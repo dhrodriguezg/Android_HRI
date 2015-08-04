@@ -75,11 +75,12 @@ public class TouchArea implements DoubleTapGestureDetector.OnDoubleTapGestureLis
     @Override
     public void OnSingleDrag(SingleDragGestureDetector singleDragGestureDetector) {
         singleDragNormalizedX=singleDragGestureDetector.getNormalizedX();
-        singleDragNormalizedY=singleDragGestureDetector.getNormalizedX();
+        singleDragNormalizedY=singleDragGestureDetector.getNormalizedY();
         singleDragX=singleDragGestureDetector.getX();
         singleDragY=singleDragGestureDetector.getY();
         singleDragRelease=singleDragGestureDetector.isRelease();
-        Log.d("Log: SingleDrag", "X:" + singleDragX + " Y:" + singleDragY);
+        //Log.d("Log: SingleDrag", "X:" + singleDragX + " Y:" + singleDragY);
+        Log.d("Log: SingleDrag", "X:" + singleDragNormalizedX + " Y:" + singleDragNormalizedY);
     }
 
     @Override
@@ -98,7 +99,7 @@ public class TouchArea implements DoubleTapGestureDetector.OnDoubleTapGestureLis
         longClickNormalizedX=longClickGestureDetector.getNormalizedX();
         longClickNormalizedY=longClickGestureDetector.getNormalizedY();
         vibrator.vibrate(100);
-        Log.d("Log: LongClick", "X:" + longClickNormalizedX + " Y:" + longClickNormalizedY);
+        Log.d("Log: LongClick", "X:" + longClickX + " Y:" + longClickY);
     }
 
     public boolean isSingleDragRelease(){

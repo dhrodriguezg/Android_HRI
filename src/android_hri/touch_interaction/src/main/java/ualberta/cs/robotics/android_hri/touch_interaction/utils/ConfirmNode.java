@@ -7,24 +7,25 @@ import org.ros.node.Node;
 import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
 
-import std_msgs.Float32;
+import std_msgs.Bool;
+
 /**
  * Created by dhrodriguezg on 7/29/15.
  */
-public class SliderNode implements NodeMain {
+public class ConfirmNode implements NodeMain {
 
     private String nodeName = "customJSlider";
-    private Publisher<Float32> publisher = null;
-    private float sliderValue=0;
+    private Publisher<Bool> publisher = null;
+    private boolean confirm = false;
 
     @Override
     public void onStart(ConnectedNode node) {
-        publisher = node.newPublisher("/android/slider", Float32._TYPE);  //"/android/joynode/joy"
+        publisher = node.newPublisher("/android/active", Bool._TYPE);  //"/android/joynode/joy"
         final CancellableLoop aLoop = new CancellableLoop() {
             @Override protected void loop() throws InterruptedException {
-                Float32 float32 = publisher.newMessage();
-                float32.setData(sliderValue);
-                publisher.publish(float32);
+                Bool bool = publisher.newMessage();
+                bool.setData(confirm);
+                publisher.publish(bool);
                 Thread.sleep(10);
             }
         };
@@ -52,11 +53,11 @@ public class SliderNode implements NodeMain {
 
     }
 
-    public float getSliderValue() {
-        return sliderValue;
+    public boolean isConfirm() {
+        return confirm;
     }
 
-    public void setSliderValue(float sliderValue) {
-        this.sliderValue = sliderValue;
+    public void setConfirm(boolean confirm) {
+        this.confirm = confirm;
     }
 }

@@ -10,12 +10,26 @@
         android:layout_width="0px"
         android:layout_weight="1" />
 
-    <org.ros.android.view.RosImageView
-        android:id="@+id/imageViewCenter"
-        android:layout_height="match_parent"
-        android:src="@raw/loading"
+    <RelativeLayout
         android:layout_width="0px"
-        android:layout_weight="6" />
+        android:layout_height="match_parent"
+        android:layout_weight="6">
+
+        <org.ros.android.view.RosImageView
+            android:id="@+id/imageViewCenter"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:src="@raw/loading" />
+
+        <ImageView
+            android:layout_width="200px"
+            android:layout_height="200px"
+            android:src="@drawable/target"
+            android:id="@+id/selectedArea"
+            android:alpha="0"/>
+    </RelativeLayout>
+
+
 
     <ImageView
             android:id="@+id/imageViewRight"

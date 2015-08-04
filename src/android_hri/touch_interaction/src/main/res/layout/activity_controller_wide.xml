@@ -40,6 +40,8 @@
                 android:text="Grasp"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:id="@+id/graspingSwitch"
+                android:textOff="OFF"
+                android:textOn="ON"
                 android:layout_weight="2"
                 android:gravity="bottom"/>
 

@@ -10,13 +10,6 @@
         android:layout_width="0px"
         android:layout_weight="1" />
 
-
-    <!--ImageView
-        android:id="@+id/imageViewLeft"
-        android:layout_height="match_parent"
-        android:layout_width="0px"
-        android:layout_weight="1" / -->
-
     <RelativeLayout
         android:layout_width="0px"
         android:layout_height="match_parent"
@@ -26,11 +19,13 @@
             android:id="@+id/imageViewCenter"
             android:layout_height="match_parent"
             android:layout_width="match_parent"
-            android:src="@raw/loading" />
+            android:src="@raw/loading"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"/>
 
         <ImageView
-            android:layout_width="200px"
-            android:layout_height="200px"
+            android:layout_width="150px"
+            android:layout_height="150px"
             android:src="@drawable/target"
             android:id="@+id/selectedArea"
             android:alpha="0"/>
@@ -62,7 +57,8 @@
             android:layout_height="match_parent"
             android:layout_width="match_parent"
             android:src="@drawable/empty"
-            android:layout_alignParentRight="true"/>
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"/>
 
     </RelativeLayout>
 

@@ -17,8 +17,11 @@ public class MultiTouchArea extends TouchArea implements RotationGestureDetector
     private RotationGestureDetector mRotationDetector;
     private DoubleDragGestureDetector mDragDetector;
     protected float angle;
-    protected float dragX;
-    protected float dragY;
+    protected float doubleDragX;
+    protected float doubleDragY;
+    protected float doubleNormalizedDragX;
+    protected float doubleNormalizedDragY;
+    protected boolean doubleDragRelease;
     protected boolean multiChanged = false;
 
     public MultiTouchArea(Activity activity, ImageView view) {
@@ -52,8 +55,59 @@ public class MultiTouchArea extends TouchArea implements RotationGestureDetector
 
     @Override
     public void OnDoubleDrag(DoubleDragGestureDetector doubleDragDetector) {
-        dragX = doubleDragDetector.getX();
-        dragY = doubleDragDetector.getY();
-        Log.d("Log: DoubleDrag", "X:" + dragX + " Y:" + dragY);
+        doubleDragX = doubleDragDetector.getX();
+        doubleDragY = doubleDragDetector.getY();
+        doubleNormalizedDragX = doubleDragDetector.getNormalizedX();
+        doubleNormalizedDragY = doubleDragDetector.getNormalizedY();
+        doubleDragRelease = doubleDragDetector.isRelease();
+        Log.d("Log: DoubleDrag", "X:" + doubleDragX + " Y:" + doubleDragY + " Active:" + doubleDragRelease);
+    }
+
+    public float getAngle() {
+        return angle;
+    }
+
+    public void setAngle(float angle) {
+        this.angle = angle;
+    }
+
+    public float getDoubleDragX() {
+        return doubleDragX;
+    }
+
+    public void setDoubleDragX(float doubleDragX) {
+        this.doubleDragX = doubleDragX;
+    }
+
+    public float getDoubleDragY() {
+        return doubleDragY;
+    }
+
+    public void setDoubleDragY(float doubleDragY) {
+        this.doubleDragY = doubleDragY;
+    }
+
+    public float getDoubleNormalizedDragX() {
+        return doubleNormalizedDragX;
+    }
+
+    public void setDoubleNormalizedDragX(float doubleNormalizedDragX) {
+        this.doubleNormalizedDragX = doubleNormalizedDragX;
+    }
+
+    public float getDoubleNormalizedDragY() {
+        return doubleNormalizedDragY;
+    }
+
+    public void setDoubleNormalizedDragY(float doubleNormalizedDragY) {
+        this.doubleNormalizedDragY = doubleNormalizedDragY;
+    }
+
+    public boolean isDoubleDragRelease() {
+        return doubleDragRelease;
+    }
+
+    public void setDoubleDragRelease(boolean doubleDragRelease) {
+        this.doubleDragRelease = doubleDragRelease;
     }
 }

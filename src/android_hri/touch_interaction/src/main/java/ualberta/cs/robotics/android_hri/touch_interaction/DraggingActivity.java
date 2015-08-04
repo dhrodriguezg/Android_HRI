@@ -1,7 +1,6 @@
 package ualberta.cs.robotics.android_hri.touch_interaction;
 
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,18 +18,22 @@ import java.net.URI;
 
 import sensor_msgs.CompressedImage;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiTouchArea;
+import ualberta.cs.robotics.android_hri.touch_interaction.utils.ConfirmNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.utils.TargetNode;
 
 
 public class DraggingActivity extends RosActivity {
 	
 	private static final String TAG = "DraggingActivity";
-    private MultiTouchArea touchHandler = null;
+    private MultiTouchArea dragHandler = null;
     public final static int MAX_POWER = 100;
 
-    private RosImageView<CompressedImage> image;
-    
+    private RosImageView<CompressedImage> imageStream;
     private int operator = 1;
-    private boolean firstUpdate = true;
+    private ImageView selectedArea;
+    private boolean running = true;
+    private TargetNode targetNode;
+    private ConfirmNode confirmNode;
 
     public DraggingActivity() {
         super("DraggingActivity", "DraggingActivity", URI.create(MainActivity.ROS_MASTER));
@@ -45,22 +48,40 @@ public class DraggingActivity extends RosActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_dragging);
 
-        image = (RosImageView<CompressedImage>) findViewById(R.id.imageViewCenter);
-        image.setTopicName("/camera/rgb/image_raw/compressed");
-        image.setMessageType("sensor_msgs/CompressedImage"); //% rostopic type /camera/rgb/image_raw
-        image.setMessageToBitmapCallable(new BitmapFromCompressedImage());
-        image.setScaleType(ImageView.ScaleType.FIT_XY);
-        image.getDrawable().getBounds(); //TODO
+        imageStream = (RosImageView<CompressedImage>) findViewById(R.id.imageViewCenter);
+        imageStream.setTopicName("/camera/rgb/image_raw/compressed");
+        imageStream.setMessageType("sensor_msgs/CompressedImage"); //% rostopic type /camera/rgb/image_raw
+        imageStream.setMessageToBitmapCallable(new BitmapFromCompressedImage());
+        imageStream.setScaleType(ImageView.ScaleType.FIT_XY);
 
-        touchHandler = new MultiTouchArea(this, image);
-        //touchHandler.draw(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sample));
-		operator = 2;
+        selectedArea = (ImageView) findViewById(R.id.selectedArea);
+
+        dragHandler = new MultiTouchArea(this, imageStream);
+        targetNode = new TargetNode();
+        confirmNode = new ConfirmNode();
+
+        Thread threadTarget = new Thread(){
+            public void run(){
+                while(running){
+                    try {
+                        if(dragHandler.getDoubleDragX()>0){
+                            updateTarget();
+                        }
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        e.getStackTrace();
+                    }
+                }
+            }
+        };
+        threadTarget.start();
 
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        running=true;
     }
     
     @Override
@@ -72,6 +93,7 @@ public class DraggingActivity extends RosActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        running=false;
     }
     
     @Override
@@ -91,7 +113,25 @@ public class DraggingActivity extends RosActivity {
     @Override
     protected void init(NodeMainExecutor nodeMainExecutor) {
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
-        nodeMainExecutor.execute(image, nodeConfiguration.setNodeName("android/streaming"));
+        nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName("android/streaming"));
+        nodeMainExecutor.execute(targetNode, nodeConfiguration.setNodeName("android/target"));
+        nodeMainExecutor.execute(confirmNode, nodeConfiguration.setNodeName("android/confirm"));
+
+    }
+
+    public void updateTarget(){
+
+        targetNode.setX(640*dragHandler.getDoubleDragX()/dragHandler.getWidth());
+        targetNode.setY(480 * dragHandler.getDoubleDragY() / dragHandler.getHeight());
+        confirmNode.setConfirm(dragHandler.isDoubleDragRelease());
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                selectedArea.setAlpha(0.5f);
+                selectedArea.setTranslationX(dragHandler.getDoubleDragX() - selectedArea.getWidth() / 2);
+                selectedArea.setTranslationY(dragHandler.getDoubleDragY() - selectedArea.getHeight() / 2);
+            }
+        });
     }
 
 }
