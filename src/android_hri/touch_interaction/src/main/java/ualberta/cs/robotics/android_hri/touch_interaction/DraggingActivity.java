@@ -50,7 +50,7 @@ public class DraggingActivity extends RosActivity {
         image.setMessageType("sensor_msgs/CompressedImage"); //% rostopic type /camera/rgb/image_raw
         image.setMessageToBitmapCallable(new BitmapFromCompressedImage());
         image.setScaleType(ImageView.ScaleType.FIT_XY);
-
+        image.getDrawable().getBounds(); //TODO
 
         touchHandler = new MultiTouchArea(this, image);
         //touchHandler.draw(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sample));
@@ -90,16 +90,8 @@ public class DraggingActivity extends RosActivity {
 
     @Override
     protected void init(NodeMainExecutor nodeMainExecutor) {
-        //image.init(nodeMainExecutor);
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
         nodeMainExecutor.execute(image, nodeConfiguration.setNodeName("android/streaming"));
     }
-
-	/*
-	public SoundPlayer getSound() { return sound; }
-
-	public void setSound(SoundPlayer sound) {
-		this.sound = sound;
-	}*/
 
 }

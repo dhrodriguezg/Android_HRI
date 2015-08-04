@@ -10,18 +10,46 @@
         android:layout_height="match_parent"
         android:layout_width="match_parent" />
 
-    <org.ros.android.view.VirtualJoystickView
-        android:id="@+id/virtual_joystick_pos"
-        android:layout_width="500px"
-        android:layout_height="500px"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true" />
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-    <org.ros.android.view.VirtualJoystickView
-        android:id="@+id/virtual_joystick_rot"
-        android:layout_width="500px"
-        android:layout_height="500px"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true" />
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="0px"
+            android:id="@+id/imageView4"
+            android:src="@drawable/empty"
+            android:layout_weight="3"/>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="0px"
+            android:layout_weight="2">
+
+            <org.ros.android.view.VirtualJoystickView
+                android:id="@+id/virtual_joystick_pos"
+                android:layout_width="0px"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <Switch
+                android:layout_width="0px"
+                android:layout_height="match_parent"
+                android:text="Grasp"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:id="@+id/graspingSwitch"
+                android:layout_weight="2"
+                android:gravity="bottom"/>
+
+            <org.ros.android.view.VirtualJoystickView
+                android:id="@+id/virtual_joystick_rot"
+                android:layout_width="0px"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+    </LinearLayout>
+
+    </LinearLayout>
 
 </RelativeLayout>

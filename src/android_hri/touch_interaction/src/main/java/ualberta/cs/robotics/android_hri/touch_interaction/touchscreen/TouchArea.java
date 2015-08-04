@@ -1,7 +1,9 @@
 package ualberta.cs.robotics.android_hri.touch_interaction.touchscreen;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -21,21 +23,28 @@ public class TouchArea implements DoubleTapGestureDetector.OnDoubleTapGestureLis
     protected LongClickGestureDetector mLongClickGestureDetector;
     protected Activity activity;
     protected ImageView view;
-    protected float singleX;
-    protected float singleY;
-    protected float doubleX;
-    protected float doubleY;
-    protected float longX;
-    protected float longY;
+    protected Vibrator vibrator;
+    protected boolean singleDragRelease = true;
+    protected float singleDragX = -1.f;
+    protected float singleDragY = -1.f;
+    protected float singleDragNormalizedX = -1.f;
+    protected float singleDragNormalizedY = -1.f;
+    protected float doubleTapX = -1.f;
+    protected float doubleTapY = -1.f;
+    protected float doubleTapNormalizedX = -1.f;
+    protected float doubleTapNormalizedY = -1.f;
+    protected float longClickX = -1.f;
+    protected float longClickY = -1.f;
+    protected float longClickNormalizedX = -1.f;
+    protected float longClickNormalizedY = -1.f;
 
     public TouchArea(Activity activity, ImageView view){
         mSingleDragGestureDetector = new SingleDragGestureDetector(this);
         mDoubleTapDetector = new DoubleTapGestureDetector(activity,this);
         mLongClickGestureDetector = new LongClickGestureDetector(activity,this);
+        vibrator = (Vibrator) activity.getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
         this.activity = activity;
         this.view = view;
-        singleX = 0.f; singleY = 0.f;
-        doubleX = 0.f; doubleY = 0.f;
         view.setVisibility(View.VISIBLE);
         setupListener();
     }
@@ -65,47 +74,131 @@ public class TouchArea implements DoubleTapGestureDetector.OnDoubleTapGestureLis
 
     @Override
     public void OnSingleDrag(SingleDragGestureDetector singleDragGestureDetector) {
-        singleX=singleDragGestureDetector.getX();
-        singleY=singleDragGestureDetector.getY();
-        Log.d("Log: SingleDrag", "X:" + singleX + " Y:" + singleY);
+        singleDragNormalizedX=singleDragGestureDetector.getNormalizedX();
+        singleDragNormalizedY=singleDragGestureDetector.getNormalizedX();
+        singleDragX=singleDragGestureDetector.getX();
+        singleDragY=singleDragGestureDetector.getY();
+        singleDragRelease=singleDragGestureDetector.isRelease();
+        Log.d("Log: SingleDrag", "X:" + singleDragX + " Y:" + singleDragY);
     }
 
     @Override
     public void OnDoubleTap(DoubleTapGestureDetector doubleTapGestureDetector) {
-        doubleX=doubleTapGestureDetector.getX();
-        doubleY=doubleTapGestureDetector.getY();
-        Log.d("Log: DoubleTap", "X:" + doubleX + " Y:" + doubleY);
+        doubleTapX=doubleTapGestureDetector.getX();
+        doubleTapY=doubleTapGestureDetector.getY();
+        doubleTapNormalizedX=doubleTapGestureDetector.getNormalizedX();
+        doubleTapNormalizedY=doubleTapGestureDetector.getNormalizedY();
+        Log.d("Log: DoubleTap", "X:" + doubleTapNormalizedX + " Y:" + doubleTapNormalizedY);
     }
 
     @Override
     public void OnLongClick(LongClickGestureDetector longClickGestureDetector) {
-        longX=longClickGestureDetector.getX();
-        longY=longClickGestureDetector.getY();
-        Log.d("Log: LongClick", "X:" + longX + " Y:" + longY);
+        longClickX=longClickGestureDetector.getX();
+        longClickY=longClickGestureDetector.getY();
+        longClickNormalizedX=longClickGestureDetector.getNormalizedX();
+        longClickNormalizedY=longClickGestureDetector.getNormalizedY();
+        vibrator.vibrate(100);
+        Log.d("Log: LongClick", "X:" + longClickNormalizedX + " Y:" + longClickNormalizedY);
     }
 
-    /*public float getX() {
-        return view.getX();
+    public boolean isSingleDragRelease(){
+        return singleDragRelease;
     }
 
-    public float getY() {
-        return view.getY();
-    }*/
-
-    public float getSingleX() {
-        return singleX;
+    public float getSingleDragX() {
+        return singleDragX;
     }
 
-    public void setSingleX(float singleX) {
-        this.singleX = singleX;
+    public void setSingleDragX(float singleDragX) {
+        this.singleDragX = singleDragX;
     }
 
-    public float getSingleY() {
-        return singleY;
+    public float getSingleDragY() {
+        return singleDragY;
     }
 
-    public void setSingleY(float singleY) {
-        this.singleY = singleY;
+    public void setSingleDragY(float singleDragY) {
+        this.singleDragY = singleDragY;
+    }
+
+    public float getSingleDragNormalizedX() {
+        return singleDragNormalizedX;
+    }
+
+    public void setSingleDragNormalizedX(float singleDragNormalizedX) {
+        this.singleDragNormalizedX = singleDragNormalizedX;
+    }
+
+    public float getSingleDragNormalizedY() {
+        return singleDragNormalizedY;
+    }
+
+    public void setSingleDragNormalizedY(float singleDragNormalizedY) {
+        this.singleDragNormalizedY = singleDragNormalizedY;
+    }
+
+    public float getDoubleTapX() {
+        return doubleTapX;
+    }
+
+    public void setDoubleTapX(float doubleTapX) {
+        this.doubleTapX = doubleTapX;
+    }
+
+    public float getDoubleTapY() {
+        return doubleTapY;
+    }
+
+    public void setDoubleTapY(float doubleTapY) {
+        this.doubleTapY = doubleTapY;
+    }
+
+    public float getDoubleTapNormalizedX() {
+        return doubleTapNormalizedX;
+    }
+
+    public void setDoubleTapNormalizedX(float doubleTapNormalizedX) {
+        this.doubleTapNormalizedX = doubleTapNormalizedX;
+    }
+
+    public float getDoubleTapNormalizedY() {
+        return doubleTapNormalizedY;
+    }
+
+    public void setDoubleTapNormalizedY(float doubleTapNormalizedY) {
+        this.doubleTapNormalizedY = doubleTapNormalizedY;
+    }
+
+    public float getLongClickX() {
+        return longClickX;
+    }
+
+    public void setLongClickX(float longClickX) {
+        this.longClickX = longClickX;
+    }
+
+    public float getLongClickY() {
+        return longClickY;
+    }
+
+    public void setLongClickY(float longClickY) {
+        this.longClickY = longClickY;
+    }
+
+    public float getLongClickNormalizedX() {
+        return longClickNormalizedX;
+    }
+
+    public void setLongClickNormalizedX(float longClickNormalizedX) {
+        this.longClickNormalizedX = longClickNormalizedX;
+    }
+
+    public float getLongClickNormalizedY() {
+        return longClickNormalizedY;
+    }
+
+    public void setLongClickNormalizedY(float longClickNormalizedY) {
+        this.longClickNormalizedY = longClickNormalizedY;
     }
 
     public float getWidth() {

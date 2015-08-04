@@ -80,7 +80,7 @@ public class MainActivity extends ActionBarActivity {
                 ROS_MASTER = "http://" + editIP.getText().toString() + ":" + editPort.getText().toString();
                 int exit = pingHost(editIP.getText().toString());
                 if (exit==0){
-                    Intent myIntent = new Intent(MainActivity.this, DraggingActivity.class);
+                    Intent myIntent = new Intent(MainActivity.this, SliderActivity.class);
                     myIntent.putExtra("layout", "slider");
                     MainActivity.this.startActivity(myIntent);
                 }else {

@@ -5,7 +5,9 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.WindowManager;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.ToggleButton;
 
 import org.ros.address.InetAddressFactory;
@@ -24,6 +26,7 @@ import java.net.URI;
 import sensor_msgs.CompressedImage;
 
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.TouchArea;
+import ualberta.cs.robotics.android_hri.touch_interaction.utils.Twist2JoyNode;
 
 
 public class ControllerActivity extends RosActivity {
@@ -33,10 +36,10 @@ public class ControllerActivity extends RosActivity {
     private VirtualJoystickView mVirtualJoystickViewPos;
     private VirtualJoystickView mVirtualJoystickViewRot;
     private RosImageView<CompressedImage> image;
-    private NodeMain nodeMain;
-
+    private Twist2JoyNode nodeMain;
 
 	private ImageView imageView;
+    private Switch graspingSwitch;
     private TouchArea posHandler = null;
     private TouchArea rotHandler = null;
 
@@ -70,6 +73,16 @@ public class ControllerActivity extends RosActivity {
 
         mVirtualJoystickViewPos = (VirtualJoystickView) findViewById(R.id.virtual_joystick_pos);
         mVirtualJoystickViewRot = (VirtualJoystickView) findViewById(R.id.virtual_joystick_rot);
+        graspingSwitch =  (Switch) findViewById(R.id.graspingSwitch);
+        graspingSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked)
+                    nodeMain.setGraspButton(1);
+                else
+                    nodeMain.setGraspButton(0);
+            }
+        });
+
         mVirtualJoystickViewPos.setHolonomic(true);
         mVirtualJoystickViewRot.setHolonomic(true);
 
@@ -77,7 +90,7 @@ public class ControllerActivity extends RosActivity {
         image.setTopicName("/camera/rgb/image_raw/compressed");
         image.setMessageType("sensor_msgs/CompressedImage"); //% rostopic type /camera/rgb/image_raw
         image.setMessageToBitmapCallable(new BitmapFromCompressedImage());
-        nodeMain = new CustomNode();
+        nodeMain = new Twist2JoyNode();
 
         if (layout.equals("tight"))
             image.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -118,7 +131,6 @@ public class ControllerActivity extends RosActivity {
 
     @Override
     protected void init(NodeMainExecutor nodeMainExecutor) {
-        //image.init(nodeMainExecutor);
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
         nodeMainExecutor.execute(mVirtualJoystickViewPos, nodeConfiguration.setNodeName("android/joystickPos")); //  geometry_msgs/Twist   -->   sensor_msgs/Joy
         nodeMainExecutor.execute(mVirtualJoystickViewRot, nodeConfiguration.setNodeName("android/joystickRot")); //

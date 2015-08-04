@@ -16,6 +16,8 @@ public class DoubleTapGestureDetector extends GestureDetector.SimpleOnGestureLis
     private View mView;
     private float mX;
     private float mY;
+    private float normalizedX;
+    private float normalizedY;
 
     public DoubleTapGestureDetector(Activity activity, OnDoubleTapGestureListener listener){
         mGestureDetector = new GestureDetector(activity, this);
@@ -30,17 +32,18 @@ public class DoubleTapGestureDetector extends GestureDetector.SimpleOnGestureLis
 
     @Override
     public boolean onDoubleTap(MotionEvent event) {
+        mX=event.getX(); mY=event.getY();
         float[] touch = new float[]{event.getX(), event.getY()}; //relative to the view. Right,Down increase
         float[] viewCenter = new float[]{mView.getWidth() / 2, mView.getHeight() / 2};
         float[] touchVector = new float[] {touch[0] - viewCenter[0], touch[1] - viewCenter[1]};
         float x =  touchVector[0]/viewCenter[0];
         float y = -touchVector[1]/viewCenter[1];
         if(x > 1 || x < -1 || y > 1 || y < -1){
-            mX=0;
-            mY=0;
+            normalizedX=0;
+            normalizedY=0;
         }else{
-            mX=x;
-            mY=y;
+            normalizedX=x;
+            normalizedY=y;
         }
         mListener.OnDoubleTap(this);
         return true;
@@ -55,7 +58,7 @@ public class DoubleTapGestureDetector extends GestureDetector.SimpleOnGestureLis
     }
 
     public void setX(float x) {
-        this.mX = mX;
+        this.mX = x;
     }
 
     public float getY() {
@@ -63,6 +66,25 @@ public class DoubleTapGestureDetector extends GestureDetector.SimpleOnGestureLis
     }
 
     public void setY(float y) {
-        this.mY = mY;
+        this.mY = y;
     }
+
+    public float getNormalizedX() {
+        return normalizedX;
+    }
+
+    public void setNormalizedX(float normalizedX) {
+        this.normalizedX = normalizedX;
+    }
+
+    public float getNormalizedY() {
+        return normalizedY;
+    }
+
+    public void setNormalizedY(float normalizedY) {
+        this.normalizedY = normalizedY;
+    }
+
+
+
 }
