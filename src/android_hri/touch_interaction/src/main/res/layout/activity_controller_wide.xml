@@ -1,0 +1,27 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    tools:context=".ControllerActivity"
+    android:orientation="horizontal" >
+
+    <org.ros.android.view.RosImageView
+        android:id="@+id/visualization"
+        android:src="@raw/loading"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent" />
+
+    <org.ros.android.view.VirtualJoystickView
+        android:id="@+id/virtual_joystick_pos"
+        android:layout_width="500px"
+        android:layout_height="500px"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true" />
+
+    <org.ros.android.view.VirtualJoystickView
+        android:id="@+id/virtual_joystick_rot"
+        android:layout_width="500px"
+        android:layout_height="500px"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true" />
+
+</RelativeLayout>

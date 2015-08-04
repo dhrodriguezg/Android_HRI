@@ -1,0 +1,39 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    tools:context=".ControllerActivity"
+    android:orientation="horizontal" >
+
+    <org.ros.android.view.RosImageView
+        android:id="@+id/visualization"
+        android:src="@raw/loading"
+        android:layout_height="match_parent"
+        android:layout_width="0px"
+        android:layout_weight="3"/>
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="0px"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_vertical"
+        android:layout_weight="1">
+
+        <org.ros.android.view.VirtualJoystickView
+            android:id="@+id/virtual_joystick_pos"
+            android:layout_width="match_parent"
+            android:layout_height="0px"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_weight="1"/>
+
+        <org.ros.android.view.VirtualJoystickView
+            android:id="@+id/virtual_joystick_rot"
+            android:layout_width="match_parent"
+            android:layout_height="0px"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_weight="1"/>
+
+    </LinearLayout>
+
+</LinearLayout><!-- From: file:/home/dhrodriguezg/Android_HRI/src/android_hri/touch_interaction/src/main/res/layout/activity_controller_wide.xml -->

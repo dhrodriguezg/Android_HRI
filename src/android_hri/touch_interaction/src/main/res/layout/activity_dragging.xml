@@ -1,0 +1,26 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    tools:context=".DraggingActivity"
+    android:orientation="horizontal">
+
+    <ImageView
+        android:id="@+id/imageViewLeft"
+        android:layout_height="match_parent"
+        android:layout_width="0px"
+        android:layout_weight="1" />
+
+    <org.ros.android.view.RosImageView
+        android:id="@+id/imageViewCenter"
+        android:layout_height="match_parent"
+        android:src="@raw/loading"
+        android:layout_width="0px"
+        android:layout_weight="6" />
+
+    <ImageView
+            android:id="@+id/imageViewRight"
+            android:layout_height="match_parent"
+            android:layout_width="0px"
+            android:layout_weight="1"/>
+
+</LinearLayout>
