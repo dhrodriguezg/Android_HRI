@@ -19,6 +19,7 @@ import java.net.URI;
 import sensor_msgs.CompressedImage;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiTouchArea;
 import ualberta.cs.robotics.android_hri.touch_interaction.utils.ConfirmNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.utils.RotationNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.utils.TargetNode;
 
 
@@ -34,6 +35,7 @@ public class DraggingActivity extends RosActivity {
     private boolean running = true;
     private TargetNode targetNode;
     private ConfirmNode confirmNode;
+    private RotationNode rotationNode;
 
     public DraggingActivity() {
         super("DraggingActivity", "DraggingActivity", URI.create(MainActivity.ROS_MASTER));
@@ -49,7 +51,7 @@ public class DraggingActivity extends RosActivity {
         setContentView(R.layout.activity_dragging);
 
         imageStream = (RosImageView<CompressedImage>) findViewById(R.id.imageViewCenter);
-        imageStream.setTopicName("/camera/rgb/image_raw/compressed");
+        imageStream.setTopicName("/image_converter/output_video/compressed"); //"/camera/rgb/image_raw/compressed"
         imageStream.setMessageType("sensor_msgs/CompressedImage"); //% rostopic type /camera/rgb/image_raw
         imageStream.setMessageToBitmapCallable(new BitmapFromCompressedImage());
         imageStream.setScaleType(ImageView.ScaleType.FIT_XY);
@@ -58,6 +60,7 @@ public class DraggingActivity extends RosActivity {
 
         dragHandler = new MultiTouchArea(this, imageStream);
         targetNode = new TargetNode();
+        rotationNode = new RotationNode();
         confirmNode = new ConfirmNode();
 
         Thread threadTarget = new Thread(){
@@ -75,6 +78,20 @@ public class DraggingActivity extends RosActivity {
             }
         };
         threadTarget.start();
+
+        Thread threadRotation = new Thread(){
+            public void run(){
+                while(running){
+                    try {
+                        rotationNode.setRotationValue(dragHandler.getAngle());
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        e.getStackTrace();
+                    }
+                }
+            }
+        };
+        threadRotation.start();
 
     }
 
@@ -116,12 +133,13 @@ public class DraggingActivity extends RosActivity {
         nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName("android/streaming"));
         nodeMainExecutor.execute(targetNode, nodeConfiguration.setNodeName("android/target"));
         nodeMainExecutor.execute(confirmNode, nodeConfiguration.setNodeName("android/confirm"));
+        nodeMainExecutor.execute(rotationNode, nodeConfiguration.setNodeName("android/rotation"));
 
     }
 
     public void updateTarget(){
 
-        targetNode.setX(640*dragHandler.getDoubleDragX()/dragHandler.getWidth());
+        targetNode.setX(640 * dragHandler.getDoubleDragX() / dragHandler.getWidth());
         targetNode.setY(480 * dragHandler.getDoubleDragY() / dragHandler.getHeight());
         confirmNode.setConfirm(dragHandler.isDoubleDragRelease());
         this.runOnUiThread(new Runnable() {

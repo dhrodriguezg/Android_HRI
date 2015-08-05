@@ -14,7 +14,7 @@ public class DoubleDragGestureDetector {
     private float mX, mY;
     private float normalizedX;
     private float normalizedY;
-    private boolean release=true;
+    private boolean release=false;
 
     private OnDragGestureListener mListener;
 
@@ -42,7 +42,7 @@ public class DoubleDragGestureDetector {
                 break;
             case MotionEvent.ACTION_MOVE:
                 if(ptrID1 != INVALID_POINTER_ID && ptrID2 != INVALID_POINTER_ID){
-                    release=false;
+                    release=true;
                     float nfX, nfY, nsX, nsY;
                     nsX = event.getX(event.findPointerIndex(ptrID1));
                     nsY = event.getY(event.findPointerIndex(ptrID1));
@@ -66,16 +66,17 @@ public class DoubleDragGestureDetector {
                 }
                 break;
             case MotionEvent.ACTION_UP:
-                release=true;
+                release=false;
                 ptrID1 = INVALID_POINTER_ID;
                 mListener.OnDoubleDrag(this);
                 break;
             case MotionEvent.ACTION_POINTER_UP:
-                release=true;
+                release=false;
                 ptrID2 = INVALID_POINTER_ID;
                 mListener.OnDoubleDrag(this);
                 break;
             case MotionEvent.ACTION_CANCEL:
+                release=false;
                 ptrID1 = INVALID_POINTER_ID;
                 ptrID2 = INVALID_POINTER_ID;
                 mListener.OnDoubleDrag(this);

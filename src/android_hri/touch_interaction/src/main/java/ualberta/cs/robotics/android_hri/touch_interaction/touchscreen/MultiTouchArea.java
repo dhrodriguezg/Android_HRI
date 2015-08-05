@@ -21,7 +21,7 @@ public class MultiTouchArea extends TouchArea implements RotationGestureDetector
     protected float doubleDragY;
     protected float doubleNormalizedDragX;
     protected float doubleNormalizedDragY;
-    protected boolean doubleDragRelease;
+    protected boolean doubleDragRelease = false;
     protected boolean multiChanged = false;
 
     public MultiTouchArea(Activity activity, ImageView view) {

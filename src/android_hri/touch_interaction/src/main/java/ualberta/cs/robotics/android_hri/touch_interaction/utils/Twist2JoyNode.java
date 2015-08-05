@@ -22,7 +22,10 @@ public class Twist2JoyNode implements NodeMain {
     private java.lang.String nodeName = "customJoy";
     private Publisher<sensor_msgs.Joy> publisher = null;
     private float[] axes = new float[]{0, 0, 0, 0, 0, 0};
-    private int[] button = new int[]{0,0,0,0,0,0,0,0,0,0,1,0};
+    private int[] button = new int[]{0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0};
+    private int counter = 100;
+    private int graspValue = -1;
+    private boolean started=false;
 
     @Override
     public void onStart(ConnectedNode node) {
@@ -63,9 +66,17 @@ public class Twist2JoyNode implements NodeMain {
         Point p=null;
         final CancellableLoop aLoop = new CancellableLoop() {
             @Override protected void loop() throws InterruptedException {
+                if(started){
+                    counter--;
+                }
                 sensor_msgs.Joy joy = publisher.newMessage();
                 joy.setAxes(axes);
                 joy.setButtons(button);
+                if(counter<0){
+                    button[12]=0;
+                    button[14]=0;
+                }
+
                 publisher.publish(joy);
                 Thread.sleep(10);
             }
@@ -73,8 +84,19 @@ public class Twist2JoyNode implements NodeMain {
         node.executeCancellableLoop(aLoop);
     }
 
-    public void setGraspButton(int value) {
-        button[0]=value;
+    public void setGraspValue(int value){
+        if(graspValue!=value){
+            graspValue=value;
+            counter=100;
+            started=true;
+        }
+        if(graspValue==0){
+            button[12]=1;
+            button[14]=0;
+        }else{
+            button[12]=0;
+            button[14]=1;
+        }
     }
 
     public void setButtonValue(int button, int value) {

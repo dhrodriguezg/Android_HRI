@@ -77,9 +77,9 @@ public class ControllerActivity extends RosActivity {
         graspingSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if(isChecked)
-                    nodeMain.setGraspButton(1);
+                    nodeMain.setGraspValue(1);
                 else
-                    nodeMain.setGraspButton(0);
+                    nodeMain.setGraspValue(0);
             }
         });
 
