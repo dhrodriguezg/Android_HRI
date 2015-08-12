@@ -18,9 +18,9 @@ import java.net.URI;
 
 import sensor_msgs.CompressedImage;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiTouchArea;
-import ualberta.cs.robotics.android_hri.touch_interaction.utils.ConfirmNode;
-import ualberta.cs.robotics.android_hri.touch_interaction.utils.RotationNode;
-import ualberta.cs.robotics.android_hri.touch_interaction.utils.TargetNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.node.ConfirmNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.node.RotationNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.node.TargetNode;
 
 
 public class DraggingActivity extends RosActivity {
@@ -141,7 +141,7 @@ public class DraggingActivity extends RosActivity {
 
         targetNode.setX(640 * dragHandler.getDoubleDragX() / dragHandler.getWidth());
         targetNode.setY(480 * dragHandler.getDoubleDragY() / dragHandler.getHeight());
-        confirmNode.setConfirm(dragHandler.isDoubleDragRelease());
+        confirmNode.setConfirm(dragHandler.isDetectingTwoFingerGesture());
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {

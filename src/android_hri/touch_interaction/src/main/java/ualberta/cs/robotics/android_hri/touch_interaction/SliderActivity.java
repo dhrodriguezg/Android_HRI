@@ -1,7 +1,6 @@
 package ualberta.cs.robotics.android_hri.touch_interaction;
 
 import android.content.Intent;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -23,9 +22,9 @@ import java.net.URI;
 import sensor_msgs.CompressedImage;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiTouchArea;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.TouchArea;
-import ualberta.cs.robotics.android_hri.touch_interaction.utils.ConfirmNode;
-import ualberta.cs.robotics.android_hri.touch_interaction.utils.SliderNode;
-import ualberta.cs.robotics.android_hri.touch_interaction.utils.TargetNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.node.ConfirmNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.node.SliderNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.node.TargetNode;
 
 
 public class SliderActivity extends RosActivity {
@@ -85,6 +84,10 @@ public class SliderActivity extends RosActivity {
         sliderNode = new SliderNode();
         targetNode = new TargetNode();
         confirmNode = new ConfirmNode();
+
+        sliderImage.setTranslationY(sliderHandler.getHeight() / 2 - sliderImage.getHeight() / 2);
+        sliderNode.setSliderValue(0.01f);
+
         //targetHandler.draw(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.sample));
 
 
@@ -93,10 +96,10 @@ public class SliderActivity extends RosActivity {
             public void run(){
                 while(running){
                     try {
+                        Thread.sleep(100);
                         if(targetHandler.getLongClickX()>0){
                             updateTarget();
                         }
-                        Thread.sleep(100);
                     } catch (InterruptedException e) {
                         e.getStackTrace();
                     }
@@ -109,10 +112,10 @@ public class SliderActivity extends RosActivity {
             public void run(){
                 while(running){
                     try {
-                        if(sliderHandler.getSingleDragY()>0){
+                        Thread.sleep(10);
+                        if(sliderHandler.getSingleDragY() > 0  || sliderNode.getSliderValue() != 0){
                             updateSlider();
                         }
-                        Thread.sleep(10);
                     } catch (InterruptedException e) {
                         e.getStackTrace();
                     }
@@ -170,15 +173,16 @@ public class SliderActivity extends RosActivity {
         });
     }
     public void updateSlider(){
-        sliderNode.setSliderValue(sliderHandler.getSingleDragNormalizedY());
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(sliderHandler.isSingleDragRelease()) {
+                if(sliderHandler.isDetectingOneFingerGesture() && sliderHandler.getSingleDragY() > 0) {
+                    sliderImage.setTranslationY(sliderHandler.getSingleDragY() - sliderImage.getHeight() / 2);
+                    sliderNode.setSliderValue(sliderHandler.getSingleDragNormalizedY());
+                } else {
                     sliderImage.setTranslationY(sliderHandler.getHeight() / 2 - sliderImage.getHeight() / 2);
                     sliderNode.setSliderValue(0);
-                }else
-                    sliderImage.setTranslationY(sliderHandler.getSingleDragY() - sliderImage.getHeight() / 2);
+                }
             }
         });
     }

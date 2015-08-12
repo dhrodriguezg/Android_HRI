@@ -1,27 +1,25 @@
 package ualberta.cs.robotics.android_hri.touch_interaction.touchscreen;
 
 import android.app.Activity;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 
-import ualberta.cs.robotics.android_hri.touch_interaction.utils.DoubleDragGestureDetector;
-import ualberta.cs.robotics.android_hri.touch_interaction.utils.RotationGestureDetector;
+import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.gesture_detector.TwoFingerGestureDetector;
 
 /**
  * Created by DarkNeoBahamut on 23/07/2015.
  */
-public class MultiTouchArea extends TouchArea implements RotationGestureDetector.OnRotationGestureListener, DoubleDragGestureDetector.OnDragGestureListener {
+public class MultiTouchArea extends TouchArea implements TwoFingerGestureDetector.OnTwoFingerGestureListener {
 
-    private RotationGestureDetector mRotationDetector;
-    private DoubleDragGestureDetector mDragDetector;
+    private TwoFingerGestureDetector mTwoFingerGestureDetector;
     protected float angle;
+    protected float scale;
     protected float doubleDragX;
     protected float doubleDragY;
     protected float doubleNormalizedDragX;
     protected float doubleNormalizedDragY;
-    protected boolean doubleDragRelease = false;
+    protected boolean detectingTwoFingerGesture = false;
     protected boolean multiChanged = false;
 
     public MultiTouchArea(Activity activity, ImageView view) {
@@ -30,38 +28,45 @@ public class MultiTouchArea extends TouchArea implements RotationGestureDetector
 
     @Override
     protected void setupListener() {
-        mRotationDetector = new RotationGestureDetector(this);
-        mDragDetector = new DoubleDragGestureDetector(this);
+        mTwoFingerGestureDetector = new TwoFingerGestureDetector(activity, this);
         view.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent event) {
-                mRotationDetector.onTouchEvent(event);
-                mDragDetector.onTouchEvent(view, event);
-                if (event.getPointerCount() < 2) {
-                    mSingleDragGestureDetector.onTouchEvent(view, event);
-                    mDoubleTapDetector.onTouchEvent(view, event);
-                    mLongClickGestureDetector.onTouchEvent(view, event);
-                }
+                addOneFingerListener(view, event);
+                addTwoFingerListener(view, event);
                 return true;
             }
         });
     }
 
-    @Override
-    public void OnRotation(RotationGestureDetector rotationDetector) {
-        angle = rotationDetector.getAngle();
-        Log.d("Log: Rotation", "Angle:" + Float.toString(angle));
+    protected void addTwoFingerListener(View view, MotionEvent event) {
+        mTwoFingerGestureDetector.onTouchEvent(view, event);
     }
 
     @Override
-    public void OnDoubleDrag(DoubleDragGestureDetector doubleDragDetector) {
-        doubleDragX = doubleDragDetector.getX();
-        doubleDragY = doubleDragDetector.getY();
-        doubleNormalizedDragX = doubleDragDetector.getNormalizedX();
-        doubleNormalizedDragY = doubleDragDetector.getNormalizedY();
-        doubleDragRelease = doubleDragDetector.isRelease();
-        Log.d("Log: DoubleDrag", "X:" + doubleDragX + " Y:" + doubleDragY + " Active:" + doubleDragRelease);
+    public void OnRotation(float mAngle) {
+        angle = mAngle;
     }
+
+    @Override
+    public void OnDoubleDrag(float mX, float mY, float normalizedX, float normalizedY) {
+        doubleDragX = mX;
+        doubleDragY = mY;
+        doubleNormalizedDragX = normalizedX;
+        doubleNormalizedDragY = normalizedY;
+    }
+
+    @Override
+    public void OnScale(float mScale) {
+        scale=mScale;
+    }
+
+    @Override
+    public void onTwoFingerGestureState(boolean detectingGesture) {
+        detectingTwoFingerGesture =detectingGesture;
+    }
+
+
 
     public float getAngle() {
         return angle;
@@ -103,11 +108,13 @@ public class MultiTouchArea extends TouchArea implements RotationGestureDetector
         this.doubleNormalizedDragY = doubleNormalizedDragY;
     }
 
-    public boolean isDoubleDragRelease() {
-        return doubleDragRelease;
+    public boolean isDetectingTwoFingerGesture() {
+        return detectingTwoFingerGesture;
     }
 
-    public void setDoubleDragRelease(boolean doubleDragRelease) {
-        this.doubleDragRelease = doubleDragRelease;
+    public void setDetectingTwoFingerGesture(boolean detectingTwoFingerGesture) {
+        this.detectingTwoFingerGesture = detectingTwoFingerGesture;
     }
+
+
 }

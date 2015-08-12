@@ -1,4 +1,4 @@
-package ualberta.cs.robotics.android_hri.touch_interaction.utils;
+package ualberta.cs.robotics.android_hri.touch_interaction.node;
 
 import org.ros.concurrent.CancellableLoop;
 import org.ros.namespace.GraphName;

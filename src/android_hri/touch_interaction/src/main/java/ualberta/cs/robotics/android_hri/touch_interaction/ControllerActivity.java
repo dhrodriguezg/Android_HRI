@@ -18,7 +18,6 @@ import org.ros.android.view.VirtualJoystickView;
 import org.ros.android.view.RosImageView;
 
 import org.ros.node.NodeConfiguration;
-import org.ros.node.NodeMain;
 import org.ros.node.NodeMainExecutor;
 
 import java.net.URI;
@@ -26,7 +25,7 @@ import java.net.URI;
 import sensor_msgs.CompressedImage;
 
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.TouchArea;
-import ualberta.cs.robotics.android_hri.touch_interaction.utils.Twist2JoyNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.node.Twist2JoyNode;
 
 
 public class ControllerActivity extends RosActivity {

@@ -4,27 +4,23 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Vibrator;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 
-import ualberta.cs.robotics.android_hri.touch_interaction.utils.DoubleTapGestureDetector;
-import ualberta.cs.robotics.android_hri.touch_interaction.utils.LongClickGestureDetector;
-import ualberta.cs.robotics.android_hri.touch_interaction.utils.SingleDragGestureDetector;
+import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.gesture_detector.OneFingerGestureDetector;
 
 /**
  * Created by Diego Rodriguez on 22/07/2015.
  */
-public class TouchArea implements DoubleTapGestureDetector.OnDoubleTapGestureListener, SingleDragGestureDetector.OnSingleDragGestureListener, LongClickGestureDetector.OnLongClickGestureListener{
+public class TouchArea implements OneFingerGestureDetector.OnOneFingerGestureListener{
 
-    protected SingleDragGestureDetector mSingleDragGestureDetector;
-    protected DoubleTapGestureDetector mDoubleTapDetector;
-    protected LongClickGestureDetector mLongClickGestureDetector;
+    protected OneFingerGestureDetector mOneFingerGestureDetector;
     protected Activity activity;
     protected ImageView view;
     protected Vibrator vibrator;
-    protected boolean singleDragRelease = true;
+
+    protected boolean detectingOneFingerGesture = false;
     protected float singleDragX = -1.f;
     protected float singleDragY = -1.f;
     protected float singleDragNormalizedX = -1.f;
@@ -39,9 +35,7 @@ public class TouchArea implements DoubleTapGestureDetector.OnDoubleTapGestureLis
     protected float longClickNormalizedY = -1.f;
 
     public TouchArea(Activity activity, ImageView view){
-        mSingleDragGestureDetector = new SingleDragGestureDetector(this);
-        mDoubleTapDetector = new DoubleTapGestureDetector(activity,this);
-        mLongClickGestureDetector = new LongClickGestureDetector(activity,this);
+        mOneFingerGestureDetector = new OneFingerGestureDetector(activity,this);
         vibrator = (Vibrator) activity.getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
         this.activity = activity;
         this.view = view;
@@ -53,15 +47,16 @@ public class TouchArea implements DoubleTapGestureDetector.OnDoubleTapGestureLis
         view.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent event) {
-                if (event.getPointerCount() < 2) {
-                    mSingleDragGestureDetector.onTouchEvent(view, event);
-                    mDoubleTapDetector.onTouchEvent(view, event);
-                    mLongClickGestureDetector.onTouchEvent(view, event);
-                }
+                addOneFingerListener(view, event);
                 return true;
             }
         });
     }
+
+    protected void addOneFingerListener(View view, MotionEvent event) {
+        mOneFingerGestureDetector.onTouchEvent(view, event);
+    }
+
 
     public void draw(final Bitmap bitmap){
         activity.runOnUiThread(new Runnable() {
@@ -72,38 +67,60 @@ public class TouchArea implements DoubleTapGestureDetector.OnDoubleTapGestureLis
         });
     }
 
+
     @Override
-    public void OnSingleDrag(SingleDragGestureDetector singleDragGestureDetector) {
-        singleDragNormalizedX=singleDragGestureDetector.getNormalizedX();
-        singleDragNormalizedY=singleDragGestureDetector.getNormalizedY();
-        singleDragX=singleDragGestureDetector.getX();
-        singleDragY=singleDragGestureDetector.getY();
-        singleDragRelease=singleDragGestureDetector.isRelease();
-        //Log.d("Log: SingleDrag", "X:" + singleDragX + " Y:" + singleDragY);
-        Log.d("Log: SingleDrag", "X:" + singleDragNormalizedX + " Y:" + singleDragNormalizedY);
+    public void onScrollDrag(float sX, float sY, float sdX, float sdY, float dX, float dY, float normalizedDX, float normalizedDY) {
+        singleDragNormalizedX=normalizedDX;
+        singleDragNormalizedY=normalizedDY;
+        singleDragX=dX;
+        singleDragY=dY;
     }
 
     @Override
-    public void OnDoubleTap(DoubleTapGestureDetector doubleTapGestureDetector) {
-        doubleTapX=doubleTapGestureDetector.getX();
-        doubleTapY=doubleTapGestureDetector.getY();
-        doubleTapNormalizedX=doubleTapGestureDetector.getNormalizedX();
-        doubleTapNormalizedY=doubleTapGestureDetector.getNormalizedY();
-        Log.d("Log: DoubleTap", "X:" + doubleTapNormalizedX + " Y:" + doubleTapNormalizedY);
+    public void onDoubleTap(float dtX, float dtY, float normalizedDTX, float normalizedDTY) {
+        doubleTapNormalizedX=normalizedDTX;
+        doubleTapNormalizedY=normalizedDTY;
+        doubleTapX=dtX;
+        doubleTapY=dtY;
     }
 
     @Override
-    public void OnLongClick(LongClickGestureDetector longClickGestureDetector) {
-        longClickX=longClickGestureDetector.getX();
-        longClickY=longClickGestureDetector.getY();
-        longClickNormalizedX=longClickGestureDetector.getNormalizedX();
-        longClickNormalizedY=longClickGestureDetector.getNormalizedY();
+    public void onLongPress(float lpX, float lpY, float normalizedLPX, float normalizedLPY) {
+        longClickNormalizedX=normalizedLPX;
+        longClickNormalizedY=normalizedLPY;
+        longClickX=lpX;
+        longClickY=lpY;
         vibrator.vibrate(100);
-        Log.d("Log: LongClick", "X:" + longClickX + " Y:" + longClickY);
     }
 
-    public boolean isSingleDragRelease(){
-        return singleDragRelease;
+    @Override
+    public void onSingleTap(float stX, float stY, float normalizedSTX, float normalizedSTY) {
+        //unused...for now
+    }
+
+    @Override
+    public void onFling(float fX, float fY, float fvX, float fvY) {
+        //unused...for now
+    }
+
+    @Override
+    public void onOneFingerGestureState(boolean detectingGesture) {
+        detectingOneFingerGesture=detectingGesture;
+        resetValuesOnRelease();
+    }
+
+    private void resetValuesOnRelease(){
+        if(!detectingOneFingerGesture){
+            singleDragNormalizedX=0;
+            singleDragNormalizedY=0;
+            singleDragX=0;
+            singleDragY=0;
+        }
+    }
+
+
+    public boolean isDetectingOneFingerGesture(){
+        return detectingOneFingerGesture;
     }
 
     public float getSingleDragX() {
