@@ -23,6 +23,8 @@ public class TouchArea implements OneFingerGestureDetector.OnOneFingerGestureLis
     protected boolean detectingOneFingerGesture = false;
     protected float singleDragX = -1.f;
     protected float singleDragY = -1.f;
+    protected float singleIDragX = 0.f;
+    protected float singleIDragY = 0.f;
     protected float singleDragNormalizedX = -1.f;
     protected float singleDragNormalizedY = -1.f;
     protected float doubleTapX = -1.f;
@@ -70,6 +72,8 @@ public class TouchArea implements OneFingerGestureDetector.OnOneFingerGestureLis
 
     @Override
     public void onScrollDrag(float sX, float sY, float sdX, float sdY, float dX, float dY, float normalizedDX, float normalizedDY) {
+        singleIDragX=sX;
+        singleIDragY=sY;
         singleDragNormalizedX=normalizedDX;
         singleDragNormalizedY=normalizedDY;
         singleDragX=dX;
@@ -106,15 +110,17 @@ public class TouchArea implements OneFingerGestureDetector.OnOneFingerGestureLis
     @Override
     public void onOneFingerGestureState(boolean detectingGesture) {
         detectingOneFingerGesture=detectingGesture;
-        resetValuesOnRelease();
+        //resetValuesOnRelease(); //TODO por alguna razon lo estaba reseteando
     }
 
-    private void resetValuesOnRelease(){
+    public void resetValuesOnRelease(){
         if(!detectingOneFingerGesture){
             singleDragNormalizedX=0;
             singleDragNormalizedY=0;
             singleDragX=0;
             singleDragY=0;
+            singleIDragX=0;
+            singleIDragY=0;
         }
     }
 
@@ -227,4 +233,19 @@ public class TouchArea implements OneFingerGestureDetector.OnOneFingerGestureLis
         return view.getHeight();
     }
 
+    public float getSingleIDragX() {
+        return singleIDragX;
+    }
+
+    public void setSingleIDragX(float singleIDragX) {
+        this.singleIDragX = singleIDragX;
+    }
+
+    public float getSingleIDragY() {
+        return singleIDragY;
+    }
+
+    public void setSingleIDragY(float singleIDragY) {
+        this.singleIDragY = singleIDragY;
+    }
 }

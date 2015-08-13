@@ -1,6 +1,5 @@
 package ualberta.cs.robotics.android_hri.touch_interaction;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -16,43 +15,34 @@ import java.io.IOException;
 public class MainActivity extends ActionBarActivity {
 
     public static String ROS_MASTER = "";
+    private EditText rosIP;
+    private EditText rosPort;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        final EditText editIP = (EditText) findViewById(R.id.editIP);
-        final EditText editPort = (EditText) findViewById(R.id.editPort);
+        rosIP = (EditText) findViewById(R.id.editIP);
+        rosPort = (EditText) findViewById(R.id.editPort);
 
-        Button controllerWideButton = (Button) findViewById(R.id.controllerWideButton);
-        controllerWideButton.setOnClickListener(new View.OnClickListener() {
+        Button calibrationButton = (Button) findViewById(R.id.calibrationButton);
+        calibrationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                ROS_MASTER = "http://" + editIP.getText().toString() + ":" + editPort.getText().toString();
-                int exit = pingHost(editIP.getText().toString());
-                if (exit==0){
-                    Intent myIntent = new Intent(MainActivity.this, ControllerActivity.class);
-                    myIntent.putExtra("layout", "wide");
+                if (isMasterValid()){
+                    Intent myIntent = new Intent(MainActivity.this, CalibrationActivity.class);
                     MainActivity.this.startActivity(myIntent);
-                }else{
-                    Toast.makeText(getApplicationContext(),editIP.getText().toString()+" is not reachable!!!",Toast.LENGTH_LONG).show();
                 }
             }
         });
-        Button controllerTightButton = (Button) findViewById(R.id.controllerTightButton);
-        controllerTightButton.setOnClickListener(new View.OnClickListener() {
+
+        Button controllerButton = (Button) findViewById(R.id.controllerButton);
+        controllerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                ROS_MASTER = "http://" + editIP.getText().toString() + ":" + editPort.getText().toString();
-                int exit = pingHost(editIP.getText().toString());
-                if (exit==0){
+                if (isMasterValid()){
                     Intent myIntent = new Intent(MainActivity.this, ControllerActivity.class);
-                    myIntent.putExtra("layout", "tight");
                     MainActivity.this.startActivity(myIntent);
-                }else{
-                    Toast.makeText(getApplicationContext(),editIP.getText().toString()+" is not reachable!!!",Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -61,33 +51,25 @@ public class MainActivity extends ActionBarActivity {
         draggingButton.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                ROS_MASTER = "http://" + editIP.getText().toString() + ":" + editPort.getText().toString();
-                int exit = pingHost(editIP.getText().toString());
-                if (exit==0){
+                if (isMasterValid()){
                     Intent myIntent = new Intent(MainActivity.this, DraggingActivity.class);
-                    myIntent.putExtra("layout", "dragging");
                     MainActivity.this.startActivity(myIntent);
-                }else {
-                    Toast.makeText(getApplicationContext(), editIP.getText().toString() + " is not reachable!!!", Toast.LENGTH_LONG).show();
                 }
             }
-        } );
+        });
 
-        Button sliderButton = (Button) findViewById(R.id.sliderButton);
-        sliderButton.setOnClickListener( new View.OnClickListener() {
+        Button leapButton = (Button) findViewById(R.id.motionButton);
+        leapButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick( View v ) {
-                ROS_MASTER = "http://" + editIP.getText().toString() + ":" + editPort.getText().toString();
-                int exit = pingHost(editIP.getText().toString());
-                if (exit==0){
-                    Intent myIntent = new Intent(MainActivity.this, SliderActivity.class);
-                    myIntent.putExtra("layout", "slider");
+            public void onClick(View v) {
+                if (isMasterValid()){
+                    Intent myIntent = new Intent(MainActivity.this, LeapActivity.class);
                     MainActivity.this.startActivity(myIntent);
-                }else {
-                    Toast.makeText(getApplicationContext(), editIP.getText().toString() + " is not reachable!!!", Toast.LENGTH_LONG).show();
                 }
             }
-        } );
+        });
+
+
 
     }
 
@@ -113,9 +95,18 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public static int pingHost(String host){
-        int exit = -1;
+    private boolean isMasterValid(){
+        ROS_MASTER = "http://" + rosIP.getText().toString() + ":" + rosPort.getText().toString();
+        int exit = pingHost(rosIP.getText().toString());
+        if (exit!=0){
+            Toast.makeText(getApplicationContext(), rosIP.getText().toString()+" is not reachable!!!",Toast.LENGTH_LONG).show();
+            return false;
+        }
+        return true;
+    }
 
+    private static int pingHost(String host){
+        int exit = -1;
         try {
             Runtime runtime = Runtime.getRuntime();
             Process proc = runtime.exec("ping -c 1 " + host);
@@ -129,7 +120,5 @@ public class MainActivity extends ActionBarActivity {
 
         return exit;
     }
-
-
 
 }

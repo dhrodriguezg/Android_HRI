@@ -23,8 +23,9 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     private static final int ROTATING_THREASHOLD = 10;
     private static final int SCALING_THREASHOLD = 100;
 
-    private static final float MIN_SCALE = 0.1f;
-    private static final float MAX_SCALE = 5.f;
+    private static final float MIN_SCALE = 0.1f;//full open 0
+    private static final float MAX_SCALE = 5.1f;//full close 3.2
+    //calculate grasp ->   (MAX_SCALE-X)*3.2/(MAX_SCALE-MIN_SCALE)
     private boolean detectingGesture =false;
     private float fX, fY, sX, sY;
     private int ptrID1, ptrID2;
@@ -34,6 +35,8 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     private float normalizedX;
     private float normalizedY;
     private float mScale = 1.f;
+    private float mScaleFocusX = 0.f;
+    private float mScaleFocusY = 0.f;
 
     private float initScale = mScale;
     private float endScale = mScale;
@@ -159,10 +162,12 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     @Override
     public boolean onScale(ScaleGestureDetector detector){
         if(scaling) {
+            mScaleFocusX=detector.getFocusX();
+            mScaleFocusY=detector.getFocusY();
             mScale *= detector.getScaleFactor();
             mScale = Math.max(MIN_SCALE, Math.min(mScale, MAX_SCALE));
-            mListener.OnScale(mScale);
-            Log.d(TAG, String.format("Scale [ %.4f ]", mScale));
+            mListener.OnScale(mScale,mScaleFocusX,mScaleFocusY);
+            Log.d(TAG, String.format("Scale [ %.4f %.4f %.4f]", mScale,mScaleFocusX,mScaleFocusY));
         }
         return true;
     }
@@ -179,8 +184,10 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
                 }else if(endScale < initScale ){
                     mScale =MIN_SCALE;
                 }
-                mListener.OnScale(mScale);
-                Log.d(TAG, String.format("Scale [ %.4f ]", mScale));
+                mScaleFocusX=detector.getFocusX();
+                mScaleFocusY=detector.getFocusY();
+                mListener.OnScale(mScale,mScaleFocusX,mScaleFocusY);
+                Log.d(TAG, String.format("Scale [ %.4f %.4f %.4f]", mScale,mScaleFocusX,mScaleFocusY));
             }
         }
     }
@@ -190,7 +197,7 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     public static interface OnTwoFingerGestureListener {
         public void OnDoubleDrag(float mX,float mY,float normalizedX,float normalizedY);
         public void OnRotation(float mAngle);
-        public void OnScale(float mScale);
+        public void OnScale(float mScale, float mScaleFocusX, float mScaleFocusY);
         public void onTwoFingerGestureState(boolean detectingGesture);
     }
 

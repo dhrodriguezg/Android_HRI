@@ -14,13 +14,14 @@ public class MultiTouchArea extends TouchArea implements TwoFingerGestureDetecto
 
     private TwoFingerGestureDetector mTwoFingerGestureDetector;
     protected float angle;
-    protected float scale;
+    protected float scale = 1.f;
+    protected float scaleFocusX = 0.f;
+    protected float scaleFocusY = 0.f;
     protected float doubleDragX;
     protected float doubleDragY;
     protected float doubleNormalizedDragX;
     protected float doubleNormalizedDragY;
     protected boolean detectingTwoFingerGesture = false;
-    protected boolean multiChanged = false;
 
     public MultiTouchArea(Activity activity, ImageView view) {
         super(activity, view);
@@ -57,8 +58,10 @@ public class MultiTouchArea extends TouchArea implements TwoFingerGestureDetecto
     }
 
     @Override
-    public void OnScale(float mScale) {
+    public void OnScale(float mScale, float mScaleFocusX, float mScaleFocusY) {
         scale=mScale;
+        scaleFocusX=mScaleFocusX;
+        scaleFocusY=mScaleFocusY;
     }
 
     @Override
@@ -116,5 +119,27 @@ public class MultiTouchArea extends TouchArea implements TwoFingerGestureDetecto
         this.detectingTwoFingerGesture = detectingTwoFingerGesture;
     }
 
+    public float getScale() {
+        return scale;
+    }
 
+    public void setScale(float scale) {
+        this.scale = scale;
+    }
+
+    public float getScaleFocusX() {
+        return scaleFocusX;
+    }
+
+    public void setScaleFocusX(float scaleFocusX) {
+        this.scaleFocusX = scaleFocusX;
+    }
+
+    public float getScaleFocusY() {
+        return scaleFocusY;
+    }
+
+    public void setScaleFocusY(float scaleFocusY) {
+        this.scaleFocusY = scaleFocusY;
+    }
 }

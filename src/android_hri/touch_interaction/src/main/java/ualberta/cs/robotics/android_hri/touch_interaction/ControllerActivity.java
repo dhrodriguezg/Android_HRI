@@ -50,23 +50,15 @@ public class ControllerActivity extends RosActivity {
     private boolean firstUpdate = true;
 
     public ControllerActivity() {
-        super("ControllerActivity", "ControllerActivity", URI.create(MainActivity.ROS_MASTER));;
+        super(TAG, TAG, URI.create(MainActivity.ROS_MASTER));;
     }
 
-    //  roslaunch openni2.launch
-    //  rosrun image_view image_view image:=/camera/rgb/image_raw
-    //  rostopic echo /android/joystickPos/cmd_vel
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         Intent intent = getIntent();
-        String layout = intent.getStringExtra("layout");
-        if (layout.equals("tight"))
-            setContentView(R.layout.activity_controller_wide);
-        else
-            setContentView(R.layout.activity_controller_tight);
-
+        setContentView(R.layout.activity_controller);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -89,13 +81,8 @@ public class ControllerActivity extends RosActivity {
         image.setTopicName("/camera/rgb/image_raw/compressed");
         image.setMessageType("sensor_msgs/CompressedImage"); //% rostopic type /camera/rgb/image_raw
         image.setMessageToBitmapCallable(new BitmapFromCompressedImage());
+        image.setScaleType(ImageView.ScaleType.FIT_CENTER);
         nodeMain = new Twist2JoyNode();
-
-        if (layout.equals("tight"))
-            image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        else
-            image.setScaleType(ImageView.ScaleType.FIT_XY);
-
     }
 
     private void refreshView(final Bitmap bitmap){

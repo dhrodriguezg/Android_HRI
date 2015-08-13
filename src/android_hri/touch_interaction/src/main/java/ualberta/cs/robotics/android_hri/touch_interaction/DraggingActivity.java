@@ -38,7 +38,7 @@ public class DraggingActivity extends RosActivity {
     private RotationNode rotationNode;
 
     public DraggingActivity() {
-        super("DraggingActivity", "DraggingActivity", URI.create(MainActivity.ROS_MASTER));
+        super(TAG, TAG, URI.create(MainActivity.ROS_MASTER));
     }
 
     @Override
@@ -139,8 +139,8 @@ public class DraggingActivity extends RosActivity {
 
     public void updateTarget(){
 
-        targetNode.setX(640 * dragHandler.getDoubleDragX() / dragHandler.getWidth());
-        targetNode.setY(480 * dragHandler.getDoubleDragY() / dragHandler.getHeight());
+        targetNode.setX(imageStream.getDrawable().getIntrinsicWidth() * dragHandler.getDoubleDragX() / dragHandler.getWidth());
+        targetNode.setY(imageStream.getDrawable().getIntrinsicHeight() * dragHandler.getDoubleDragY() / dragHandler.getHeight());
         confirmNode.setConfirm(dragHandler.isDetectingTwoFingerGesture());
         this.runOnUiThread(new Runnable() {
             @Override

@@ -17,7 +17,7 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="ROS Master Address:"
-            android:id="@+id/textView"
+            android:id="@+id/textViewIP"
             android:layout_weight="3"/>
 
         <EditText
@@ -32,7 +32,7 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="ROS Master Port:"
-            android:id="@+id/textView3"
+            android:id="@+id/textViewPort"
             android:layout_weight="2"/>
 
         <EditText
@@ -46,12 +46,19 @@
 
     </LinearLayout>
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="0px"
+        android:text="Calibration"
+        android:id="@+id/calibrationButton"
+        android:layout_gravity="center"
+        android:layout_weight="1"/>
+
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="0px"
-        android:layout_weight="7">
-
+        android:layout_weight="5">
 
         <LinearLayout
             android:orientation="vertical"
@@ -64,7 +71,7 @@
                 android:layout_height="0px"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="Controller"
-                android:id="@+id/textView1"
+                android:id="@+id/textViewController"
                 android:layout_gravity="center"
                 android:layout_weight="1" />
 
@@ -72,39 +79,17 @@
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
                 android:src="@drawable/interface_1"
-                android:id="@+id/imageView2"
+                android:id="@+id/imageViewPreviewController"
                 android:layout_weight="3"
                 android:visibility="visible" />
 
-            <LinearLayout
-                android:orientation="horizontal"
+            <Button
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
-                android:layout_weight="1">
-
-                <TextView
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/imageView"
-                    android:text="                    "
-                    android:layout_weight="1"/>
-
-                <Button
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:text="Option 1"
-                    android:id="@+id/controllerTightButton"
-                    android:layout_gravity="center"
-                    android:layout_weight="1"/>
-
-                <Button
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:text="Option 2"
-                    android:id="@+id/controllerWideButton"
-                    android:layout_gravity="center"
-                    android:layout_weight="1"/>
-            </LinearLayout>
+                android:text="Interface 1"
+                android:id="@+id/controllerButton"
+                android:layout_gravity="center"
+                android:layout_weight="1"/>
 
         </LinearLayout>
 
@@ -119,7 +104,7 @@
                 android:layout_height="0px"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="Dragging"
-                android:id="@+id/textView2"
+                android:id="@+id/textViewDragging"
                 android:layout_weight="1"
                 android:layout_gravity="center" />
 
@@ -127,41 +112,54 @@
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
                 android:src="@drawable/interface_2"
-                android:id="@+id/imageView3"
+                android:id="@+id/imageViewPreviewDragging"
                 android:layout_weight="3"
                 android:visibility="visible" />
 
-            <LinearLayout
-                android:orientation="horizontal"
+            <Button
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
-                android:layout_weight="1">
-
-                <TextView
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/emptyView"
-                    android:text="                    "
-                    android:layout_weight="1"/>
-
-                <Button
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:text="Option 1"
-                    android:id="@+id/sliderButton"
-                    android:layout_weight="1"
-                    android:layout_gravity="center" />
-
-                <Button
-                    android:layout_width="0px"
-                    android:layout_height="wrap_content"
-                    android:text="Option 2"
-                    android:id="@+id/draggingButton"
-                    android:layout_weight="1"
-                    android:layout_gravity="center" />
-            </LinearLayout>
+                android:text="Interface 2"
+                android:id="@+id/draggingButton"
+                android:layout_weight="1"
+                android:layout_gravity="center" />
 
         </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="0px"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:text="(TOP SECRET)"
+                android:id="@+id/textViewMotion"
+                android:layout_weight="1"
+                android:layout_gravity="center" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="0px"
+                android:src="@drawable/target"
+                android:id="@+id/imageViewPreviewMotion"
+                android:layout_weight="3"
+                android:visibility="visible"
+                android:layout_gravity="center"/>
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="0px"
+                android:text="Interface 3"
+                android:id="@+id/motionButton"
+                android:layout_weight="1"
+                android:layout_gravity="center" />
+
+        </LinearLayout>
+
     </LinearLayout>
 
 
