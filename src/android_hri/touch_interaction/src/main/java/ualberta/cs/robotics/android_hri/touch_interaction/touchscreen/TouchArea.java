@@ -21,12 +21,12 @@ public class TouchArea implements OneFingerGestureDetector.OnOneFingerGestureLis
     protected Vibrator vibrator;
 
     protected boolean detectingOneFingerGesture = false;
-    protected float singleDragX = -1.f;
-    protected float singleDragY = -1.f;
+    protected float singleDragX = 0.f;
+    protected float singleDragY = 0.f;
     protected float singleIDragX = 0.f;
     protected float singleIDragY = 0.f;
-    protected float singleDragNormalizedX = -1.f;
-    protected float singleDragNormalizedY = -1.f;
+    protected float singleDragNormalizedX = 0.f;
+    protected float singleDragNormalizedY = 0.f;
     protected float doubleTapX = -1.f;
     protected float doubleTapY = -1.f;
     protected float doubleTapNormalizedX = -1.f;
@@ -35,6 +35,7 @@ public class TouchArea implements OneFingerGestureDetector.OnOneFingerGestureLis
     protected float longClickY = -1.f;
     protected float longClickNormalizedX = -1.f;
     protected float longClickNormalizedY = -1.f;
+    protected boolean enableOneFingerGestures = true;
 
     public TouchArea(Activity activity, ImageView view){
         mOneFingerGestureDetector = new OneFingerGestureDetector(activity,this);
@@ -56,7 +57,8 @@ public class TouchArea implements OneFingerGestureDetector.OnOneFingerGestureLis
     }
 
     protected void addOneFingerListener(View view, MotionEvent event) {
-        mOneFingerGestureDetector.onTouchEvent(view, event);
+        if(enableOneFingerGestures)
+            mOneFingerGestureDetector.onTouchEvent(view, event);
     }
 
 
@@ -94,7 +96,7 @@ public class TouchArea implements OneFingerGestureDetector.OnOneFingerGestureLis
         longClickNormalizedY=normalizedLPY;
         longClickX=lpX;
         longClickY=lpY;
-        vibrator.vibrate(100);
+        //vibrator.vibrate(200);
     }
 
     @Override
@@ -247,5 +249,53 @@ public class TouchArea implements OneFingerGestureDetector.OnOneFingerGestureLis
 
     public void setSingleIDragY(float singleIDragY) {
         this.singleIDragY = singleIDragY;
+    }
+
+    public void enableOneFingerGestures(){
+        enableOneFingerGestures=true;
+    }
+
+    public void disableOneFingerGestures(){
+        enableOneFingerGestures=false;
+    }
+
+    public void disableSingleTapUp(){
+        mOneFingerGestureDetector.disableSingleTapUp();
+    }
+
+    public void disableDoubleTap(){
+        mOneFingerGestureDetector.disableDoubleTap();
+    }
+
+    public void disableScroll(){
+        mOneFingerGestureDetector.disableScroll();
+    }
+
+    public void disableFling(){
+        mOneFingerGestureDetector.disableFling();
+    }
+
+    public void disableLongPress(){
+        mOneFingerGestureDetector.disableLongPress();
+    }
+
+    public void enableSingleTapUp(){
+        mOneFingerGestureDetector.enableSingleTapUp();
+    }
+
+    public void enableDoubleTap(){
+        mOneFingerGestureDetector.enableDoubleTap();
+    }
+
+    public void enableScroll(){
+        mOneFingerGestureDetector.enableScroll();
+    }
+
+    public void enableFling(){
+        mOneFingerGestureDetector.enableFling();
+    }
+
+    public void enableLongPress(){
+        mOneFingerGestureDetector.enableLongPress();
     }
 }

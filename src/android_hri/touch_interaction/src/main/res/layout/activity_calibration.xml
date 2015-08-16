@@ -9,6 +9,14 @@
         android:layout_height="match_parent"
         android:layout_width="match_parent"/>
 
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@drawable/target_cool"
+        android:id="@+id/imageTarget"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true" />
+
     <Switch
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

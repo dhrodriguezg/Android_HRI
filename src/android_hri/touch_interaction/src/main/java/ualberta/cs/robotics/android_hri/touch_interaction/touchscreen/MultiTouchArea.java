@@ -13,15 +13,16 @@ import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.gesture_de
 public class MultiTouchArea extends TouchArea implements TwoFingerGestureDetector.OnTwoFingerGestureListener {
 
     private TwoFingerGestureDetector mTwoFingerGestureDetector;
-    protected float angle;
+    protected float angle = 0.f;
     protected float scale = 1.f;
     protected float scaleFocusX = 0.f;
     protected float scaleFocusY = 0.f;
-    protected float doubleDragX;
-    protected float doubleDragY;
-    protected float doubleNormalizedDragX;
-    protected float doubleNormalizedDragY;
+    protected float doubleDragX = 0.f;
+    protected float doubleDragY = 0.f;
+    protected float doubleNormalizedDragX = 0.f;
+    protected float doubleNormalizedDragY = 0.f;
     protected boolean detectingTwoFingerGesture = false;
+    protected boolean enableTwoFingerGestures = true;
 
     public MultiTouchArea(Activity activity, ImageView view) {
         super(activity, view);
@@ -30,6 +31,7 @@ public class MultiTouchArea extends TouchArea implements TwoFingerGestureDetecto
     @Override
     protected void setupListener() {
         mTwoFingerGestureDetector = new TwoFingerGestureDetector(activity, this);
+        enableOneFingerGestures = false;
         view.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent event) {
@@ -41,8 +43,11 @@ public class MultiTouchArea extends TouchArea implements TwoFingerGestureDetecto
     }
 
     protected void addTwoFingerListener(View view, MotionEvent event) {
-        mTwoFingerGestureDetector.onTouchEvent(view, event);
+        if(enableTwoFingerGestures)
+            mTwoFingerGestureDetector.onTouchEvent(view, event);
     }
+
+
 
     @Override
     public void OnRotation(float mAngle) {
@@ -141,5 +146,37 @@ public class MultiTouchArea extends TouchArea implements TwoFingerGestureDetecto
 
     public void setScaleFocusY(float scaleFocusY) {
         this.scaleFocusY = scaleFocusY;
+    }
+
+    public void disableScaling(){
+        mTwoFingerGestureDetector.disableScaling();
+    }
+
+    public void disableRotating(){
+        mTwoFingerGestureDetector.disableRotating();
+    }
+
+    public void disableDragging(){
+        mTwoFingerGestureDetector.disableDragging();
+    }
+
+    public void enableScaling(){
+        mTwoFingerGestureDetector.enableScaling();
+    }
+
+    public void enableRotating(){
+        mTwoFingerGestureDetector.enableRotating();
+    }
+
+    public void enableDragging(){
+        mTwoFingerGestureDetector.enableDragging();
+    }
+
+    public void enableTwoFingerGestures(){
+        enableTwoFingerGestures=true;
+    }
+
+    public void disableTwoFingerGestures(){
+        enableTwoFingerGestures=false;
     }
 }

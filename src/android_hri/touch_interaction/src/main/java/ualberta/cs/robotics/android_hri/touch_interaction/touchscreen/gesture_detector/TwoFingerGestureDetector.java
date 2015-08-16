@@ -24,7 +24,7 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     private static final int SCALING_THREASHOLD = 100;
 
     private static final float MIN_SCALE = 0.1f;//full open 0
-    private static final float MAX_SCALE = 5.1f;//full close 3.2
+    private static final float MAX_SCALE = 10.1f;//full close 3.2
     //calculate grasp ->   (MAX_SCALE-X)*3.2/(MAX_SCALE-MIN_SCALE)
     private boolean detectingGesture =false;
     private float fX, fY, sX, sY;
@@ -43,12 +43,13 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     private long initTime=0;
     private long endTime=0;
 
+    private boolean enableRotating=false;
+    private boolean enableDragging=false;
+    private boolean enableScaling=false;
 
-    private boolean rotating=true;
-    private boolean dragging=true;
-    private boolean scaling=true;
-
-
+    private boolean rotating;
+    private boolean dragging;
+    private boolean scaling;
 
 
     public TwoFingerGestureDetector(Activity activity, OnTwoFingerGestureListener listener){
@@ -74,6 +75,9 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
                 ptrID1 = event.getPointerId(event.getActionIndex());
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
+                scaling=enableScaling;
+                rotating=enableRotating;
+                dragging=enableDragging;
                 detectingGesture = true;
                 ptrID2 = event.getPointerId(event.getActionIndex());
                 sX = event.getX(event.findPointerIndex(ptrID1));
@@ -122,23 +126,26 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
             case MotionEvent.ACTION_UP:
                 ptrID1 = INVALID_POINTER_ID;
                 detectingGesture = false;
-                rotating=true;
-                dragging=true;
-                scaling=true;
+                scaling=enableScaling;
+                rotating=enableRotating;
+                dragging=enableDragging;
                 mListener.onTwoFingerGestureState(detectingGesture);
                 Log.d(TAG, String.format("Detecting [ %b ]", detectingGesture));
                 break;
             case MotionEvent.ACTION_POINTER_UP:
                 ptrID2 = INVALID_POINTER_ID;
                 detectingGesture = false;
-                rotating=true;
-                dragging=true;
-                scaling=true;
+                scaling=enableScaling;
+                rotating=enableRotating;
+                dragging=enableDragging;
                 mListener.onTwoFingerGestureState(detectingGesture);
                 Log.d(TAG, String.format("Detecting [ %b ]", detectingGesture));
                 break;
             case MotionEvent.ACTION_CANCEL:
                 detectingGesture = false;
+                scaling=enableScaling;
+                rotating=enableRotating;
+                dragging=enableDragging;
                 ptrID1 = INVALID_POINTER_ID;
                 ptrID2 = INVALID_POINTER_ID;
                 mListener.onTwoFingerGestureState(detectingGesture);
@@ -275,4 +282,29 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     public void setNormalizedY(float normalizedY) {
         this.normalizedY = normalizedY;
     }
+
+    public void disableScaling(){
+        enableScaling=false;
+    }
+
+    public void disableRotating(){
+        enableRotating=false;
+    }
+
+    public void disableDragging(){
+        enableDragging=false;
+    }
+
+    public void enableScaling(){
+        enableScaling=true;
+    }
+
+    public void enableRotating(){
+        enableRotating=true;
+    }
+
+    public void enableDragging(){
+        enableDragging=true;
+    }
+
 }

@@ -24,12 +24,14 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
     private float stY;
     private float normalizedSTX;
     private float normalizedSTY;
+    private boolean enableSingleTapUp=false;
 
     //onDoubleTap -> one single update
     private float dtX;
     private float dtY;
     private float normalizedDTX;
     private float normalizedDTY;
+    private boolean enableDoubleTap=false;
 
     //onScroll -> constant updating, relative distance
     private float sX;
@@ -39,17 +41,21 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
     private float dX, dY;
     private float normalizedDX;
     private float normalizedDY;
+    private boolean enableScroll=false;
 
     //onFling -> one single update, absolute velocity
     private float fX;
     private float fY;
     private float fvX;
     private float fvY;
+    private boolean enableFling=false;
+
     //onLongPress -> one single update.
     private float lpX;
     private float lpY;
     private float normalizedLPX;
     private float normalizedLPY;
+    private boolean enableLongPress=false;
 
     public OneFingerGestureDetector(Activity activity, OnOneFingerGestureListener listener){
         mGestureDetector = new GestureDetector(activity, this);
@@ -94,6 +100,8 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
     /** Gesture events **/
     @Override
     public boolean onSingleTapUp(MotionEvent event) {
+        if(!enableSingleTapUp)
+            return true;
         stX =event.getX(); stY =event.getY();
         float[] normalizedXY = normalizedValues(event,mView);
         normalizedSTX = normalizedXY[0];
@@ -105,6 +113,8 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
 
     @Override
     public boolean onDoubleTap(MotionEvent event) {
+        if(!enableDoubleTap)
+            return true;
         dtX =event.getX(); dtY =event.getY();
         float[] normalizedXY = normalizedValues(event,mView);
         normalizedDTX = normalizedXY[0];
@@ -116,6 +126,8 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
 
     @Override
     public boolean onScroll(MotionEvent initial_event, MotionEvent current_event, float distanceX, float distanceY) {
+        if(!enableScroll)
+            return true;
         sX =initial_event.getX(); sY =initial_event.getY();
         sdX = distanceX; sdY=distanceY;
 
@@ -131,6 +143,8 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
 
     @Override
     public boolean onFling(MotionEvent initial_event, MotionEvent current_event, float velocityX, float velocityY) {
+        if(!enableFling)
+            return true;
         fX = initial_event.getX();
         fY = initial_event.getY();
         fvX = velocityX; fvY = velocityY;
@@ -141,12 +155,14 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
 
     @Override
     public void onLongPress(MotionEvent event) {
+        if(!enableLongPress)
+            return;
         lpX =event.getX(); lpY =event.getY();
         float[] normalizedXY = normalizedValues(event,mView);
         normalizedLPX = normalizedXY[0];
         normalizedLPY = normalizedXY[1];
         mListener.onLongPress(lpX,lpY,normalizedLPX,normalizedLPY);
-        Log.d(TAG, String.format("LongPress [ %.1f , %.1f , %.4f , %.4f ]",lpX,lpY,normalizedLPX,normalizedLPY) );
+        Log.d(TAG, String.format("LongPress [ %.1f , %.1f , %.4f , %.4f ]", lpX, lpY, normalizedLPX, normalizedLPY));
     }
 
     /** Gesture interfaces **/
@@ -375,4 +391,55 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
     public void setNormalizedLPY(float normalizedLPY) {
         this.normalizedLPY = normalizedLPY;
     }
+
+    public void disableSingleTapUp(){
+        enableSingleTapUp=false;
+    }
+
+    public void disableDoubleTap(){
+        enableDoubleTap=false;
+    }
+
+    public void disableScroll(){
+        enableScroll=false;
+    }
+
+    public void disableFling(){
+        enableFling=false;
+    }
+
+    public void disableLongPress(){
+        enableLongPress=false;
+    }
+
+    public void enableSingleTapUp(){
+        enableSingleTapUp=true;
+    }
+
+    public void enableDoubleTap(){
+        enableDoubleTap=true;
+    }
+
+    public void enableScroll(){
+        enableScroll=true;
+    }
+
+    public void enableFling(){
+        enableFling=true;
+    }
+
+    public void enableLongPress(){
+        enableLongPress=true;
+    }
+
+
+
+
+
+
+
+
+
+
+
 }
