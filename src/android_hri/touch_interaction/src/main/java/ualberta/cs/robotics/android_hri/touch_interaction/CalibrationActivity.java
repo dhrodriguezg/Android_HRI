@@ -82,10 +82,9 @@ public class CalibrationActivity extends RosActivity {
             imageStream.setTopicName("/usb_cam/image_raw/compressed");
             imageStream.setMessageType("sensor_msgs/CompressedImage");
         }else{
+            //imageStream.setTopicName("/image_converter/output_video/compressed");
             imageStream.setTopicName("/camera/rgb/image_raw/compressed");
             imageStream.setMessageType("sensor_msgs/CompressedImage");
-            //imageStream.setTopicName("/image_converter/output_video/compressed");
-            //imageStream.setMessageType("sensor_msgs/CompressedImage");
         }
         imageStream.setMessageToBitmapCallable(new BitmapFromCompressedImage());
         imageStream.setScaleType(ImageView.ScaleType.MATRIX);
@@ -175,8 +174,6 @@ public class CalibrationActivity extends RosActivity {
     }
 
     public void updateTarget(){
-
-
 
         this.runOnUiThread(new Runnable() {
             @Override

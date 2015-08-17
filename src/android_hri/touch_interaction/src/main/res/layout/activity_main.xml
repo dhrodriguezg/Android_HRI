@@ -24,7 +24,7 @@
             android:layout_width="0px"
             android:layout_height="wrap_content"
             android:id="@+id/editIP"
-            android:text="string/default_master_ip"
+            android:text="@string/default_master_ip"
             android:layout_weight="2"/>
 
         <TextView
@@ -39,7 +39,7 @@
             android:layout_width="0px"
             android:layout_height="wrap_content"
             android:inputType="number"
-            android:text="@string/default_master_ip"
+            android:text="@string/default_master_port"
             android:ems="10"
             android:id="@+id/editPort"
             android:layout_weight="1"/>

@@ -10,48 +10,156 @@
         android:layout_height="match_parent"
         android:layout_width="match_parent" />
 
-    <LinearLayout
-        android:orientation="vertical"
+    <ImageView
+    android:layout_width="100dp"
+    android:layout_height="100dp"
+    android:src="@drawable/target_cool"
+    android:id="@+id/imageTarget"
+    android:layout_centerVertical="true"
+    android:layout_centerHorizontal="true"
+    android:alpha="0"/>
+
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="0px"
-            android:id="@+id/imageView4"
-            android:src="@drawable/empty"
-            android:layout_weight="3"/>
 
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="0px"
-            android:layout_weight="2">
+            android:layout_height="match_parent"
+            android:id="@+id/linearLayout"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_above="@+id/virtual_joystick_pos"
+            android:layout_alignRight="@+id/virtual_joystick_pos">
 
-            <org.ros.android.view.VirtualJoystickView
-                android:id="@+id/virtual_joystick_pos"
+            <RelativeLayout
                 android:layout_width="0px"
                 android:layout_height="match_parent"
-                android:layout_weight="1" />
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
+                android:layout_above="@+id/virtual_joystick_rot"
+                android:layout_alignLeft="@+id/virtual_joystick_rot"
+                android:layout_weight="1"
+                android:id="@+id/relativeLayout">
 
-            <Switch
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/slider_b"
+                    android:id="@+id/imageSlider_b"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentRight="true"
+                    android:layout_alignParentLeft="true" />
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/slider_p"
+                    android:id="@+id/imageSlider_p"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentLeft="true" />
+
+                <ImageView
+                    android:id="@+id/sliderControl"
+                    android:layout_height="match_parent"
+                    android:layout_width="match_parent"
+                    android:src="@drawable/empty"
+                    android:layout_alignParentLeft="true"
+                    android:layout_alignParentTop="true"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="Grasping"
+                    android:id="@+id/graspingTextView"
+                    android:gravity="center_vertical|center_horizontal"
+                    android:textColor="#ff32a9ff"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentRight="true" />
+
+            </RelativeLayout>
+
+            <ImageView
                 android:layout_width="0px"
                 android:layout_height="match_parent"
-                android:text="Grasp"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:id="@+id/graspingSwitch"
-                android:textOff="OFF"
-                android:textOn="ON"
-                android:layout_weight="2"
-                android:gravity="bottom"/>
+                android:src="@drawable/empty"
+                android:id="@+id/emptyView"
+                android:layout_weight="1"/>
 
-            <org.ros.android.view.VirtualJoystickView
-                android:id="@+id/virtual_joystick_rot"
-                android:layout_width="0px"
-                android:layout_height="match_parent"
-                android:layout_weight="1" />
-    </LinearLayout>
+        </LinearLayout>
 
-    </LinearLayout>
+        <org.ros.android.view.VirtualJoystickView
+            android:id="@+id/virtual_joystick_pos"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true" >
+
+        </org.ros.android.view.VirtualJoystickView>
+
+        <org.ros.android.view.VirtualJoystickView
+            android:id="@+id/virtual_joystick_rot"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="2D Rotation"
+            android:id="@+id/rotationTextView"
+            android:layout_below="@+id/linearLayout"
+            android:layout_alignLeft="@+id/virtual_joystick_rot"
+            android:layout_alignParentRight="true"
+            android:gravity="center_vertical|center_horizontal"
+            android:textColor="#ffd9d9d9" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="2D Position"
+            android:id="@+id/positionTextView"
+            android:gravity="center_vertical|center_horizontal"
+            android:textColor="#ffd9d9d9"
+            android:layout_gravity="center_vertical"
+            android:layout_alignTop="@+id/virtual_joystick_pos"
+            android:layout_alignParentLeft="true"
+            android:layout_alignRight="@+id/virtual_joystick_pos" />
+
+        <org.ros.android.view.VirtualJoystickView
+            android:id="@+id/virtual_joystick_target"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="2D Target"
+            android:id="@+id/targetTextView"
+            android:gravity="center_vertical|center_horizontal"
+            android:textColor="#ffd9d9d9"
+            android:layout_gravity="center_vertical"
+            android:layout_alignParentTop="true"
+            android:layout_alignRight="@+id/virtual_joystick_target"
+            android:layout_alignLeft="@+id/virtual_joystick_target" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Go to Target"
+            android:id="@+id/confirmTarget"
+            android:layout_below="@+id/virtual_joystick_target"
+            android:layout_alignLeft="@+id/virtual_joystick_target"
+            android:layout_alignParentRight="true" />
+
+
+    </RelativeLayout>
 
 </RelativeLayout>
