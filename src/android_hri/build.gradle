@@ -20,6 +20,7 @@ task wrapper(type: Wrapper) {
 
 buildscript {
     apply from: "https://github.com/rosjava/android_core/raw/indigo/buildscript.gradle"
+    //apply from: "/home/dhrodriguezg/Downloads/AndroidScripts/buildscript1.gradle"
 }
 
 apply plugin: 'catkin'

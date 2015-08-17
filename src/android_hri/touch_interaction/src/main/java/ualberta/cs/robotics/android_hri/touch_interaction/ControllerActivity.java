@@ -1,13 +1,18 @@
 package ualberta.cs.robotics.android_hri.touch_interaction;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import org.ros.address.InetAddressFactory;
 import org.ros.android.BitmapFromCompressedImage;
@@ -31,16 +36,18 @@ import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.TouchArea;
 
 
 public class ControllerActivity extends RosActivity {
-	
-	private static final String TAG = "ControllerActivity";
-    private static final String CONFIRM_TARGET="/android/confirmTarget";
-    private static final String TARGET_POINT="/android/target_point";
-    private static final String GRASP="/android/grasp";
-    private static final String POSITION= "/android/joystickPosition";
-    private static final String ROTATION= "/android/joystickRotation";
-    private static final String TARGET= "/android/joystickTarget";
+
+    private static final String TAG = "ControllerActivity";
     private static final String STREAMING= "/camera/rgb/image_raw/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
+    private static final String EMERGENCY_STOP = "/android/emergency_stop";
+    private static final String TARGET_POINT="/android/target_point";
+    private static final String CONFIRM_TARGET="/android/target_confirm";
+    private static final String POSITION= "/android/joystick_position";
+    private static final String ROTATION= "/android/joystick_rotation";
+    private static final String GRASP="/android/grasping_rel";
+    private static final String TARGET= "/android/joystick_target_tmp";
+
 
     private VirtualJoystickView mVirtualJoystickViewPosition;
     private VirtualJoystickView mVirtualJoystickViewRotation;
@@ -50,6 +57,7 @@ public class ControllerActivity extends RosActivity {
     private PointNode targetPointNode;
     private Float32Node graspNode;
     private BooleanNode confirmTargetNode;
+    private BooleanNode emergencyNode;
     private TwistNode targetControlNode;
 
     private TouchArea sliderHandler = null;
@@ -88,6 +96,9 @@ public class ControllerActivity extends RosActivity {
         targetPointNode.publishTo(TARGET_POINT, true, 0);
         confirmTargetNode = new BooleanNode();
         confirmTargetNode.publishTo(CONFIRM_TARGET, true, 100);
+        emergencyNode = new BooleanNode();
+        emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
+        emergencyNode.setPublish_bool(true);
         targetControlNode = new TwistNode();
         targetControlNode.subscribeTo(TARGET+"/cmd_vel");
 
@@ -109,12 +120,35 @@ public class ControllerActivity extends RosActivity {
         imageStream.setMessageToBitmapCallable(new BitmapFromCompressedImage());
         imageStream.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
+        targetImage.setX(imageStream.getWidth() / 2 - targetImage.getWidth() / 2);
+        targetImage.setY(imageStream.getHeight() / 2 - targetImage.getHeight() / 2);
+
         Button confirmTarget = (Button) findViewById(R.id.confirmTarget);
         confirmTarget.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (!targetControlNode.hasReceivedMsg()) {
+                    Toast.makeText(getApplicationContext(), "Select a target first! Use the Joystick at the top-right hand corner of the screen.", Toast.LENGTH_LONG).show();
+                    return;
+                }
                 confirmTargetNode.setPublish_bool(true);
                 confirmTargetNode.publishNow();
+            }
+        });
+
+        ToggleButton emergencyStop = (ToggleButton)findViewById(R.id.emergencyButton) ;
+        emergencyStop.setOnCheckedChangeListener( new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
+                if(isChecked){
+                    Toast.makeText(getApplicationContext(), "EMERGENCY STOP ACTIVATED!", Toast.LENGTH_LONG).show();
+                    imageStream.setBackgroundColor(Color.RED);
+                    emergencyNode.setPublish_bool(false);
+                }else{
+                    Toast.makeText(getApplicationContext(), "EMERGENCY STOP DEACTIVATED!", Toast.LENGTH_LONG).show();
+                    imageStream.setBackgroundColor(Color.GREEN);
+                    emergencyNode.setPublish_bool(true);
+                }
             }
         });
 
@@ -197,7 +231,7 @@ public class ControllerActivity extends RosActivity {
 
     private void updateTarget(){
 
-        if(!targetControlNode.hasReceivedMsg()){
+        if(targetControlNode.hasReceivedMsg()){
             targetImage.setAlpha(1.0f);
         }
 
@@ -237,6 +271,7 @@ public class ControllerActivity extends RosActivity {
         nodeMainExecutor.execute(graspNode, nodeConfiguration.setNodeName(GRASP));
         nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
         nodeMainExecutor.execute(confirmTargetNode, nodeConfiguration.setNodeName(CONFIRM_TARGET));
+        nodeMainExecutor.execute(emergencyNode, nodeConfiguration.setNodeName(EMERGENCY_STOP));
         nodeMainExecutor.execute(targetControlNode, nodeConfiguration.setNodeName(TARGET+"sub"));
     }
 }

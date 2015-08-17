@@ -35,5 +35,18 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true" />
 
+    <ToggleButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textOn="STOPING ROBOT"
+        android:textOff="EMERGENCY STOP"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:id="@+id/emergencyButton"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:checked="false"
+        android:textStyle="bold"
+        />
+
 
 </RelativeLayout>

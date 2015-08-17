@@ -1,4 +1,4 @@
-package ualberta.cs.robotics.android_hri.touch_interaction;
+package ualberta.cs.robotics.android_hri.touch_interaction.utils;
 /******************************************************************************\
 * Copyright (C) 2012-2013 Leap Motion, Inc. All rights reserved.               *
 * Leap Motion proprietary and confidential. Not for distribution.              *
@@ -23,6 +23,8 @@ import com.leapmotion.leap.Listener;
 import com.leapmotion.leap.ScreenTapGesture;
 import com.leapmotion.leap.SwipeGesture;
 import com.leapmotion.leap.Vector;
+
+import ualberta.cs.robotics.android_hri.touch_interaction.LeapActivity;
 
 
 public class SampleListener extends Listener {

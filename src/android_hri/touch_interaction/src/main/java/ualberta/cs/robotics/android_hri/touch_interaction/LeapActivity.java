@@ -7,6 +7,8 @@ import android.widget.TextView;
 
 import com.leapmotion.leap.Controller;
 
+import ualberta.cs.robotics.android_hri.touch_interaction.utils.SampleListener;
+
 public class LeapActivity extends Activity {
 
     private static final String TAG = "LeapActivity";

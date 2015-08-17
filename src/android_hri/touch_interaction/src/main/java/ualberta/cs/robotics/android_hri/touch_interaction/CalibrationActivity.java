@@ -32,11 +32,11 @@ import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiTouch
 public class CalibrationActivity extends RosActivity {
 
 	private static final String TAG = "CalibrationActivity";
-    private static final String CONFIRM_TARGET="/android/confirmTarget";
-    private static final String TARGET_POINT="/android/target_point";
-    private static final String START="/android/start_calibration";
     private static final String STREAMING= "/camera/rgb/image_raw/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
+    private static final String START="/android/start_calibration";
+    private static final String TARGET_POINT="/android/target_point";
+    private static final String CONFIRM_TARGET="/android/target_confirm";
 
     private static final boolean debug = true;
     private MultiTouchArea dragHandler = null;
@@ -171,16 +171,6 @@ public class CalibrationActivity extends RosActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    protected void init(NodeMainExecutor nodeMainExecutor) {
-        NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
-        nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING + "sub"));
-
-        nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
-        nodeMainExecutor.execute(confirmTargetNode, nodeConfiguration.setNodeName(CONFIRM_TARGET));
-        nodeMainExecutor.execute(startNode, nodeConfiguration.setNodeName(START));
-    }
-
     public void updateTarget(){
 
         this.runOnUiThread(new Runnable() {
@@ -273,6 +263,16 @@ public class CalibrationActivity extends RosActivity {
 
             }
         });
+    }
+
+    @Override
+    protected void init(NodeMainExecutor nodeMainExecutor) {
+        NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
+        nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING + "sub"));
+
+        nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
+        nodeMainExecutor.execute(confirmTargetNode, nodeConfiguration.setNodeName(CONFIRM_TARGET));
+        nodeMainExecutor.execute(startNode, nodeConfiguration.setNodeName(START));
     }
 
 }

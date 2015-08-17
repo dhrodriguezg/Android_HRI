@@ -1,14 +1,17 @@
 package ualberta.cs.robotics.android_hri.touch_interaction;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import org.ros.address.InetAddressFactory;
 import org.ros.android.BitmapFromCompressedImage;
@@ -30,13 +33,15 @@ import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.gesture_de
 public class DraggingActivity extends RosActivity {
 	
 	private static final String TAG = "DraggingActivity";
-    private static final String CONFIRM_TARGET="/android/confirmTarget";
-    private static final String TARGET_POINT="/android/target_point";
-    private static final String GRASP="/android/grasp";
-    private static final String POSITION= "/android/position";
-    private static final String ROTATION= "/android/rotation";
     private static final String STREAMING= "/image_converter/output_video/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
+    private static final String EMERGENCY_STOP = "/android/emergency_stop";
+    private static final String TARGET_POINT="/android/target_point";
+    private static final String CONFIRM_TARGET="/android/target_confirm";
+    private static final String POSITION= "/android/position_abs";
+    private static final String ROTATION= "/android/rotation_abs";
+    private static final String GRASP="/android/grasping_abs";
+
     private MultiTouchArea gestureHandler = null;
 
     private RosImageView<CompressedImage> imageStream;
@@ -49,6 +54,8 @@ public class DraggingActivity extends RosActivity {
     private PointNode positionNode;
     private Float32Node rotationNode;
     private BooleanNode confirmTargetNode;
+    private BooleanNode emergencyNode;
+
     private String msg="";
 
     private boolean running = true;
@@ -98,6 +105,25 @@ public class DraggingActivity extends RosActivity {
         rotationNode.publishTo(ROTATION,true,0);
         confirmTargetNode = new BooleanNode();
         confirmTargetNode.publishTo(CONFIRM_TARGET, true, 100);
+        emergencyNode = new BooleanNode();
+        emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
+        emergencyNode.setPublish_bool(true);
+
+        ToggleButton emergencyStop = (ToggleButton)findViewById(R.id.emergencyButton) ;
+        emergencyStop.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
+                if (isChecked) {
+                    Toast.makeText(getApplicationContext(), "EMERGENCY STOP ACTIVATED!", Toast.LENGTH_LONG).show();
+                    imageStream.setBackgroundColor(Color.RED);
+                    emergencyNode.setPublish_bool(false);
+                } else {
+                    Toast.makeText(getApplicationContext(), "EMERGENCY STOP DEACTIVATED!", Toast.LENGTH_LONG).show();
+                    imageStream.setBackgroundColor(Color.GREEN);
+                    emergencyNode.setPublish_bool(true);
+                }
+            }
+        });
 
         Thread threadGestures = new Thread(){
             public void run(){
