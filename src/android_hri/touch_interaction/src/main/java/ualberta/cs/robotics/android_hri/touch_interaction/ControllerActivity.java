@@ -48,7 +48,7 @@ public class ControllerActivity extends RosActivity {
     private RosImageView<CompressedImage> imageStream;
 
     private PointNode targetPointNode;
-    private Float32Node sliderNode;
+    private Float32Node graspNode;
     private BooleanNode confirmTargetNode;
     private TwistNode targetControlNode;
 
@@ -82,8 +82,8 @@ public class ControllerActivity extends RosActivity {
 
         imageStream = (RosImageView<CompressedImage>) findViewById(R.id.visualization);
 
-        sliderNode = new Float32Node(); //TODO
-        sliderNode.publishTo(GRASP,true,0);
+        graspNode = new Float32Node();
+        graspNode.publishTo(GRASP, true, 0);
         targetPointNode = new PointNode();
         targetPointNode.publishTo(TARGET_POINT, true, 0);
         confirmTargetNode = new BooleanNode();
@@ -99,10 +99,12 @@ public class ControllerActivity extends RosActivity {
         sliderHandler.enableScroll();
 
         sliderImage.setTranslationY(sliderHandler.getHeight() / 2 - sliderImage.getHeight() / 2);
-        sliderNode.setPublish_float(0.01f); //it's just to init the thread below
+        graspNode.setPublish_float(0.01f); //it's just to init the thread below
 
         if(debug)
             imageStream.setTopicName("/usb_cam/image_raw/compressed");
+        else
+            imageStream.setTopicName(STREAMING);
         imageStream.setMessageType(STREAMING_MSG);
         imageStream.setMessageToBitmapCallable(new BitmapFromCompressedImage());
         imageStream.setScaleType(ImageView.ScaleType.FIT_CENTER);
@@ -121,7 +123,7 @@ public class ControllerActivity extends RosActivity {
                 while(running){
                     try {
                         Thread.sleep(16);
-                        if(sliderHandler.getSingleDragY() > 0  || sliderNode.getPublish_float() != 0){
+                        if(sliderHandler.getSingleDragY() > 0  || graspNode.getPublish_float() != 0){
                             updateSlider();
                         }
                         updateTarget();
@@ -183,11 +185,11 @@ public class ControllerActivity extends RosActivity {
             public void run() {
                 if (sliderHandler.isDetectingOneFingerGesture() && sliderHandler.getSingleDragY() > 0) {
                     sliderImage.setTranslationY(sliderHandler.getSingleDragY() - sliderImage.getHeight() / 2);
-                    sliderNode.setPublish_float(sliderHandler.getSingleDragNormalizedY());
+                    graspNode.setPublish_float(sliderHandler.getSingleDragNormalizedY());
                 } else {
                     sliderHandler.resetValuesOnRelease();
                     sliderImage.setTranslationY(sliderHandler.getHeight() / 2 - sliderImage.getHeight() / 2);
-                    sliderNode.setPublish_float(sliderHandler.getSingleDragNormalizedY());
+                    graspNode.setPublish_float(sliderHandler.getSingleDragNormalizedY());
                 }
             }
         });
@@ -232,7 +234,7 @@ public class ControllerActivity extends RosActivity {
         nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING+"sub"));
 
         //Custom
-        nodeMainExecutor.execute(sliderNode, nodeConfiguration.setNodeName(GRASP));
+        nodeMainExecutor.execute(graspNode, nodeConfiguration.setNodeName(GRASP));
         nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
         nodeMainExecutor.execute(confirmTargetNode, nodeConfiguration.setNodeName(CONFIRM_TARGET));
         nodeMainExecutor.execute(targetControlNode, nodeConfiguration.setNodeName(TARGET+"sub"));

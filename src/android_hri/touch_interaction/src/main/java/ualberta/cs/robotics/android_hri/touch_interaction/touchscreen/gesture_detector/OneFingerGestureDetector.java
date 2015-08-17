@@ -57,6 +57,8 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
     private float normalizedLPY;
     private boolean enableLongPress=false;
 
+    private boolean  detectingMultiGesture=false;
+
     public OneFingerGestureDetector(Activity activity, OnOneFingerGestureListener listener){
         mGestureDetector = new GestureDetector(activity, this);
         mActivity = activity;
@@ -67,9 +69,12 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
 
     public boolean onTouchEvent(View view, MotionEvent event){
         if (event.getPointerCount() < 2) {
+            detectingMultiGesture=false;
             mView = view;
             checkGestureState(event);
             return mGestureDetector.onTouchEvent(event);
+        }else{
+            detectingMultiGesture=true;
         }
         return true;
     }
@@ -157,11 +162,14 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
     public void onLongPress(MotionEvent event) {
         if(!enableLongPress)
             return;
+        if(detectingMultiGesture)
+            return;
+
         lpX =event.getX(); lpY =event.getY();
         float[] normalizedXY = normalizedValues(event,mView);
         normalizedLPX = normalizedXY[0];
         normalizedLPY = normalizedXY[1];
-        mListener.onLongPress(lpX,lpY,normalizedLPX,normalizedLPY);
+        mListener.onLongPress(lpX, lpY, normalizedLPX,normalizedLPY);
         Log.d(TAG, String.format("LongPress [ %.1f , %.1f , %.4f , %.4f ]", lpX, lpY, normalizedLPX, normalizedLPY));
     }
 

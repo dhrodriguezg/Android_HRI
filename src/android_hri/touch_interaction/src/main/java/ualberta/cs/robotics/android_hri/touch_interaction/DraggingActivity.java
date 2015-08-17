@@ -1,11 +1,14 @@
 package ualberta.cs.robotics.android_hri.touch_interaction;
 
 import android.content.Intent;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import org.ros.address.InetAddressFactory;
 import org.ros.android.BitmapFromCompressedImage;
@@ -17,25 +20,39 @@ import org.ros.node.NodeMainExecutor;
 import java.net.URI;
 
 import sensor_msgs.CompressedImage;
+import ualberta.cs.robotics.android_hri.touch_interaction.node.BooleanNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.node.Float32Node;
+import ualberta.cs.robotics.android_hri.touch_interaction.node.PointNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiTouchArea;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.ConfirmNode;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.RotationNode;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.TargetNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.gesture_detector.TwoFingerGestureDetector;
 
 
 public class DraggingActivity extends RosActivity {
 	
 	private static final String TAG = "DraggingActivity";
-    private MultiTouchArea dragHandler = null;
-    public final static int MAX_POWER = 100;
+    private static final String CONFIRM_TARGET="/android/confirmTarget";
+    private static final String TARGET_POINT="/android/target_point";
+    private static final String GRASP="/android/grasp";
+    private static final String POSITION= "/android/position";
+    private static final String ROTATION= "/android/rotation";
+    private static final String STREAMING= "/image_converter/output_video/compressed";
+    private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
+    private MultiTouchArea gestureHandler = null;
 
     private RosImageView<CompressedImage> imageStream;
-    private int operator = 1;
-    private ImageView selectedArea;
+    private ImageView targetImage;
+    private ImageView positionImage;
+    private TextView msgText;
+
+    private PointNode targetPointNode;
+    private Float32Node graspNode;
+    private PointNode positionNode;
+    private Float32Node rotationNode;
+    private BooleanNode confirmTargetNode;
+    private String msg="";
+
     private boolean running = true;
-    private TargetNode targetNode;
-    private ConfirmNode confirmNode;
-    private RotationNode rotationNode;
+    private boolean debug = true;
 
     public DraggingActivity() {
         super(TAG, TAG, URI.create(MainActivity.ROS_MASTER));
@@ -50,26 +67,49 @@ public class DraggingActivity extends RosActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_dragging);
 
+        targetImage = (ImageView) findViewById(R.id.targetView);
+        positionImage = (ImageView) findViewById(R.id.positionView);
+        msgText = (TextView) findViewById(R.id.msgTextView);
+
         imageStream = (RosImageView<CompressedImage>) findViewById(R.id.imageViewCenter);
-        imageStream.setTopicName("/image_converter/output_video/compressed"); //"/camera/rgb/image_raw/compressed"
-        imageStream.setMessageType("sensor_msgs/CompressedImage"); //% rostopic type /camera/rgb/image_raw
+        if(debug)
+            imageStream.setTopicName("/usb_cam/image_raw/compressed");
+        else
+            imageStream.setTopicName(STREAMING);
+        imageStream.setMessageType(STREAMING_MSG);
         imageStream.setMessageToBitmapCallable(new BitmapFromCompressedImage());
-        imageStream.setScaleType(ImageView.ScaleType.FIT_XY);
+        imageStream.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
-        selectedArea = (ImageView) findViewById(R.id.selectedArea);
+        gestureHandler = new MultiTouchArea(this, imageStream);
+        gestureHandler.enableScaling();
+        gestureHandler.enableDragging();
+        gestureHandler.enableRotating();
+        gestureHandler.enableOneFingerGestures();
+        gestureHandler.enableDoubleTap();
+        gestureHandler.enableLongPress();
 
-        dragHandler = new MultiTouchArea(this, imageStream);
-        targetNode = new TargetNode();
-        rotationNode = new RotationNode();
-        confirmNode = new ConfirmNode();
+        targetPointNode = new PointNode();
+        targetPointNode.publishTo(TARGET_POINT, true, 0);
+        graspNode = new Float32Node();
+        graspNode.publishTo(GRASP, true, 0);
+        positionNode = new PointNode();
+        positionNode.publishTo(POSITION,true,0);
+        rotationNode = new Float32Node();
+        rotationNode.publishTo(ROTATION,true,0);
+        confirmTargetNode = new BooleanNode();
+        confirmTargetNode.publishTo(CONFIRM_TARGET, true, 100);
 
-        Thread threadTarget = new Thread(){
+        Thread threadGestures = new Thread(){
             public void run(){
                 while(running){
                     try {
-                        if(dragHandler.getDoubleDragX()>0){
-                            updateTarget();
-                        }
+                        msg="";
+                        updateTarget();
+                        updateConfirmTarget();
+                        updatePosition();
+                        updateGrasping();
+                        updateRotation();
+                        updateText();
                         Thread.sleep(10);
                     } catch (InterruptedException e) {
                         e.getStackTrace();
@@ -77,21 +117,7 @@ public class DraggingActivity extends RosActivity {
                 }
             }
         };
-        threadTarget.start();
-
-        Thread threadRotation = new Thread(){
-            public void run(){
-                while(running){
-                    try {
-                        rotationNode.setRotationValue(dragHandler.getAngle());
-                        Thread.sleep(10);
-                    } catch (InterruptedException e) {
-                        e.getStackTrace();
-                    }
-                }
-            }
-        };
-        threadRotation.start();
+        threadGestures.start();
 
     }
 
@@ -127,29 +153,133 @@ public class DraggingActivity extends RosActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    protected void init(NodeMainExecutor nodeMainExecutor) {
-        NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
-        nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName("android/streaming"));
-        nodeMainExecutor.execute(targetNode, nodeConfiguration.setNodeName("android/target"));
-        nodeMainExecutor.execute(confirmNode, nodeConfiguration.setNodeName("android/confirm"));
-        nodeMainExecutor.execute(rotationNode, nodeConfiguration.setNodeName("android/rotation"));
+    private void updateTarget(){
+        /** Update LongClick **/
+        if(gestureHandler.getLongClickX()>0){
+
+            final float x=gestureHandler.getLongClickX() - targetImage.getWidth()/2;
+            final float y=gestureHandler.getLongClickY() - targetImage.getHeight()/2;
+
+            float[] targetPoint = new float[]{gestureHandler.getLongClickX(), gestureHandler.getLongClickY()};
+            float[] targetPixel = new float[2];
+
+            Matrix streamMatrix = new Matrix();
+            imageStream.getImageMatrix().invert(streamMatrix);
+            streamMatrix.mapPoints(targetPixel, targetPoint);
+
+            targetPointNode.getPublish_point()[0]=targetPixel[0];
+            targetPointNode.getPublish_point()[1]=targetPixel[1];
+            this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    targetImage.setX(x);
+                    targetImage.setY(y);
+                    targetImage.setAlpha(1.0f);
+                    positionImage.setAlpha(0.f);
+                    positionImage.setX(0);
+                    positionImage.setY(0);
+                    msg="Target Selected";
+                }
+            });
+            if(!gestureHandler.isDetectingTwoFingerGesture()){
+                gestureHandler.setDoubleDragX(0);
+                positionNode.getPublish_point()[0]=0;
+                positionNode.getPublish_point()[1]=0;
+            }
+        }
+    }
+
+    private void updatePosition(){
+        if(gestureHandler.getDoubleDragX()>0){
+
+            final float x=gestureHandler.getDoubleDragX() - positionImage.getWidth()/2;
+            final float y=gestureHandler.getDoubleDragY() - positionImage.getHeight()/2;
+
+            float[] positionPoint = new float[]{gestureHandler.getDoubleDragX(), gestureHandler.getDoubleDragY()};
+            float[] positionPixel = new float[2];
+
+            Matrix streamMatrix = new Matrix();
+            imageStream.getImageMatrix().invert(streamMatrix);
+            streamMatrix.mapPoints(positionPixel, positionPoint);
+
+            positionNode.getPublish_point()[0]=positionPixel[0];
+            positionNode.getPublish_point()[1]=positionPixel[1];
+            this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    positionImage.setX(x);
+                    positionImage.setY(y);
+                    positionImage.setAlpha(0.4f);
+
+                    targetImage.setAlpha(0.f);
+                    targetImage.setX(0);
+                    targetImage.setY(0);
+                    msg="Position updated";
+                }
+            });
+            gestureHandler.setLongClickX(0);
+            targetPointNode.getPublish_point()[0]=0;
+            targetPointNode.getPublish_point()[1]=0;
+        }
+    }
+
+    private void updateConfirmTarget(){
+        if(gestureHandler.getDoubleTapX()>0){
+            if(gestureHandler.getLongClickX()>1){
+                confirmTargetNode.setPublish_bool(true);
+                confirmTargetNode.publishNow();
+            }else{
+                this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(), "Select a target first! use Long Press.", Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+            gestureHandler.setDoubleTapX(0);
+            gestureHandler.setDoubleTapY(0);
+        }
+    }
+
+    private void updateGrasping(){
+        float grasp = 3.2f*(TwoFingerGestureDetector.MAX_SCALE-gestureHandler.getScale())/(TwoFingerGestureDetector.MAX_SCALE-TwoFingerGestureDetector.MIN_SCALE);
+        graspNode.setPublish_float(grasp);
+    }
+
+    private void updateRotation(){
+        final float angle = gestureHandler.getAngle();
+        rotationNode.setPublish_float(angle);
+        if(!gestureHandler.isDetectingTwoFingerGesture()){
+            gestureHandler.setAngle(0);
+        }
+        if(angle!=0){
+            msg="Rotating: "+angle;
+            gestureHandler.setDoubleDragX(0);
+            targetPointNode.getPublish_point()[0]=0;
+            targetPointNode.getPublish_point()[1]=0;
+        }
 
     }
 
-    public void updateTarget(){
-
-        targetNode.setX(imageStream.getDrawable().getIntrinsicWidth() * dragHandler.getDoubleDragX() / dragHandler.getWidth());
-        targetNode.setY(imageStream.getDrawable().getIntrinsicHeight() * dragHandler.getDoubleDragY() / dragHandler.getHeight());
-        confirmNode.setConfirm(dragHandler.isDetectingTwoFingerGesture());
+    private void updateText(){
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                selectedArea.setAlpha(0.5f);
-                selectedArea.setTranslationX(dragHandler.getDoubleDragX() - selectedArea.getWidth() / 2);
-                selectedArea.setTranslationY(dragHandler.getDoubleDragY() - selectedArea.getHeight() / 2);
+                msgText.setText(msg);
             }
         });
+    }
+
+    @Override
+    protected void init(NodeMainExecutor nodeMainExecutor) {
+        NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
+        nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING+"sub"));
+
+        nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
+        nodeMainExecutor.execute(graspNode, nodeConfiguration.setNodeName(GRASP));
+        nodeMainExecutor.execute(positionNode, nodeConfiguration.setNodeName(POSITION));
+        nodeMainExecutor.execute(rotationNode, nodeConfiguration.setNodeName(ROTATION));
+        nodeMainExecutor.execute(confirmTargetNode, nodeConfiguration.setNodeName(CONFIRM_TARGET));
     }
 
 }

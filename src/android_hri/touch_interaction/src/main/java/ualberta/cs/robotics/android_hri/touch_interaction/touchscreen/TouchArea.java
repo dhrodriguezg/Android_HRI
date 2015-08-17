@@ -96,7 +96,7 @@ public class TouchArea implements OneFingerGestureDetector.OnOneFingerGestureLis
         longClickNormalizedY=normalizedLPY;
         longClickX=lpX;
         longClickY=lpY;
-        //vibrator.vibrate(200);
+        vibrator.vibrate(200);
     }
 
     @Override

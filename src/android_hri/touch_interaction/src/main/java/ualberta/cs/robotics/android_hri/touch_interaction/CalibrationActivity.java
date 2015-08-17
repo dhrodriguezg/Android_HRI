@@ -24,15 +24,20 @@ import org.ros.node.NodeMainExecutor;
 import java.net.URI;
 
 import sensor_msgs.CompressedImage;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.ConfirmNode;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.RotationNode;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.TargetNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.node.BooleanNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.node.PointNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiTouchArea;
 
 
 public class CalibrationActivity extends RosActivity {
 
 	private static final String TAG = "CalibrationActivity";
+    private static final String CONFIRM_TARGET="/android/confirmTarget";
+    private static final String TARGET_POINT="/android/target_point";
+    private static final String START="/android/start_calibration";
+    private static final String STREAMING= "/camera/rgb/image_raw/compressed";
+    private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
+
     private static final boolean debug = true;
     private MultiTouchArea dragHandler = null;
 
@@ -49,9 +54,10 @@ public class CalibrationActivity extends RosActivity {
     private float traslationTempX=0.f;
     private float traslationTempY=0.f;
 
-    private TargetNode targetNode;
-    private ConfirmNode confirmNode;
-    private RotationNode rotationNode;
+    private PointNode targetPointNode;
+    private BooleanNode confirmTargetNode;
+    private BooleanNode startNode;
+
     private boolean firstRun=true;
 
     public CalibrationActivity() {
@@ -80,12 +86,18 @@ public class CalibrationActivity extends RosActivity {
              rostopic echo /android/joystickPos/cmd_vel
             */
             imageStream.setTopicName("/usb_cam/image_raw/compressed");
-            imageStream.setMessageType("sensor_msgs/CompressedImage");
-        }else{
-            //imageStream.setTopicName("/image_converter/output_video/compressed");
-            imageStream.setTopicName("/camera/rgb/image_raw/compressed");
-            imageStream.setMessageType("sensor_msgs/CompressedImage");
-        }
+
+        }else
+            imageStream.setTopicName(STREAMING);
+        imageStream.setMessageType(STREAMING_MSG);
+
+        targetPointNode = new PointNode();
+        targetPointNode.publishTo(TARGET_POINT, true, 0);
+        confirmTargetNode = new BooleanNode();
+        confirmTargetNode.publishTo(CONFIRM_TARGET, true, 100);
+        startNode = new BooleanNode();
+        startNode.publishTo(START, true, 100);
+
         imageStream.setMessageToBitmapCallable(new BitmapFromCompressedImage());
         imageStream.setScaleType(ImageView.ScaleType.MATRIX);
 
@@ -93,15 +105,17 @@ public class CalibrationActivity extends RosActivity {
         confirmButton.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                //TODO
+                confirmTargetNode.setPublish_bool(true);
+                confirmTargetNode.publishNow();
             }
         } );
-
         startSwitch = (Switch) findViewById(R.id.startSwitch);
         startSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked)
-                    ;//TODO
+                if (isChecked){
+                    startNode.setPublish_bool(true);
+                    startNode.publishNow();
+                }
             }
         });
 
@@ -109,11 +123,6 @@ public class CalibrationActivity extends RosActivity {
         dragHandler.enableScaling();
         dragHandler.enableOneFingerGestures();
         dragHandler.enableScroll();
-
-        targetNode = new TargetNode();
-        rotationNode = new RotationNode();
-        confirmNode = new ConfirmNode();
-
 
         Thread threadTarget = new Thread(){
             public void run(){
@@ -128,7 +137,6 @@ public class CalibrationActivity extends RosActivity {
             }
         };
         threadTarget.start();
-
     }
 
     @Override
@@ -166,11 +174,11 @@ public class CalibrationActivity extends RosActivity {
     @Override
     protected void init(NodeMainExecutor nodeMainExecutor) {
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
-        nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName("android/streaming"));
-        nodeMainExecutor.execute(targetNode, nodeConfiguration.setNodeName("android/target"));
-        nodeMainExecutor.execute(confirmNode, nodeConfiguration.setNodeName("android/confirm"));
-        nodeMainExecutor.execute(rotationNode, nodeConfiguration.setNodeName("android/rotation"));
+        nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING + "sub"));
 
+        nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
+        nodeMainExecutor.execute(confirmTargetNode, nodeConfiguration.setNodeName(CONFIRM_TARGET));
+        nodeMainExecutor.execute(startNode, nodeConfiguration.setNodeName(START));
     }
 
     public void updateTarget(){
@@ -212,17 +220,11 @@ public class CalibrationActivity extends RosActivity {
                 float finalScaledCenteredX=imageScaledCenteredX + imageTraslationX + correctionX;
                 float finalScaledCenteredY=imageScaledCenteredY + imageTraslationY + correctionY;
 
-
                 if (scaleTemp==scale) {
                     traslationTempX=finalScaledCenteredX;
                     traslationTempY=finalScaledCenteredY;
 
                 }
-
-                //Matrix previowsTMatrix = new Matrix();
-                //previowsTMatrix.setScale(scale, scale);
-                //previowsTMatrix.postTranslate(finalScaledCenteredX, finalScaledCenteredY);
-                //imageStream.setImageMatrix(previowsTMatrix);
 
                 float[] targetPoint = new float[2];
                 float[] targetPixel = new float[2];
@@ -248,13 +250,14 @@ public class CalibrationActivity extends RosActivity {
                 float scaleCorrectionY = focusY - errorPoint[1];
 
                 Log.d(TAG, String.format("Centers [ %.4f %.4f %.4f %.4f ]", errorPoint[0], errorPoint[1], targetPixel[0], targetPixel[1]));
+                targetPointNode.getPublish_point()[0]=targetPixel[0];
+                targetPointNode.getPublish_point()[1]=targetPixel[1];
 
                 Matrix finalTMatrix = new Matrix();
                 finalTMatrix.setScale(scale, scale);
                 finalTMatrix.postTranslate(finalScaledCenteredX + scaleCorrectionX, finalScaledCenteredY + scaleCorrectionY);
 
                 imageStream.setImageMatrix(finalTMatrix);
-
 
                 if(dragHandler.isDetectingOneFingerGesture()){
                     updateCenter=false;

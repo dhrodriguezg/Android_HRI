@@ -23,8 +23,8 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     private static final int ROTATING_THREASHOLD = 10;
     private static final int SCALING_THREASHOLD = 100;
 
-    private static final float MIN_SCALE = 0.1f;//full open 0
-    private static final float MAX_SCALE = 10.1f;//full close 3.2
+    public static final float MIN_SCALE = 0.1f;//full open 0
+    public static final float MAX_SCALE = 10.1f;//full close 3.2
     //calculate grasp ->   (MAX_SCALE-X)*3.2/(MAX_SCALE-MIN_SCALE)
     private boolean detectingGesture =false;
     private float fX, fY, sX, sY;
