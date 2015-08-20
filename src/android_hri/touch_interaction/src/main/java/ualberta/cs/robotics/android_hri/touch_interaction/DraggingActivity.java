@@ -51,13 +51,14 @@ public class DraggingActivity extends RosActivity {
 
     private PointNode targetPointNode;
     private Float32Node graspNode;
-    private PointNode positionNode;
+    //private PointNode positionNode;
     private Float32Node rotationNode;
     private BooleanNode confirmTargetNode;
     private BooleanNode emergencyNode;
 
     private String msg="";
-
+    private float target_x;
+    private float target_y;
     private boolean running = true;
     private boolean debug = true;
 
@@ -96,11 +97,12 @@ public class DraggingActivity extends RosActivity {
         gestureHandler.enableLongPress();
 
         targetPointNode = new PointNode();
-        targetPointNode.publishTo(TARGET_POINT, true, 0);
+        targetPointNode.publishTo(TARGET_POINT, false, 10);
+
         graspNode = new Float32Node();
         graspNode.publishTo(GRASP, true, 0);
-        positionNode = new PointNode();
-        positionNode.publishTo(POSITION,true,0);
+        //positionNode = new PointNode();
+        //positionNode.publishTo(POSITION,true,0);
         rotationNode = new Float32Node();
         rotationNode.publishTo(ROTATION,true,0);
         confirmTargetNode = new BooleanNode();
@@ -193,6 +195,8 @@ public class DraggingActivity extends RosActivity {
             imageStream.getImageMatrix().invert(streamMatrix);
             streamMatrix.mapPoints(targetPixel, targetPoint);
 
+            target_x=targetPixel[0];
+            target_y=targetPixel[1];
             targetPointNode.getPublish_point()[0]=targetPixel[0];
             targetPointNode.getPublish_point()[1]=targetPixel[1];
             this.runOnUiThread(new Runnable() {
@@ -204,13 +208,13 @@ public class DraggingActivity extends RosActivity {
                     positionImage.setAlpha(0.f);
                     positionImage.setX(0);
                     positionImage.setY(0);
-                    msg="Target Selected";
+                    msg = "Target Selected";
                 }
             });
             if(!gestureHandler.isDetectingTwoFingerGesture()){
                 gestureHandler.setDoubleDragX(0);
-                positionNode.getPublish_point()[0]=0;
-                positionNode.getPublish_point()[1]=0;
+                //positionNode.getPublish_point()[0]=0;
+                //positionNode.getPublish_point()[1]=0;
             }
         }
     }
@@ -228,8 +232,11 @@ public class DraggingActivity extends RosActivity {
             imageStream.getImageMatrix().invert(streamMatrix);
             streamMatrix.mapPoints(positionPixel, positionPoint);
 
-            positionNode.getPublish_point()[0]=positionPixel[0];
-            positionNode.getPublish_point()[1]=positionPixel[1];
+            targetPointNode.getPublish_point()[0]=positionPixel[0];
+            targetPointNode.getPublish_point()[1]=positionPixel[1];
+            targetPointNode.publishNow();
+            //positionNode.getPublish_point()[0]=positionPixel[0];
+            //positionNode.getPublish_point()[1]=positionPixel[1];
             this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -240,12 +247,13 @@ public class DraggingActivity extends RosActivity {
                     targetImage.setAlpha(0.f);
                     targetImage.setX(0);
                     targetImage.setY(0);
-                    msg="Position updated";
+                    msg = "Position updated";
                 }
             });
+            gestureHandler.setDoubleDragX(0); //to not publish all the time
             gestureHandler.setLongClickX(0);
-            targetPointNode.getPublish_point()[0]=0;
-            targetPointNode.getPublish_point()[1]=0;
+            //targetPointNode.getPublish_point()[0]=0;
+            //targetPointNode.getPublish_point()[1]=0;
         }
     }
 
@@ -254,6 +262,15 @@ public class DraggingActivity extends RosActivity {
             if(gestureHandler.getLongClickX()>1){
                 confirmTargetNode.setPublish_bool(true);
                 confirmTargetNode.publishNow();
+                targetPointNode.publishNow();
+                this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(), "Going to coords: "+(int)targetPointNode.getPublish_point()[0]+","+(int)targetPointNode.getPublish_point()[1], Toast.LENGTH_LONG).show();
+                    }
+                });
+                //targetPointNode.getPublish_point()[0]=target_x;
+                //targetPointNode.getPublish_point()[1]=target_y;
             }else{
                 this.runOnUiThread(new Runnable() {
                     @Override
@@ -303,8 +320,9 @@ public class DraggingActivity extends RosActivity {
 
         nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
         nodeMainExecutor.execute(graspNode, nodeConfiguration.setNodeName(GRASP));
-        nodeMainExecutor.execute(positionNode, nodeConfiguration.setNodeName(POSITION));
+        //nodeMainExecutor.execute(positionNode, nodeConfiguration.setNodeName(POSITION));
         nodeMainExecutor.execute(rotationNode, nodeConfiguration.setNodeName(ROTATION));
+        nodeMainExecutor.execute(emergencyNode, nodeConfiguration.setNodeName(EMERGENCY_STOP));
         nodeMainExecutor.execute(confirmTargetNode, nodeConfiguration.setNodeName(CONFIRM_TARGET));
     }
 

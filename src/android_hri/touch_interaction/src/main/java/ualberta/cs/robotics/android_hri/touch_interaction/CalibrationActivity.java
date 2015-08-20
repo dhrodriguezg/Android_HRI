@@ -13,6 +13,7 @@ import android.widget.CompoundButton;
 import android.widget.ImageView;
 
 import android.widget.Switch;
+import android.widget.Toast;
 
 import org.ros.address.InetAddressFactory;
 import org.ros.android.BitmapFromCompressedImage;
@@ -32,13 +33,13 @@ import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiTouch
 public class CalibrationActivity extends RosActivity {
 
 	private static final String TAG = "CalibrationActivity";
-    private static final String STREAMING= "/camera/rgb/image_raw/compressed";
+    private static final String STREAMING= "/image_converter/output_video/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String START="/android/start_calibration";
-    private static final String TARGET_POINT="/android/target_point";
-    private static final String CONFIRM_TARGET="/android/target_confirm";
+    private static final String TRACKER_POINT ="/android/tracker_point";
+    private static final String CONFIRM_TRACKER ="/android/tracker_confirm";
 
-    private static final boolean debug = true;
+    private static final boolean debug = false;
     private MultiTouchArea dragHandler = null;
 
     private RosImageView<CompressedImage> imageStream;
@@ -54,11 +55,13 @@ public class CalibrationActivity extends RosActivity {
     private float traslationTempX=0.f;
     private float traslationTempY=0.f;
 
-    private PointNode targetPointNode;
-    private BooleanNode confirmTargetNode;
+    private PointNode trackerPointNode;
+    //private BooleanNode confirmTrackerNode;
     private BooleanNode startNode;
 
     private boolean firstRun=true;
+    private static final int MAX_TRACKERS=1;
+    private int trackerNumber=0;
 
     public CalibrationActivity() {
         super(TAG, TAG, URI.create(MainActivity.ROS_MASTER));
@@ -91,10 +94,10 @@ public class CalibrationActivity extends RosActivity {
             imageStream.setTopicName(STREAMING);
         imageStream.setMessageType(STREAMING_MSG);
 
-        targetPointNode = new PointNode();
-        targetPointNode.publishTo(TARGET_POINT, true, 0);
-        confirmTargetNode = new BooleanNode();
-        confirmTargetNode.publishTo(CONFIRM_TARGET, true, 100);
+        trackerPointNode = new PointNode();
+        trackerPointNode.publishTo(TRACKER_POINT, false, 10);
+        //confirmTrackerNode = new BooleanNode();
+        //confirmTrackerNode.publishTo(CONFIRM_TRACKER, true, 100);
         startNode = new BooleanNode();
         startNode.publishTo(START, true, 100);
 
@@ -105,14 +108,23 @@ public class CalibrationActivity extends RosActivity {
         confirmButton.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                confirmTargetNode.setPublish_bool(true);
-                confirmTargetNode.publishNow();
+                if(trackerNumber < MAX_TRACKERS){
+                    trackerPointNode.getPublish_point()[2]=trackerNumber;
+                    trackerPointNode.publishNow();
+                    trackerNumber++;
+                    Toast.makeText(getApplicationContext(), "Defined Tracker N: "+trackerNumber, Toast.LENGTH_LONG).show();
+                }else{
+                    Toast.makeText(getApplicationContext(), "You can't add more trackers, MAX: "+MAX_TRACKERS, Toast.LENGTH_LONG).show();
+                }
+                //confirmTrackerNode.setPublish_bool(true);
+                //confirmTrackerNode.publishNow();
             }
         } );
         startSwitch = (Switch) findViewById(R.id.startSwitch);
         startSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked){
+                    trackerNumber=0;
                     startNode.setPublish_bool(true);
                     startNode.publishNow();
                 }
@@ -240,8 +252,8 @@ public class CalibrationActivity extends RosActivity {
                 float scaleCorrectionY = focusY - errorPoint[1];
 
                 Log.d(TAG, String.format("Centers [ %.4f %.4f %.4f %.4f ]", errorPoint[0], errorPoint[1], targetPixel[0], targetPixel[1]));
-                targetPointNode.getPublish_point()[0]=targetPixel[0];
-                targetPointNode.getPublish_point()[1]=targetPixel[1];
+                trackerPointNode.getPublish_point()[0]=targetPixel[0];
+                trackerPointNode.getPublish_point()[1]=targetPixel[1];
 
                 Matrix finalTMatrix = new Matrix();
                 finalTMatrix.setScale(scale, scale);
@@ -270,8 +282,8 @@ public class CalibrationActivity extends RosActivity {
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
         nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING + "sub"));
 
-        nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
-        nodeMainExecutor.execute(confirmTargetNode, nodeConfiguration.setNodeName(CONFIRM_TARGET));
+        nodeMainExecutor.execute(trackerPointNode, nodeConfiguration.setNodeName(TRACKER_POINT));
+        //nodeMainExecutor.execute(confirmTrackerNode, nodeConfiguration.setNodeName(CONFIRM_TRACKER));
         nodeMainExecutor.execute(startNode, nodeConfiguration.setNodeName(START));
     }
 

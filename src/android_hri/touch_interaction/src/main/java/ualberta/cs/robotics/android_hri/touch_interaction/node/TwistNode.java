@@ -10,7 +10,6 @@ import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
 import geometry_msgs.Twist;
-import sensor_msgs.Joy;
 
 /**
  * Created by dhrodriguezg on 7/29/15.
@@ -53,7 +52,7 @@ public class TwistNode implements NodeMain {
     @Override
     public void onStart(ConnectedNode connectedNode) {
         if(isPublisher){
-            publisher = connectedNode.newPublisher(publishTopic, Joy._TYPE);
+            publisher = connectedNode.newPublisher(publishTopic, Twist._TYPE);
             publish(connectedNode);
         }
         if(isSubscriber){

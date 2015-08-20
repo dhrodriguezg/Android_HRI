@@ -3,7 +3,6 @@ package ualberta.cs.robotics.android_hri.touch_interaction;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -56,7 +55,7 @@ public class ControllerActivity extends RosActivity {
 
     private PointNode targetPointNode;
     private Float32Node graspNode;
-    private BooleanNode confirmTargetNode;
+    //private BooleanNode confirmTargetNode;
     private BooleanNode emergencyNode;
     private TwistNode targetControlNode;
 
@@ -93,9 +92,9 @@ public class ControllerActivity extends RosActivity {
         graspNode = new Float32Node();
         graspNode.publishTo(GRASP, true, 0);
         targetPointNode = new PointNode();
-        targetPointNode.publishTo(TARGET_POINT, true, 0);
-        confirmTargetNode = new BooleanNode();
-        confirmTargetNode.publishTo(CONFIRM_TARGET, true, 100);
+        targetPointNode.publishTo(TARGET_POINT, false, 10);
+        //confirmTargetNode = new BooleanNode();
+        //confirmTargetNode.publishTo(CONFIRM_TARGET, true, 100);
         emergencyNode = new BooleanNode();
         emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
         emergencyNode.setPublish_bool(true);
@@ -131,8 +130,10 @@ public class ControllerActivity extends RosActivity {
                     Toast.makeText(getApplicationContext(), "Select a target first! Use the Joystick at the top-right hand corner of the screen.", Toast.LENGTH_LONG).show();
                     return;
                 }
-                confirmTargetNode.setPublish_bool(true);
-                confirmTargetNode.publishNow();
+                Toast.makeText(getApplicationContext(), "Going to coords: "+(int)targetPointNode.getPublish_point()[0]+","+(int)targetPointNode.getPublish_point()[1], Toast.LENGTH_LONG).show();
+                targetPointNode.publishNow();
+                //confirmTargetNode.setPublish_bool(true);
+                //confirmTargetNode.publishNow();
             }
         });
 
@@ -187,6 +188,7 @@ public class ControllerActivity extends RosActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        this.
         running=false;
     }
 
@@ -270,7 +272,7 @@ public class ControllerActivity extends RosActivity {
         //Custom
         nodeMainExecutor.execute(graspNode, nodeConfiguration.setNodeName(GRASP));
         nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
-        nodeMainExecutor.execute(confirmTargetNode, nodeConfiguration.setNodeName(CONFIRM_TARGET));
+        //nodeMainExecutor.execute(confirmTargetNode, nodeConfiguration.setNodeName(CONFIRM_TARGET));
         nodeMainExecutor.execute(emergencyNode, nodeConfiguration.setNodeName(EMERGENCY_STOP));
         nodeMainExecutor.execute(targetControlNode, nodeConfiguration.setNodeName(TARGET+"sub"));
     }
