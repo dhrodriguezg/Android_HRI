@@ -22,6 +22,8 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     private static final int DRAGGING_THREASHOLD = 20;
     private static final int ROTATING_THREASHOLD = 10;
     private static final int SCALING_THREASHOLD = 100;
+    public static float MAX_DRAGGING_DISTANCE=0.2f;
+    public static float MAX_RESOLUTION=0;
 
     public static final float MIN_SCALE = 0.1f;//full open 0
     public static final float MAX_SCALE = 10.1f;//full close 3.2
@@ -84,6 +86,11 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
                 sY = event.getY(event.findPointerIndex(ptrID1));
                 fX = event.getX(event.findPointerIndex(ptrID2));
                 fY = event.getY(event.findPointerIndex(ptrID2));
+
+                double distance = Math.sqrt(Math.pow(sX - fX,2) + Math.pow(sY - fY, 2));
+                if (distance > MAX_DRAGGING_DISTANCE*MAX_RESOLUTION)
+                    dragging=false;
+
                 mListener.onTwoFingerGestureState(detectingGesture);
                 Log.d(TAG, String.format("Detecting [ %b ]", detectingGesture));
                 break;
@@ -95,6 +102,8 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
                     nsY = event.getY(event.findPointerIndex(ptrID1));
                     nfX = event.getX(event.findPointerIndex(ptrID2));
                     nfY = event.getY(event.findPointerIndex(ptrID2));
+
+
 
                     if(dragging){
                         mX=(nsX+nfX)/2; mY=(nsY+nfY)/2;

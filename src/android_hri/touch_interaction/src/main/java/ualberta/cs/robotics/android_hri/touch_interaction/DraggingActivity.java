@@ -36,6 +36,7 @@ public class DraggingActivity extends RosActivity {
     private static final String STREAMING= "/image_converter/output_video/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
+    private static final String ENABLE_VS = "/android/enable_vs";
     private static final String TARGET_POINT="/android/target_point";
     private static final String CONFIRM_TARGET="/android/target_confirm";
     private static final String POSITION= "/android/position_abs";
@@ -52,9 +53,10 @@ public class DraggingActivity extends RosActivity {
     private PointNode targetPointNode;
     private Float32Node graspNode;
     //private PointNode positionNode;
-    private Float32Node rotationNode;
-    private BooleanNode confirmTargetNode;
+    private PointNode rotationNode;
+    //private BooleanNode confirmTargetNode;
     private BooleanNode emergencyNode;
+    private BooleanNode vsNode;
 
     private String msg="";
     private float target_x;
@@ -100,16 +102,21 @@ public class DraggingActivity extends RosActivity {
         targetPointNode.publishTo(TARGET_POINT, false, 10);
 
         graspNode = new Float32Node();
-        graspNode.publishTo(GRASP, true, 0);
-        //positionNode = new PointNode();
-        //positionNode.publishTo(POSITION,true,0);
-        rotationNode = new Float32Node();
-        rotationNode.publishTo(ROTATION,true,0);
-        confirmTargetNode = new BooleanNode();
-        confirmTargetNode.publishTo(CONFIRM_TARGET, true, 100);
+        graspNode.publishTo(GRASP, false, 2);
+        graspNode.setPublishFreq(500);
+
+        rotationNode = new PointNode();
+        rotationNode.publishTo(ROTATION,false,10);
+
         emergencyNode = new BooleanNode();
         emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
+        emergencyNode.setPublishFreq(100);
         emergencyNode.setPublish_bool(true);
+        //emergencyNode.publishNow();
+
+        vsNode = new BooleanNode();
+        vsNode.publishTo(ENABLE_VS, false, 100);
+        vsNode.setPublish_bool(true);
 
         ToggleButton emergencyStop = (ToggleButton)findViewById(R.id.emergencyButton) ;
         emergencyStop.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -119,10 +126,12 @@ public class DraggingActivity extends RosActivity {
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP ACTIVATED!", Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.RED);
                     emergencyNode.setPublish_bool(false);
+                    //emergencyNode.publishNow();
                 } else {
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP DEACTIVATED!", Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.GREEN);
                     emergencyNode.setPublish_bool(true);
+                    //emergencyNode.publishNow();
                 }
             }
         });
@@ -131,6 +140,7 @@ public class DraggingActivity extends RosActivity {
             public void run(){
                 while(running){
                     try {
+                        TwoFingerGestureDetector.MAX_RESOLUTION=imageStream.getWidth();
                         msg="";
                         updateTarget();
                         updateConfirmTarget();
@@ -152,12 +162,16 @@ public class DraggingActivity extends RosActivity {
     @Override
     public void onResume() {
         super.onResume();
+        emergencyNode.setPublish_bool(true);
+        //emergencyNode.publishNow();
         running=true;
     }
     
     @Override
     protected void onPause()
     {
+        emergencyNode.setPublish_bool(false);
+        //emergencyNode.publishNow();
     	super.onPause();
     }
     
@@ -235,6 +249,8 @@ public class DraggingActivity extends RosActivity {
             targetPointNode.getPublish_point()[0]=positionPixel[0];
             targetPointNode.getPublish_point()[1]=positionPixel[1];
             targetPointNode.publishNow();
+            vsNode.setPublish_bool(true);
+            vsNode.publishNow();
             //positionNode.getPublish_point()[0]=positionPixel[0];
             //positionNode.getPublish_point()[1]=positionPixel[1];
             this.runOnUiThread(new Runnable() {
@@ -260,9 +276,11 @@ public class DraggingActivity extends RosActivity {
     private void updateConfirmTarget(){
         if(gestureHandler.getDoubleTapX()>0){
             if(gestureHandler.getLongClickX()>1){
-                confirmTargetNode.setPublish_bool(true);
-                confirmTargetNode.publishNow();
+                //confirmTargetNode.setPublish_bool(true);
+                //confirmTargetNode.publishNow();
                 targetPointNode.publishNow();
+                vsNode.setPublish_bool(true);
+                vsNode.publishNow();
                 this.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -287,11 +305,18 @@ public class DraggingActivity extends RosActivity {
     private void updateGrasping(){
         float grasp = 3.2f*(TwoFingerGestureDetector.MAX_SCALE-gestureHandler.getScale())/(TwoFingerGestureDetector.MAX_SCALE-TwoFingerGestureDetector.MIN_SCALE);
         graspNode.setPublish_float(grasp);
+        graspNode.publishNow();
+        vsNode.setPublish_bool(false);
+        vsNode.publishNow();
     }
 
     private void updateRotation(){
         final float angle = gestureHandler.getAngle();
-        rotationNode.setPublish_float(angle);
+        rotationNode.getPublish_point()[0]=angle;
+        rotationNode.getPublish_point()[1]=0; //TODO
+        rotationNode.publishNow();
+        vsNode.setPublish_bool(false);
+        vsNode.publishNow();
         if(!gestureHandler.isDetectingTwoFingerGesture()){
             gestureHandler.setAngle(0);
         }
@@ -320,10 +345,9 @@ public class DraggingActivity extends RosActivity {
 
         nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
         nodeMainExecutor.execute(graspNode, nodeConfiguration.setNodeName(GRASP));
-        //nodeMainExecutor.execute(positionNode, nodeConfiguration.setNodeName(POSITION));
         nodeMainExecutor.execute(rotationNode, nodeConfiguration.setNodeName(ROTATION));
         nodeMainExecutor.execute(emergencyNode, nodeConfiguration.setNodeName(EMERGENCY_STOP));
-        nodeMainExecutor.execute(confirmTargetNode, nodeConfiguration.setNodeName(CONFIRM_TARGET));
+        nodeMainExecutor.execute(vsNode, nodeConfiguration.setNodeName(ENABLE_VS));
     }
 
 }

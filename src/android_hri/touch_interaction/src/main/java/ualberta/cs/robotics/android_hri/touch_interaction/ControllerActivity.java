@@ -4,7 +4,9 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -32,6 +34,7 @@ import ualberta.cs.robotics.android_hri.touch_interaction.node.Float32Node;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.PointNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.TwistNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.TouchArea;
+import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.TouchExtractor;
 
 
 public class ControllerActivity extends RosActivity {
@@ -40,6 +43,7 @@ public class ControllerActivity extends RosActivity {
     private static final String STREAMING= "/camera/rgb/image_raw/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
+    private static final String ENABLE_VS = "/android/enable_vs";
     private static final String TARGET_POINT="/android/target_point";
     private static final String CONFIRM_TARGET="/android/target_confirm";
     private static final String POSITION= "/android/joystick_position";
@@ -57,7 +61,10 @@ public class ControllerActivity extends RosActivity {
     private Float32Node graspNode;
     //private BooleanNode confirmTargetNode;
     private BooleanNode emergencyNode;
+    private BooleanNode vsNode;
     private TwistNode targetControlNode;
+    private TwistNode positionListenerNode;
+    private TwistNode rotationListenerNode;
 
     private TouchArea sliderHandler = null;
     private ImageView sliderTouch;
@@ -66,6 +73,8 @@ public class ControllerActivity extends RosActivity {
     private ImageView targetImage;
     private boolean running=true;
     private boolean debug=true;
+
+    TouchExtractor te;
 
     public ControllerActivity() {
         super(TAG, TAG, URI.create(MainActivity.ROS_MASTER));;
@@ -89,15 +98,28 @@ public class ControllerActivity extends RosActivity {
 
         imageStream = (RosImageView<CompressedImage>) findViewById(R.id.visualization);
 
+        positionListenerNode = new TwistNode();
+        positionListenerNode.subscribeTo(POSITION+"/cmd_vel");
+        rotationListenerNode = new TwistNode();
+        rotationListenerNode.subscribeTo(ROTATION+"/cmd_vel");
+
         graspNode = new Float32Node();
+        graspNode.setPublishFreq(250);
         graspNode.publishTo(GRASP, true, 0);
+
         targetPointNode = new PointNode();
         targetPointNode.publishTo(TARGET_POINT, false, 10);
-        //confirmTargetNode = new BooleanNode();
-        //confirmTargetNode.publishTo(CONFIRM_TARGET, true, 100);
+
         emergencyNode = new BooleanNode();
         emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
+        emergencyNode.setPublishFreq(100);
         emergencyNode.setPublish_bool(true);
+        //emergencyNode.publishNow();
+
+        vsNode = new BooleanNode();
+        vsNode.publishTo(ENABLE_VS, false, 100);
+        vsNode.setPublish_bool(false);
+
         targetControlNode = new TwistNode();
         targetControlNode.subscribeTo(TARGET+"/cmd_vel");
 
@@ -132,6 +154,8 @@ public class ControllerActivity extends RosActivity {
                 }
                 Toast.makeText(getApplicationContext(), "Going to coords: "+(int)targetPointNode.getPublish_point()[0]+","+(int)targetPointNode.getPublish_point()[1], Toast.LENGTH_LONG).show();
                 targetPointNode.publishNow();
+                vsNode.setPublish_bool(true);
+                vsNode.publishNow();
                 //confirmTargetNode.setPublish_bool(true);
                 //confirmTargetNode.publishNow();
             }
@@ -145,10 +169,12 @@ public class ControllerActivity extends RosActivity {
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP ACTIVATED!", Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.RED);
                     emergencyNode.setPublish_bool(false);
+                    //emergencyNode.publishNow();
                 }else{
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP DEACTIVATED!", Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.GREEN);
                     emergencyNode.setPublish_bool(true);
+                    //emergencyNode.publishNow();
                 }
             }
         });
@@ -162,6 +188,13 @@ public class ControllerActivity extends RosActivity {
                             updateSlider();
                         }
                         updateTarget();
+                        if(positionListenerNode.hasReceivedMsg() || rotationListenerNode.hasReceivedMsg()){
+                            vsNode.setPublish_bool(false);
+                            vsNode.publishNow();
+                            positionListenerNode.setHasReceivedMsg(false);
+                            rotationListenerNode.setHasReceivedMsg(false);
+                            Log.d(TAG, String.format("MANUAL OPT [ %b ]", true));
+                        }
                     } catch (InterruptedException e) {
                         e.getStackTrace();
                     }
@@ -175,6 +208,9 @@ public class ControllerActivity extends RosActivity {
     @Override
     public void onResume() {
         super.onResume();
+        emergencyNode.setPublish_bool(true);
+        vsNode.setPublish_bool(false);
+        vsNode.publishNow();
         sliderImage.setTranslationY(sliderHandler.getHeight() / 2 - sliderImage.getHeight() / 2);
         running=true;
     }
@@ -182,6 +218,9 @@ public class ControllerActivity extends RosActivity {
     @Override
     protected void onPause()
     {
+        emergencyNode.setPublish_bool(false);
+        vsNode.setPublish_bool(false);
+        vsNode.publishNow();
         super.onPause();
     }
 
@@ -272,8 +311,11 @@ public class ControllerActivity extends RosActivity {
         //Custom
         nodeMainExecutor.execute(graspNode, nodeConfiguration.setNodeName(GRASP));
         nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
-        //nodeMainExecutor.execute(confirmTargetNode, nodeConfiguration.setNodeName(CONFIRM_TARGET));
         nodeMainExecutor.execute(emergencyNode, nodeConfiguration.setNodeName(EMERGENCY_STOP));
+        nodeMainExecutor.execute(vsNode, nodeConfiguration.setNodeName(ENABLE_VS));
+
         nodeMainExecutor.execute(targetControlNode, nodeConfiguration.setNodeName(TARGET+"sub"));
+        nodeMainExecutor.execute(positionListenerNode, nodeConfiguration.setNodeName(POSITION+"sub"));
+        nodeMainExecutor.execute(rotationListenerNode, nodeConfiguration.setNodeName(ROTATION+"sub"));
     }
 }

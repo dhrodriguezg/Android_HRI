@@ -31,6 +31,7 @@ public class Float32Node implements NodeMain {
 
     private boolean alwaysPublish;
     private int maxPublishing = 0;
+    private long publishFreq = 10;
 
     private boolean hasReceivedMsg=false;
     private boolean hasPublishedMsg=false;
@@ -70,7 +71,7 @@ public class Float32Node implements NodeMain {
                     }
                     counter--;
                 }
-                Thread.sleep(10);
+                Thread.sleep(publishFreq);
             }
         };
         connectedNode.executeCancellableLoop(aLoop);
@@ -147,5 +148,13 @@ public class Float32Node implements NodeMain {
 
     public void setHasPublishedMsg(boolean hasPublishedMsg) {
         this.hasPublishedMsg = hasPublishedMsg;
+    }
+
+    public long getPublishFreq() {
+        return publishFreq;
+    }
+
+    public void setPublishFreq(long publishFreq) {
+        this.publishFreq = publishFreq;
     }
 }
