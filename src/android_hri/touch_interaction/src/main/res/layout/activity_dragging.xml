@@ -31,9 +31,8 @@
         android:text=""
         android:id="@+id/msgTextView"
         android:gravity="center_vertical|center_horizontal"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true" />
+        android:layout_below="@+id/textRotRoll"
+        android:layout_alignParentLeft="true" />
 
     <ToggleButton
         android:layout_width="wrap_content"
@@ -47,6 +46,32 @@
         android:checked="false"
         android:textStyle="bold"
         />
+
+    <TextView
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/textRotRoll"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Roll"
+        android:alpha="1.0"
+        android:background="#ff00ff00"
+        android:gravity="center_vertical|center_horizontal"
+        android:textColor="#ff000000"
+        android:layout_alignParentTop="true"
+        android:layout_alignLeft="@+id/emergencyButton" />
+
+    <TextView
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/textRotPitch"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Pitch"
+        android:alpha="0.1"
+        android:background="#ffff0000"
+        android:gravity="center_vertical|center_horizontal"
+        android:textColor="#ff000000"
+        android:layout_alignParentTop="true"
+        android:layout_alignRight="@+id/emergencyButton" />
 
 
 </RelativeLayout>

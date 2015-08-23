@@ -1,9 +1,15 @@
 package ualberta.cs.robotics.android_hri.touch_interaction;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
@@ -30,7 +36,7 @@ import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiTouch
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.gesture_detector.TwoFingerGestureDetector;
 
 
-public class DraggingActivity extends RosActivity {
+public class DraggingActivity extends RosActivity implements SensorEventListener {
 	
 	private static final String TAG = "DraggingActivity";
     private static final String STREAMING= "/image_converter/output_video/compressed";
@@ -38,10 +44,14 @@ public class DraggingActivity extends RosActivity {
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
     private static final String ENABLE_VS = "/android/enable_vs";
     private static final String TARGET_POINT="/android/target_point";
-    private static final String CONFIRM_TARGET="/android/target_confirm";
-    private static final String POSITION= "/android/position_abs";
-    private static final String ROTATION= "/android/rotation_abs";
+    private static final String ROTATION= "/android/rotation";
     private static final String GRASP="/android/grasping_abs";
+
+    private NodeMainExecutor nodeMain;
+
+    private static final float ROLL_THREASHOLD = 6.0f;
+    private static final float PITCH_THREASHOLD = 8.5f;
+    private static final float MAX_GRASP = 2.0f;
 
     private MultiTouchArea gestureHandler = null;
 
@@ -49,20 +59,21 @@ public class DraggingActivity extends RosActivity {
     private ImageView targetImage;
     private ImageView positionImage;
     private TextView msgText;
+    private TextView pitchText;
+    private TextView rollText;
 
     private PointNode targetPointNode;
     private Float32Node graspNode;
-    //private PointNode positionNode;
     private PointNode rotationNode;
-    //private BooleanNode confirmTargetNode;
     private BooleanNode emergencyNode;
     private BooleanNode vsNode;
 
     private String msg="";
-    private float target_x;
-    private float target_y;
     private boolean running = true;
     private boolean debug = true;
+
+    private SensorManager senSensorManager;
+    private Sensor senAccelerometer;
 
     public DraggingActivity() {
         super(TAG, TAG, URI.create(MainActivity.ROS_MASTER));
@@ -80,6 +91,8 @@ public class DraggingActivity extends RosActivity {
         targetImage = (ImageView) findViewById(R.id.targetView);
         positionImage = (ImageView) findViewById(R.id.positionView);
         msgText = (TextView) findViewById(R.id.msgTextView);
+        pitchText = (TextView) findViewById(R.id.textRotPitch);
+        rollText = (TextView) findViewById(R.id.textRotRoll);
 
         imageStream = (RosImageView<CompressedImage>) findViewById(R.id.imageViewCenter);
         if(debug)
@@ -106,7 +119,7 @@ public class DraggingActivity extends RosActivity {
         graspNode.setPublishFreq(500);
 
         rotationNode = new PointNode();
-        rotationNode.publishTo(ROTATION,false,10);
+        rotationNode.publishTo(ROTATION, false, 10);
 
         emergencyNode = new BooleanNode();
         emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
@@ -115,8 +128,13 @@ public class DraggingActivity extends RosActivity {
         //emergencyNode.publishNow();
 
         vsNode = new BooleanNode();
-        vsNode.publishTo(ENABLE_VS, false, 100);
-        vsNode.setPublish_bool(true);
+        vsNode.publishTo(ENABLE_VS, true, 0);
+        vsNode.setPublish_bool(false);
+
+        senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+
 
         ToggleButton emergencyStop = (ToggleButton)findViewById(R.id.emergencyButton) ;
         emergencyStop.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -126,22 +144,21 @@ public class DraggingActivity extends RosActivity {
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP ACTIVATED!", Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.RED);
                     emergencyNode.setPublish_bool(false);
-                    //emergencyNode.publishNow();
                 } else {
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP DEACTIVATED!", Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.GREEN);
                     emergencyNode.setPublish_bool(true);
-                    //emergencyNode.publishNow();
                 }
             }
         });
 
+        updateGrasping();
+        msg="";
         Thread threadGestures = new Thread(){
             public void run(){
                 while(running){
                     try {
                         TwoFingerGestureDetector.MAX_RESOLUTION=imageStream.getWidth();
-                        msg="";
                         updateTarget();
                         updateConfirmTarget();
                         updatePosition();
@@ -163,7 +180,6 @@ public class DraggingActivity extends RosActivity {
     public void onResume() {
         super.onResume();
         emergencyNode.setPublish_bool(true);
-        //emergencyNode.publishNow();
         running=true;
     }
     
@@ -171,14 +187,16 @@ public class DraggingActivity extends RosActivity {
     protected void onPause()
     {
         emergencyNode.setPublish_bool(false);
-        //emergencyNode.publishNow();
     	super.onPause();
     }
     
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        emergencyNode.setPublish_bool(false);
+        vsNode.setPublish_bool(false);
+        nodeMain.shutdown();
         running=false;
+        super.onDestroy();
     }
     
     @Override
@@ -209,10 +227,14 @@ public class DraggingActivity extends RosActivity {
             imageStream.getImageMatrix().invert(streamMatrix);
             streamMatrix.mapPoints(targetPixel, targetPoint);
 
-            target_x=targetPixel[0];
-            target_y=targetPixel[1];
+            if(!validTarget(targetPixel[0],targetPixel[1])){
+                gestureHandler.setLongClickX(0);
+                return;
+            }
             targetPointNode.getPublish_point()[0]=targetPixel[0];
             targetPointNode.getPublish_point()[1]=targetPixel[1];
+            vsNode.setPublish_bool(false);
+
             this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -222,14 +244,32 @@ public class DraggingActivity extends RosActivity {
                     positionImage.setAlpha(0.f);
                     positionImage.setX(0);
                     positionImage.setY(0);
-                    msg = "Target Selected";
+                    msg = String.format("Target (%d , %d) ",(int)targetPointNode.getPublish_point()[0],(int)targetPointNode.getPublish_point()[1]);
                 }
             });
+            gestureHandler.setLongClickX(0);
             if(!gestureHandler.isDetectingTwoFingerGesture()){
                 gestureHandler.setDoubleDragX(0);
-                //positionNode.getPublish_point()[0]=0;
-                //positionNode.getPublish_point()[1]=0;
             }
+        }
+    }
+
+    private void updateConfirmTarget(){
+        if(gestureHandler.getDoubleTapX()>0){
+            if(targetPointNode.getPublish_point()[0] > 1){
+                targetPointNode.publishNow();
+                vsNode.setPublish_bool(true);
+                msg = String.format("Going to target (%d , %d) ",(int)targetPointNode.getPublish_point()[0],(int)targetPointNode.getPublish_point()[1]);
+            }else{
+                this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(), "Select a target first! use Long Press.", Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+            gestureHandler.setDoubleTapX(0);
+            gestureHandler.setDoubleTapY(0);
         }
     }
 
@@ -246,13 +286,15 @@ public class DraggingActivity extends RosActivity {
             imageStream.getImageMatrix().invert(streamMatrix);
             streamMatrix.mapPoints(positionPixel, positionPoint);
 
+            if(!validTarget(positionPixel[0],positionPixel[1])){
+                gestureHandler.setDoubleDragX(0);
+                return;
+            }
+
             targetPointNode.getPublish_point()[0]=positionPixel[0];
             targetPointNode.getPublish_point()[1]=positionPixel[1];
             targetPointNode.publishNow();
             vsNode.setPublish_bool(true);
-            vsNode.publishNow();
-            //positionNode.getPublish_point()[0]=positionPixel[0];
-            //positionNode.getPublish_point()[1]=positionPixel[1];
             this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -263,70 +305,59 @@ public class DraggingActivity extends RosActivity {
                     targetImage.setAlpha(0.f);
                     targetImage.setX(0);
                     targetImage.setY(0);
-                    msg = "Position updated";
+                    msg = String.format("Moving to (%d , %d) ", (int) targetPointNode.getPublish_point()[0], (int) targetPointNode.getPublish_point()[1]);
                 }
             });
-            gestureHandler.setDoubleDragX(0); //to not publish all the time
+            gestureHandler.setDoubleDragX(0);
             gestureHandler.setLongClickX(0);
-            //targetPointNode.getPublish_point()[0]=0;
-            //targetPointNode.getPublish_point()[1]=0;
         }
-    }
-
-    private void updateConfirmTarget(){
-        if(gestureHandler.getDoubleTapX()>0){
-            if(gestureHandler.getLongClickX()>1){
-                //confirmTargetNode.setPublish_bool(true);
-                //confirmTargetNode.publishNow();
-                targetPointNode.publishNow();
-                vsNode.setPublish_bool(true);
-                vsNode.publishNow();
-                this.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(), "Going to coords: "+(int)targetPointNode.getPublish_point()[0]+","+(int)targetPointNode.getPublish_point()[1], Toast.LENGTH_LONG).show();
-                    }
-                });
-                //targetPointNode.getPublish_point()[0]=target_x;
-                //targetPointNode.getPublish_point()[1]=target_y;
-            }else{
-                this.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(), "Select a target first! use Long Press.", Toast.LENGTH_LONG).show();
-                    }
-                });
-            }
-            gestureHandler.setDoubleTapX(0);
-            gestureHandler.setDoubleTapY(0);
-        }
-    }
-
-    private void updateGrasping(){
-        float grasp = 3.2f*(TwoFingerGestureDetector.MAX_SCALE-gestureHandler.getScale())/(TwoFingerGestureDetector.MAX_SCALE-TwoFingerGestureDetector.MIN_SCALE);
-        graspNode.setPublish_float(grasp);
-        graspNode.publishNow();
-        vsNode.setPublish_bool(false);
-        vsNode.publishNow();
     }
 
     private void updateRotation(){
-        final float angle = gestureHandler.getAngle();
-        rotationNode.getPublish_point()[0]=angle;
-        rotationNode.getPublish_point()[1]=0; //TODO
-        rotationNode.publishNow();
-        vsNode.setPublish_bool(false);
-        vsNode.publishNow();
+        final float angle = gestureHandler.getAngle()*3.1416f/180f;
         if(!gestureHandler.isDetectingTwoFingerGesture()){
             gestureHandler.setAngle(0);
         }
         if(angle!=0){
-            msg="Rotating: "+angle;
+
+            if (rollText.getAlpha()>0.9f){
+                msg = String.format("Rotating Roll += %.2f ",angle);
+                rotationNode.getPublish_point()[0]=angle;
+                rotationNode.getPublish_point()[1]=0;
+
+            }else{
+                msg = String.format("Rotating Pitch += %.2f ",angle);
+                rotationNode.getPublish_point()[0]=0;
+                rotationNode.getPublish_point()[1]=angle;
+            }
             gestureHandler.setDoubleDragX(0);
-            targetPointNode.getPublish_point()[0]=0;
-            targetPointNode.getPublish_point()[1]=0;
+            rotationNode.publishNow();
+            vsNode.setPublish_bool(false);
+            this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    positionImage.setAlpha(0.0f);
+                    targetImage.setAlpha(0.0f);
+                }
+            });
         }
 
+    }
+
+    private void updateGrasping(){
+        float grasp = MAX_GRASP*(TwoFingerGestureDetector.MAX_SCALE-gestureHandler.getScale())/(TwoFingerGestureDetector.MAX_SCALE-TwoFingerGestureDetector.MIN_SCALE);
+        if(grasp!=graspNode.getPublish_float()){
+            graspNode.setPublish_float(grasp);
+            msg = String.format("Grasping = %.2f ",grasp);
+            this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    positionImage.setAlpha(0.0f);
+                    targetImage.setAlpha(0.0f);
+                }
+            });
+        }
+        graspNode.publishNow();
     }
 
     private void updateText(){
@@ -338,8 +369,45 @@ public class DraggingActivity extends RosActivity {
         });
     }
 
+    private boolean validTarget(float x, float y){
+        if (x < 0 || y < 0)
+            return false;
+        if (x > imageStream.getDrawable().getIntrinsicWidth() ||  y > imageStream.getDrawable().getIntrinsicHeight())
+            return false;
+        return true;
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+
+
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            float x = event.values[0];
+            float y = event.values[1];
+            float z = event.values[2];
+
+            z=y-1; //for testing with shield TODO
+            y=x-1;
+
+            if(Math.abs(y)>ROLL_THREASHOLD){
+                rollText.setAlpha(1.f);
+                pitchText.setAlpha(.1f);
+            }
+            if(Math.abs(z)>PITCH_THREASHOLD) {
+                rollText.setAlpha(.1f);
+                pitchText.setAlpha(1.f);
+            }
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+
     @Override
     protected void init(NodeMainExecutor nodeMainExecutor) {
+        nodeMain=nodeMainExecutor;
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
         nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING+"sub"));
 

@@ -21,7 +21,7 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     private static final int INVALID_POINTER_ID = -1;
     private static final int DRAGGING_THREASHOLD = 20;
     private static final int ROTATING_THREASHOLD = 10;
-    private static final int SCALING_THREASHOLD = 100;
+    private static final int FAST_SCALING_THREASHOLD = 200;
     public static float MAX_DRAGGING_DISTANCE=0.2f;
     public static float MAX_RESOLUTION=0;
 
@@ -42,6 +42,7 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
 
     private float initScale = mScale;
     private float endScale = mScale;
+    private float testScale = mScale;
     private long initTime=0;
     private long endTime=0;
 
@@ -102,8 +103,6 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
                     nsY = event.getY(event.findPointerIndex(ptrID1));
                     nfX = event.getX(event.findPointerIndex(ptrID2));
                     nfY = event.getY(event.findPointerIndex(ptrID2));
-
-
 
                     if(dragging){
                         mX=(nsX+nfX)/2; mY=(nsY+nfY)/2;
@@ -169,8 +168,9 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
         if(scaling) {
             initTime = detector.getEventTime();
             initScale = mScale;
-            rotating=false;
-            dragging=false;
+            testScale = 10.f;
+            //rotating=false;
+            //dragging=false;
         }
         return true;
     }
@@ -178,6 +178,11 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     @Override
     public boolean onScale(ScaleGestureDetector detector){
         if(scaling) {
+            testScale *= detector.getScaleFactor();
+            if(Math.abs(10.f-testScale) > 1.f){
+                rotating=false;
+                dragging=false;
+            }
             mScaleFocusX=detector.getFocusX();
             mScaleFocusY=detector.getFocusY();
             mScale *= detector.getScaleFactor();
@@ -193,7 +198,7 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
         if(scaling) {
             endTime=detector.getEventTime();
             endScale = mScale;
-            if( endTime-initTime < SCALING_THREASHOLD){
+            if( endTime-initTime < FAST_SCALING_THREASHOLD){
                 //Fast Pinch
                 if(endScale > initScale){
                     mScale =MAX_SCALE;

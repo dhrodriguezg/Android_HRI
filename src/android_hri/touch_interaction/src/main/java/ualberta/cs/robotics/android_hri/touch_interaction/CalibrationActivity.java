@@ -38,9 +38,9 @@ public class CalibrationActivity extends RosActivity {
     private static final String TARGET_POINT="/android/target_point";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
     private static final String ENABLE_VS = "/android/enable_vs";
-    private static final String START="/android/start_calibration";
     private static final String TRACKER_POINT ="/android/tracker_point";
-    private static final String CONFIRM_TRACKER ="/android/tracker_confirm";
+
+    private NodeMainExecutor nodeMain;
 
     private static final boolean debug = false;
     private MultiTouchArea dragHandler = null;
@@ -194,8 +194,11 @@ public class CalibrationActivity extends RosActivity {
     
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        emergencyNode.setPublish_bool(false);
+        vsNode.setPublish_bool(false);
+        nodeMain.shutdown();
         running=false;
+        super.onDestroy();
     }
     
     @Override
@@ -306,6 +309,7 @@ public class CalibrationActivity extends RosActivity {
 
     @Override
     protected void init(NodeMainExecutor nodeMainExecutor) {
+        nodeMain=nodeMainExecutor;
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
         nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING + "sub"));
 
