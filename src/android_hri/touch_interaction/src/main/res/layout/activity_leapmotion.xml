@@ -1,0 +1,118 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    tools:context=".DraggingActivity"
+    android:orientation="horizontal">
+
+    <org.ros.android.view.RosImageView
+        android:id="@+id/imageViewCenter"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent"
+        android:src="@raw/loading" />
+
+    <ImageView
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:src="@drawable/target_cool"
+        android:id="@+id/targetView"
+        android:alpha="0"/>
+
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@drawable/target"
+        android:id="@+id/positionView"
+        android:alpha="0" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:id="@+id/msgTextView"
+        android:layout_above="@+id/emergencyButton"
+        android:layout_alignParentTop="true"
+        android:gravity="start"
+        android:background="#ffffffff"
+        android:alpha="0.0"
+        android:textColor="#ff000000"
+        android:layout_alignRight="@+id/emergencyButton"
+        android:layout_alignParentLeft="true" />
+
+    <ToggleButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textOn="STOPING ROBOT"
+        android:textOff="EMERGENCY STOP"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:id="@+id/emergencyButton"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:checked="false"
+        android:textStyle="bold"
+        />
+    <ToggleButton
+        android:layout_width="110dp"
+        android:layout_height="wrap_content"
+        android:text="Select"
+        android:textOn="Select: ON"
+        android:textOff="Select:OFF"
+        android:id="@+id/selectButton"
+        android:checked="true"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true" />
+
+    <ToggleButton
+        android:layout_width="110dp"
+        android:layout_height="wrap_content"
+        android:text="Move"
+        android:textOn="Move: ON"
+        android:textOff="Move:OFF"
+        android:id="@+id/moveButton"
+        android:layout_above="@+id/emergencyButton"
+        android:layout_alignParentLeft="true"
+        android:checked="true" />
+
+    <ToggleButton
+        android:layout_width="110dp"
+        android:layout_height="wrap_content"
+        android:text="Rotate"
+        android:textOn="Rotate: ON"
+        android:textOff="Rotate:OFF"
+        android:id="@+id/rotateButton"
+        android:layout_above="@+id/moveButton"
+        android:layout_alignParentLeft="true"
+        android:checked="true" />
+
+    <ToggleButton
+        android:layout_width="110dp"
+        android:layout_height="wrap_content"
+        android:text="Grasping"
+        android:textOn="Grasp: ON"
+        android:textOff="Grasp:OFF"
+        android:id="@+id/graspButton"
+        android:layout_above="@+id/rotateButton"
+        android:layout_alignParentLeft="true"
+        android:checked="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Status: "
+        android:id="@+id/textView"
+        android:layout_alignParentTop="true"
+        android:layout_alignLeft="@+id/emergencyButton" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:id="@+id/statusView"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/textView"
+        android:layout_alignRight="@+id/emergencyButton"
+        android:background="#ffff0000"
+        android:text="No Hands!"
+        android:gravity="center_vertical|center_horizontal" />
+
+</RelativeLayout>

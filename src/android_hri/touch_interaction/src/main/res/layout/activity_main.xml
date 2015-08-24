@@ -136,7 +136,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
                 android:textAppearance="?android:attr/textAppearanceLarge"
-                android:text="(TOP SECRET)"
+                android:text="Leap Motion"
                 android:id="@+id/textViewMotion"
                 android:layout_weight="1"
                 android:layout_gravity="center" />

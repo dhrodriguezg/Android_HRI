@@ -63,7 +63,7 @@ public class MainActivity extends ActionBarActivity {
             @Override
             public void onClick(View v) {
                 if (isMasterValid()){
-                    Intent myIntent = new Intent(MainActivity.this, LeapActivity.class);
+                    Intent myIntent = new Intent(MainActivity.this, LeapMotionActivity.class);
                     MainActivity.this.startActivity(myIntent);
                 }
             }
