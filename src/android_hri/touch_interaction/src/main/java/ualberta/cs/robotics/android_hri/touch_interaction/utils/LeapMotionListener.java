@@ -107,7 +107,7 @@ public class LeapMotionListener extends Listener {
             position.setZ(MAX_POS_Z);
         else if(position.getZ() < MIN_POS_Z)
             position.setZ(MIN_POS_Z);
-        mListener.onMove(1 - position.getX() / MAX_POS_X, 1 - position.getY() / MAX_POS_Y, 1 + position.getZ() / MAX_POS_Z); //values from 0 to 2...
+        mListener.onMove(1 + position.getX() / MAX_POS_X, 1 - position.getY() / MAX_POS_Y, 1 + position.getZ() / MAX_POS_Z); //values from 0 to 2...
 
         float radius = hand.sphereRadius();
         if (radius > MAX_GRAP)
@@ -137,7 +137,7 @@ public class LeapMotionListener extends Listener {
                 else if(indexTip.getZ() < MIN_POS_Z)
                     indexTip.setZ(MIN_POS_Z);
 
-                mListener.onSelect(1 - indexTip.getX() / MAX_POS_X, 1 - indexTip.getY() / MAX_POS_Y, 1 + indexTip.getZ() / MAX_POS_Z); //values from 0 to 2...
+                mListener.onSelect(1 + indexTip.getX() / MAX_POS_X, 1 - indexTip.getY() / MAX_POS_Y, 1 + indexTip.getZ() / MAX_POS_Z); //values from 0 to 2...
             }
         }
     }

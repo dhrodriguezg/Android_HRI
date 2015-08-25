@@ -42,9 +42,9 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
     private static final String STREAMING= "/image_converter/output_video/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
-    private static final String ENABLE_VS = "/android/enable_vs";
     private static final String TARGET_POINT="/android/target_point";
-    private static final String ROTATION= "/android/rotation";
+    private static final String ENABLE_VS = "/android/enable_vs";
+    private static final String ROTATION= "/android/rotation_rel";
     private static final String GRASP="/android/grasping_abs";
 
     private NodeMainExecutor nodeMain;

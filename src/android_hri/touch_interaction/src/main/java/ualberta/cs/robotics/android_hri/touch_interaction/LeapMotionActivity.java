@@ -35,12 +35,13 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
 	private static final String TAG = "LeapMotionActivity";
     private static final String STREAMING= "/image_converter/output_video/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
-    private static final String STRING_LOG = "/android/log";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
     private static final String ENABLE_VS = "/android/enable_vs";
+    private static final String STRING_LOG = "/android/log";
     private static final String TARGET_POINT="/android/target_point";
     private static final String ROTATION= "/android/rotation_abs";
     private static final String GRASP="/android/grasping_abs";
+
 
     private NodeMainExecutor nodeMain;
     private Controller mController;

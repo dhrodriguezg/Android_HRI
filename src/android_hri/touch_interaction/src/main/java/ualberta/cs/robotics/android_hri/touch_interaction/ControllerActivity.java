@@ -40,8 +40,8 @@ public class ControllerActivity extends RosActivity {
     private static final String STREAMING= "/camera/rgb/image_raw/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
-    private static final String ENABLE_VS = "/android/enable_vs";
     private static final String TARGET_POINT="/android/target_point";
+    private static final String ENABLE_VS = "/android/enable_vs";
     private static final String POSITION= "/android/joystick_position";
     private static final String ROTATION= "/android/joystick_rotation";
     private static final String GRASP="/android/grasping_rel";
@@ -98,7 +98,7 @@ public class ControllerActivity extends RosActivity {
         rotationListenerNode.subscribeTo(ROTATION + "/cmd_vel");
 
         graspNode = new Float32Node();
-        graspNode.setPublishFreq(250);
+        graspNode.setPublishFreq(500);
         graspNode.publishTo(GRASP, true, 0);
 
         targetPointNode = new PointNode();
