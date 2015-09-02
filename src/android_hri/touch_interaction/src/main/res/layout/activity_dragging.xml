@@ -8,7 +8,7 @@
         android:id="@+id/imageViewCenter"
         android:layout_height="match_parent"
         android:layout_width="match_parent"
-        android:src="@raw/loading" />
+        android:src="@drawable/loading" />
 
     <ImageView
         android:layout_width="100dp"
@@ -63,9 +63,9 @@
     <TextView
         android:layout_width="60dp"
         android:layout_height="wrap_content"
-        android:id="@+id/textRotPitch"
+        android:id="@+id/textRotJaw"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Pitch"
+        android:text="Jaw"
         android:alpha="0.1"
         android:background="#ffff0000"
         android:gravity="center_vertical|center_horizontal"

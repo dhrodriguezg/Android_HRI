@@ -1,11 +1,4 @@
 package ualberta.cs.robotics.android_hri.touch_interaction.utils;
-/******************************************************************************\
-* Copyright (C) 2012-2013 Leap Motion, Inc. All rights reserved.               *
-* Leap Motion proprietary and confidential. Not for distribution.              *
-* Use subject to the terms of the Leap Motion SDK Agreement available at       *
-* https://developer.leapmotion.com/sdk_agreement, or another agreement         *
-* between Leap Motion and you, your company or other organization.             *
-\******************************************************************************/
 
 import android.app.Activity;
 import android.util.Log;
@@ -30,6 +23,7 @@ public class LeapMotionListener extends Listener {
     private static final float MAX_POS_Z =  200;
     private static final float MIN_GRAP =  30;
     private static final float MAX_GRAP =  60;
+    private static final float OPEN_THRESHOLD =  0.1875f;
 
     private LeapMotionFrameListener mListener;
     private Activity mActivity;
@@ -72,7 +66,6 @@ public class LeapMotionListener extends Listener {
             mCount = 0;
             mPrevTimeStamp = frame.timestamp();
         }
-        //logic for left hand;
 
         if (!frame.hands().isEmpty()) {
             mListener.onHands(true);
@@ -84,7 +77,7 @@ public class LeapMotionListener extends Listener {
                 else if(hand.isLeft())
                     leftHand(hand, msg);
             }
-            //mListener.onUpdateMsg(msg.toString());
+            mListener.onUpdateMsg(msg.toString());
         }else{
             mListener.onHands(false);
         }
@@ -92,22 +85,12 @@ public class LeapMotionListener extends Listener {
 
     private void rightHand(Hand hand, StringBuffer msg){
 
-        Vector position = new Vector(hand.palmPosition());
-        if(position.getX() > MAX_POS_X)
-            position.setX(MAX_POS_X);
-        else if(position.getX() < MIN_POS_X)
-            position.setX(MIN_POS_X);
+        Vector[] rightPositions = extractPositions(hand,msg);
+        if (rightPositions==null)
+            return;
 
-        if(position.getY() > MAX_POS_Y)
-            position.setY(MAX_POS_Y);
-        else if(position.getY() < MIN_POS_Y)
-            position.setY(MIN_POS_Y);
-
-        if(position.getZ() > MAX_POS_Z)
-            position.setZ(MAX_POS_Z);
-        else if(position.getZ() < MIN_POS_Z)
-            position.setZ(MIN_POS_Z);
-        mListener.onMove(1 + position.getX() / MAX_POS_X, 1 - position.getY() / MAX_POS_Y, 1 + position.getZ() / MAX_POS_Z); //values from 0 to 2...
+        mListener.onMove(rightPositions[0].getX(), rightPositions[0].getY(), rightPositions[0].getZ());
+        mListener.onSelect(rightPositions[1].getX(), rightPositions[1].getY(), rightPositions[1].getZ());
 
         float radius = hand.sphereRadius();
         if (radius > MAX_GRAP)
@@ -119,30 +102,72 @@ public class LeapMotionListener extends Listener {
         Vector handNormal = hand.palmNormal();
         mListener.onRotate( toRadians(handNormal.getY()), toRadians(handNormal.getX()), toRadians(handNormal.getZ()));
 
-        for (Finger finger : hand.fingers()){
-            if (finger.type().equals(Finger.Type.TYPE_INDEX)){
-                Vector indexTip = finger.tipPosition();
-                if(indexTip.getX() > MAX_POS_X)
-                    indexTip.setX(MAX_POS_X);
-                else if(indexTip.getX() < MIN_POS_X)
-                    indexTip.setX(MIN_POS_X);
-
-                if(indexTip.getY() > MAX_POS_Y)
-                    indexTip.setY(MAX_POS_Y);
-                else if(indexTip.getY() < MIN_POS_Y)
-                    indexTip.setY(MIN_POS_Y);
-
-                if(indexTip.getZ() > MAX_POS_Z)
-                    indexTip.setZ(MAX_POS_Z);
-                else if(indexTip.getZ() < MIN_POS_Z)
-                    indexTip.setZ(MIN_POS_Z);
-
-                mListener.onSelect(1 + indexTip.getX() / MAX_POS_X, 1 - indexTip.getY() / MAX_POS_Y, 1 + indexTip.getZ() / MAX_POS_Z); //values from 0 to 2...
-            }
-        }
+        mListener.onMoveRightHand(rightPositions);
     }
 
     private void leftHand(Hand hand, StringBuffer msg){
+
+        Vector[] leftPositions = extractPositions(hand, msg);
+        if (leftPositions==null)
+            return;
+
+        mListener.onMoveLeftHand(leftPositions);
+
+        Vector palm = leftPositions[0];
+
+        double indexLenght=Math.hypot( leftPositions[0].getX()-leftPositions[1].getX() , leftPositions[0].getY()-leftPositions[1].getY() );
+        indexLenght = Math.hypot( indexLenght , leftPositions[0].getZ()-leftPositions[1].getZ() );
+
+        double middleLenght=Math.hypot( leftPositions[0].getX()-leftPositions[2].getX() , leftPositions[0].getY()-leftPositions[2].getY() );
+        middleLenght = Math.hypot( middleLenght , leftPositions[0].getZ()-leftPositions[2].getZ() );
+
+        double ringLenght=Math.hypot( leftPositions[0].getX()-leftPositions[3].getX() , leftPositions[0].getY()-leftPositions[3].getY() );
+        ringLenght = Math.hypot( ringLenght , leftPositions[0].getZ()-leftPositions[3].getZ() );
+
+        double pinkyLenght=Math.hypot(leftPositions[0].getX() - leftPositions[4].getX(), leftPositions[0].getY() - leftPositions[4].getY());
+        pinkyLenght = Math.hypot( pinkyLenght , leftPositions[0].getZ()-leftPositions[4].getZ() );
+
+        double thumbLenght=Math.hypot(leftPositions[0].getX() - leftPositions[5].getX(), leftPositions[0].getY() - leftPositions[5].getY());
+        thumbLenght = Math.hypot( thumbLenght , leftPositions[0].getZ()-leftPositions[5].getZ() );
+
+        boolean isIndex = indexLenght > OPEN_THRESHOLD;
+        boolean isMiddle = middleLenght > OPEN_THRESHOLD;
+        boolean isRing = ringLenght > OPEN_THRESHOLD;
+        boolean isPinky = pinkyLenght > OPEN_THRESHOLD;
+        boolean isThumb = thumbLenght > OPEN_THRESHOLD;
+
+        if(isIndex && isMiddle && isRing && isPinky && isThumb){
+            return; //nothing just the hand open...
+        }
+
+        if(isThumb){
+            mListener.onTask(0);//thats to confirm.
+            return;
+        }
+
+        if(isIndex && isMiddle && isRing && isPinky){
+            mListener.onTask(4);
+            return;
+        }
+
+        if(isIndex && isMiddle && isRing){
+            mListener.onTask(3);
+            return;
+        }
+
+        if(isIndex && isMiddle){
+            mListener.onTask(2);
+            return;
+        }
+
+        if(isIndex){
+            mListener.onTask(1);
+            return;
+        }
+
+        mListener.onTask(5);
+
+        /*
         msg.append(String.format("\n    LeftHand Pos: (%.2f, %.2f, %.2f) ", hand.palmPosition().getX(), hand.palmPosition().getY(), hand.palmPosition().getZ()));
         msg.append(String.format("\n             Dir: (%.2f, %.2f, %.2f) ", hand.palmNormal().getX(), hand.palmNormal().getY(), hand.palmNormal().getZ()));
 
@@ -159,6 +184,53 @@ public class LeapMotionListener extends Listener {
             avgPos = avgPos.divide(fingers.count());
             msg.append(String.format("\n    AvgFinger (%.2f, %.2f, %.2f) ", avgPos.getX(), avgPos.getY(), avgPos.getZ()));
         }
+        */
+    }
+
+    private Vector[] extractPositions(Hand hand, StringBuffer msg){
+        int numFingers=0;
+        Vector[] positions = new Vector[6];
+        positions[0] = applyPositionLimits( new Vector(hand.palmPosition()) ); //palm -> 0;
+
+        msg.append(String.format("\n PalmPos: (%.2f, %.2f, %.2f) ", hand.palmPosition().getX(), hand.palmPosition().getY(), hand.palmPosition().getZ()));
+
+        FingerList fingers = hand.fingers();
+
+        for (Finger finger : fingers) {
+            numFingers++;
+            msg.append(String.format("\n   FingerPos: (%.2f, %.2f, %.2f) ", finger.tipPosition().getX(), finger.tipPosition().getY(), finger.tipPosition().getZ()));
+            if (finger.type().equals(Finger.Type.TYPE_INDEX)){
+                positions[1] = applyPositionLimits( new Vector(finger.tipPosition()) ); //index -> 1;
+            } else if(finger.type().equals(Finger.Type.TYPE_MIDDLE)){
+                positions[2] = applyPositionLimits( new Vector(finger.tipPosition()) ); //middle -> 2;
+            } else if(finger.type().equals(Finger.Type.TYPE_RING)){
+                positions[3] = applyPositionLimits( new Vector(finger.tipPosition()) ); //ring -> 3;
+            } else if(finger.type().equals(Finger.Type.TYPE_PINKY)){
+                positions[4] = applyPositionLimits( new Vector(finger.tipPosition()) ); //pinky -> 4;
+            }else if(finger.type().equals(Finger.Type.TYPE_THUMB)){
+                positions[5] = applyPositionLimits( new Vector(finger.tipPosition()) ); //thumb -> 5;
+            }
+        }
+
+        if(numFingers<5)
+            return null;
+        return positions;
+    }
+
+    private Vector applyPositionLimits(Vector position){
+        if(position.getX() > MAX_POS_X)
+            position.setX(MAX_POS_X);
+        else if(position.getX() < MIN_POS_X)
+            position.setX(MIN_POS_X);
+        if(position.getY() > MAX_POS_Y)
+            position.setY(MAX_POS_Y);
+        else if(position.getY() < MIN_POS_Y)
+            position.setY(MIN_POS_Y);
+        if(position.getZ() > MAX_POS_Z)
+            position.setZ(MAX_POS_Z);
+        else if(position.getZ() < MIN_POS_Z)
+            position.setZ(MIN_POS_Z);
+        return new Vector( (1 + position.getX() / MAX_POS_X)/2f, (1 - position.getY() / MAX_POS_Y)/2f, (1 + position.getZ() / MAX_POS_Z)/2); //values from 0 to 1
     }
 
     private float toRadians(float dir){
@@ -171,6 +243,11 @@ public class LeapMotionListener extends Listener {
         public void onMove(float x, float y, float z);
         public void onRotate(float x, float y, float z);
         public void onGrasping(float g);
+
+        public void onTask(int task);
+
         public void onUpdateMsg(String msg);
+        public void onMoveLeftHand(Vector[] positions);
+        public void onMoveRightHand(Vector[] positions);
     }
 }

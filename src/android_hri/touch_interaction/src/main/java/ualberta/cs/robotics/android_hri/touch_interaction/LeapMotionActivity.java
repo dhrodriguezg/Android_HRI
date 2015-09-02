@@ -3,6 +3,7 @@ package ualberta.cs.robotics.android_hri.touch_interaction;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.WindowManager;
@@ -13,6 +14,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.leapmotion.leap.Controller;
+import com.leapmotion.leap.Vector;
 
 import org.ros.address.InetAddressFactory;
 import org.ros.android.BitmapFromCompressedImage;
@@ -58,8 +60,6 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
     private RosImageView<CompressedImage> imageStream;
     private TextView msgText;
     private TextView statusText;
-    private ImageView targetImage;
-    private ImageView positionImage;
 
     private PointNode targetPointNode;
     private Float32Node graspNode;
@@ -67,6 +67,22 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
     private StringNode stringNode;
     private BooleanNode emergencyNode;
     private BooleanNode vsNode;
+
+    //left hand
+    private ImageView leftHand;
+    private ImageView leftIndex;
+    private ImageView leftMiddle;
+    private ImageView leftRing;
+    private ImageView leftPinky;
+    private ImageView leftThumb;
+
+    //right hand
+    private ImageView rightHand;
+    private ImageView rightIndex;
+    private ImageView rightMiddle;
+    private ImageView rightRing;
+    private ImageView rightPinky;
+    private ImageView rightThumb;
 
     private String msg="";
     private boolean running = true;
@@ -86,8 +102,19 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
         setContentView(R.layout.activity_leapmotion);
 
         msgText = (TextView) findViewById(R.id.msgTextView);
-        targetImage = (ImageView) findViewById(R.id.targetView);
-        positionImage = (ImageView) findViewById(R.id.positionView);
+
+        leftHand = (ImageView) findViewById(R.id.leftHand);
+        leftIndex = (ImageView) findViewById(R.id.leftIndexFinger);
+        leftMiddle = (ImageView) findViewById(R.id.leftMiddleFinger);
+        leftRing = (ImageView) findViewById(R.id.leftRingFinger);
+        leftPinky = (ImageView) findViewById(R.id.leftPinkyFinger);
+        leftThumb = (ImageView) findViewById(R.id.leftThumbFinger);
+        rightHand = (ImageView) findViewById(R.id.rightHand);
+        rightIndex = (ImageView) findViewById(R.id.rightIndexFinger);
+        rightMiddle = (ImageView) findViewById(R.id.rightMiddleFinger);
+        rightRing = (ImageView) findViewById(R.id.rightRingFinger);
+        rightPinky = (ImageView) findViewById(R.id.rightPinkyFinger);
+        rightThumb = (ImageView) findViewById(R.id.rightThumbFinger);
 
         imageStream = (RosImageView<CompressedImage>) findViewById(R.id.imageViewCenter);
         if(debug)
@@ -267,14 +294,14 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
         float yt=imageStream.getDrawable().getIntrinsicHeight()*z/2f;
         //targetPointNode.publishNow(); //TODO
         float[] point = calculatePoint(xt, yt);
-        final float xm = point[0] - targetImage.getWidth()/2;
-        final float ym = point[1] - targetImage.getHeight()/2;
+        final float xm = point[0] - rightIndex.getWidth()/2;
+        final float ym = point[1] - rightIndex.getHeight()/2;
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                targetImage.setX(xm);
-                targetImage.setY(ym);
-                targetImage.setAlpha(1.0f);
+                rightIndex.setX(xm);
+                rightIndex.setY(ym);
+                rightIndex.setAlpha(1.0f);
                 //positionImage.setAlpha(0.f);
             }
         });
@@ -289,14 +316,14 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
         targetPointNode.getPublish_point()[1]=imageStream.getDrawable().getIntrinsicHeight()*z/2f;
         targetPointNode.publishNow();
         float[] point = calculatePoint(targetPointNode.getPublish_point()[0],targetPointNode.getPublish_point()[1]);
-        final float xm = point[0] - positionImage.getWidth()/2;
-        final float ym = point[1] - positionImage.getHeight()/2;
+        final float xm = point[0] - rightHand.getWidth()/2;
+        final float ym = point[1] - rightHand.getHeight()/2;
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                positionImage.setX(xm);
-                positionImage.setY(ym);
-                positionImage.setAlpha(0.4f);
+                rightHand.setX(xm);
+                rightHand.setY(ym);
+                rightHand.setAlpha(0.4f);
                 //targetImage.setAlpha(0.f);
             }
         });
@@ -322,6 +349,52 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
     }
 
     @Override
+    public void onTask(final int task) {
+        if(task<0)
+            return;
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                switch (task){
+                    case 0: //palm
+                        imageStream.setBackgroundColor(Color.GREEN);
+                        break;
+                    case 1:
+                        selectButton.setChecked(true);
+                        moveButton.setChecked(false);
+                        rotateButton.setChecked(false);
+                        graspButton.setChecked(false);
+                        break;
+                    case 2:
+                        moveButton.setChecked(true);
+                        selectButton.setChecked(false);
+                        rotateButton.setChecked(false);
+                        graspButton.setChecked(false);
+                        break;
+                    case 3:
+                        rotateButton.setChecked(true);
+                        selectButton.setChecked(false);
+                        moveButton.setChecked(false);
+                        graspButton.setChecked(false);
+                        break;
+                    case 4:
+                        graspButton.setChecked(true);
+                        selectButton.setChecked(false);
+                        moveButton.setChecked(false);
+                        rotateButton.setChecked(false);
+                        break;
+                    case 5:
+                        imageStream.setBackgroundColor(Color.WHITE);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+
+    }
+
+    @Override
     public void onUpdateMsg(final String msg) {
         stringNode.setPublish_string(msg);
         stringNode.publishNow();
@@ -333,6 +406,107 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
                 //msgText.setAlpha(0.5f);
             }
         });
+    }
+
+    @Override
+    public void onMoveLeftHand(final Vector[] positions) {
+        if(!debug)
+            return;
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                int counter=0;
+                for(Vector position : positions){
+                    float[] point = calculatePoint(imageStream.getDrawable().getIntrinsicWidth() * position.getX() , imageStream.getDrawable().getIntrinsicHeight() * position.getZ() );
+                    switch (counter){
+                        case 0: //palm
+                            leftHand.setX(point[0] - leftHand.getWidth()/2);
+                            leftHand.setY(point[1] - leftHand.getHeight()/2);
+                            leftHand.setAlpha(0.4f);
+                            break;
+                        case 1: //index
+                            leftIndex.setX(point[0] - leftIndex.getWidth()/2);
+                            leftIndex.setY(point[1] - leftIndex.getHeight()/2);
+                            leftIndex.setAlpha(0.4f);
+                            break;
+                        case 2: //middle
+                            leftMiddle.setX(point[0] - leftMiddle.getWidth()/2);
+                            leftMiddle.setY(point[1] - leftMiddle.getHeight()/2);
+                            leftMiddle.setAlpha(0.4f);
+                            break;
+                        case 3: //ring
+                            leftRing.setX(point[0] - leftRing.getWidth()/2);
+                            leftRing.setY(point[1] - leftRing.getHeight()/2);
+                            leftRing.setAlpha(0.4f);
+                            break;
+                        case 4: //pinky
+                            leftPinky.setX(point[0] - leftPinky.getWidth()/2);
+                            leftPinky.setY(point[1] - leftPinky.getHeight()/2);
+                            leftPinky.setAlpha(0.4f);
+                            break;
+                        case 5: //thumb
+                            leftThumb.setX(point[0] - leftThumb.getWidth()/2);
+                            leftThumb.setY(point[1] - leftThumb.getHeight()/2);
+                            leftThumb.setAlpha(0.4f);
+                            break;
+                        default:
+                            break;
+                    }
+                    counter++;
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onMoveRightHand(final Vector[] positions) {
+        if(!debug)
+            return;
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                int counter=0;
+                for(Vector position : positions){
+                    float[] point = calculatePoint(imageStream.getDrawable().getIntrinsicWidth() * position.getX() , imageStream.getDrawable().getIntrinsicHeight() * position.getZ() );
+                    switch (counter){
+                        case 0: //palm
+                            rightHand.setX(point[0] - rightHand.getWidth()/2);
+                            rightHand.setY(point[1] - rightHand.getHeight()/2);
+                            rightHand.setAlpha(0.4f);
+                            break;
+                        case 1: //index
+                            rightIndex.setX(point[0] - rightIndex.getWidth()/2);
+                            rightIndex.setY(point[1] - rightIndex.getHeight()/2);
+                            rightIndex.setAlpha(0.4f);
+                            break;
+                        case 2: //middle
+                            rightMiddle.setX(point[0] - rightMiddle.getWidth()/2);
+                            rightMiddle.setY(point[1] - rightMiddle.getHeight()/2);
+                            rightMiddle.setAlpha(0.4f);
+                            break;
+                        case 3: //ring
+                            rightRing.setX(point[0] - rightRing.getWidth()/2);
+                            rightRing.setY(point[1] - rightRing.getHeight()/2);
+                            rightRing.setAlpha(0.4f);
+                            break;
+                        case 4: //pinky
+                            rightPinky.setX(point[0] - rightPinky.getWidth()/2);
+                            rightPinky.setY(point[1] - rightPinky.getHeight()/2);
+                            rightPinky.setAlpha(0.4f);
+                            break;
+                        case 5: //thumb
+                            rightThumb.setX(point[0] - rightThumb.getWidth()/2);
+                            rightThumb.setY(point[1] - rightThumb.getHeight()/2);
+                            rightThumb.setAlpha(0.4f);
+                            break;
+                        default:
+                            break;
+                    }
+                    counter++;
+                }
+            }
+        });
+
     }
 
     private float[] calculatePoint(float x, float y){

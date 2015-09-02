@@ -8,6 +8,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -17,6 +18,9 @@ public class MainActivity extends ActionBarActivity {
     public static String ROS_MASTER = "";
     private EditText rosIP;
     private EditText rosPort;
+    private ImageView interface_1;
+    private ImageView interface_2;
+    private ImageView interface_3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,15 +28,16 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
         rosIP = (EditText) findViewById(R.id.editIP);
         rosPort = (EditText) findViewById(R.id.editPort);
+        interface_1 = (ImageView) findViewById(R.id.imageViewPreviewController);
+        interface_2 = (ImageView) findViewById(R.id.imageViewPreviewDragging);
+        interface_3 = (ImageView) findViewById(R.id.imageViewPreviewLeapMotion);
+
 
         Button calibrationButton = (Button) findViewById(R.id.calibrationButton);
         calibrationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isMasterValid()){
-                    Intent myIntent = new Intent(MainActivity.this, CalibrationActivity.class);
-                    MainActivity.this.startActivity(myIntent);
-                }
+                startCalibrationActivity();
             }
         });
 
@@ -40,10 +45,13 @@ public class MainActivity extends ActionBarActivity {
         controllerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isMasterValid()){
-                    Intent myIntent = new Intent(MainActivity.this, ControllerActivity.class);
-                    MainActivity.this.startActivity(myIntent);
-                }
+                startControllerActivity();
+            }
+        });
+        interface_1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startControllerActivity();
             }
         });
 
@@ -51,25 +59,29 @@ public class MainActivity extends ActionBarActivity {
         draggingButton.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick( View v ) {
-                if (isMasterValid()){
-                    Intent myIntent = new Intent(MainActivity.this, DraggingActivity.class);
-                    MainActivity.this.startActivity(myIntent);
-                }
+                startDraggingActivity();
+            }
+        });
+        interface_2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startDraggingActivity();
             }
         });
 
-        Button leapButton = (Button) findViewById(R.id.motionButton);
+        Button leapButton = (Button) findViewById(R.id.leapMotionButton);
         leapButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isMasterValid()){
-                    Intent myIntent = new Intent(MainActivity.this, LeapMotionActivity.class);
-                    MainActivity.this.startActivity(myIntent);
-                }
+                startLeapMotionActivity();
             }
         });
-
-
+        interface_3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startLeapMotionActivity();
+            }
+        });
 
     }
 
@@ -93,6 +105,34 @@ public class MainActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void startCalibrationActivity(){
+        if (isMasterValid()){
+            Intent myIntent = new Intent(MainActivity.this, CalibrationActivity.class);
+            MainActivity.this.startActivity(myIntent);
+        }
+    }
+
+    private void startControllerActivity(){
+        if (isMasterValid()){
+            Intent myIntent = new Intent(MainActivity.this, ControllerActivity.class);
+            MainActivity.this.startActivity(myIntent);
+        }
+    }
+
+    private void startDraggingActivity(){
+        if (isMasterValid()){
+            Intent myIntent = new Intent(MainActivity.this, DraggingActivity.class);
+            MainActivity.this.startActivity(myIntent);
+        }
+    }
+
+    private void startLeapMotionActivity(){
+        if (isMasterValid()){
+            Intent myIntent = new Intent(MainActivity.this, LeapMotionActivity.class);
+            MainActivity.this.startActivity(myIntent);
+        }
     }
 
     private boolean isMasterValid(){

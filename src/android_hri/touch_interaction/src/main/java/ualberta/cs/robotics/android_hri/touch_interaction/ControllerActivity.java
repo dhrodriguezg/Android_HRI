@@ -237,7 +237,7 @@ public class ControllerActivity extends RosActivity {
         }
     }
 
-    private void updateSlider(){
+    private void updateSlider() {
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -253,9 +253,9 @@ public class ControllerActivity extends RosActivity {
         });
     }
 
-    private void updateTarget(){
+    private void updateTarget() {
 
-        if(targetControlNode.hasReceivedMsg()){
+        if(targetControlNode.hasReceivedMsg()) {
             targetImage.setAlpha(1.0f);
         }
 
@@ -285,7 +285,7 @@ public class ControllerActivity extends RosActivity {
         });
     }
 
-    private boolean validTarget(float x, float y){
+    private boolean validTarget(float x, float y) {
         if (x < 0 || y < 0)
             return false;
         if (x > imageStream.getDrawable().getIntrinsicWidth() ||  y > imageStream.getDrawable().getIntrinsicHeight())

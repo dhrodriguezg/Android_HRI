@@ -185,8 +185,7 @@ public class CalibrationActivity extends RosActivity {
     }
     
     @Override
-    protected void onPause()
-    {
+    protected void onPause() {
     	super.onPause();
         emergencyNode.setPublish_bool(false);
         vsNode.setPublish_bool(false);
@@ -215,7 +214,7 @@ public class CalibrationActivity extends RosActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void updateTarget(){
+    public void updateTarget() {
 
         this.runOnUiThread(new Runnable() {
             @Override

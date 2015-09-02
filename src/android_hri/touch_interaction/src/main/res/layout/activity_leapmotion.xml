@@ -8,21 +8,7 @@
         android:id="@+id/imageViewCenter"
         android:layout_height="match_parent"
         android:layout_width="match_parent"
-        android:src="@raw/loading" />
-
-    <ImageView
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:src="@drawable/target_cool"
-        android:id="@+id/targetView"
-        android:alpha="0"/>
-
-    <ImageView
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:src="@drawable/target"
-        android:id="@+id/positionView"
-        android:alpha="0" />
+        android:src="@drawable/loading" />
 
     <TextView
         android:layout_width="match_parent"
@@ -57,7 +43,7 @@
         android:textOn="Select: ON"
         android:textOff="Select:OFF"
         android:id="@+id/selectButton"
-        android:checked="true"
+        android:checked="false"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true" />
 
@@ -70,7 +56,7 @@
         android:id="@+id/moveButton"
         android:layout_above="@+id/emergencyButton"
         android:layout_alignParentLeft="true"
-        android:checked="true" />
+        android:checked="false" />
 
     <ToggleButton
         android:layout_width="110dp"
@@ -81,7 +67,7 @@
         android:id="@+id/rotateButton"
         android:layout_above="@+id/moveButton"
         android:layout_alignParentLeft="true"
-        android:checked="true" />
+        android:checked="false" />
 
     <ToggleButton
         android:layout_width="110dp"
@@ -92,7 +78,7 @@
         android:id="@+id/graspButton"
         android:layout_above="@+id/rotateButton"
         android:layout_alignParentLeft="true"
-        android:checked="true" />
+        android:checked="false" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -114,5 +100,91 @@
         android:background="#ffff0000"
         android:text="No Hands!"
         android:gravity="center_vertical|center_horizontal" />
+
+
+    <ImageView
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:src="@drawable/finger_index"
+        android:id="@+id/leftIndexFinger"
+        android:alpha="0"/>
+
+    <ImageView
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:src="@drawable/finger_middle"
+        android:id="@+id/leftMiddleFinger"
+        android:alpha="0"/>
+
+    <ImageView
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:src="@drawable/finger_ring"
+        android:id="@+id/leftRingFinger"
+        android:alpha="0"/>
+
+    <ImageView
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:src="@drawable/finger_pinky"
+        android:id="@+id/leftPinkyFinger"
+        android:alpha="0"/>
+
+    <ImageView
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:src="@drawable/finger_thumb"
+        android:id="@+id/leftThumbFinger"
+        android:alpha="0"/>
+
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/hand_left"
+        android:id="@+id/leftHand"
+        android:alpha="0" />
+
+    <ImageView
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:src="@drawable/finger_index"
+        android:id="@+id/rightIndexFinger"
+        android:alpha="0"/>
+
+    <ImageView
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:src="@drawable/finger_middle"
+        android:id="@+id/rightMiddleFinger"
+        android:alpha="0"/>
+
+    <ImageView
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:src="@drawable/finger_ring"
+        android:id="@+id/rightRingFinger"
+        android:alpha="0"/>
+
+    <ImageView
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:src="@drawable/finger_pinky"
+        android:id="@+id/rightPinkyFinger"
+        android:alpha="0"/>
+
+    <ImageView
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:src="@drawable/finger_thumb"
+        android:id="@+id/rightThumbFinger"
+        android:alpha="0"/>
+
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:src="@drawable/hand_right"
+        android:id="@+id/rightHand"
+        android:alpha="0" />
+
 
 </RelativeLayout>

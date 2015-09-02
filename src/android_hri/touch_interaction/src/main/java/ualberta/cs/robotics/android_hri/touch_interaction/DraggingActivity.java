@@ -50,7 +50,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
     private NodeMainExecutor nodeMain;
 
     private static final float ROLL_THREASHOLD = 6.0f;
-    private static final float PITCH_THREASHOLD = 8.5f;
+    private static final float JAW_THREASHOLD = 8.5f;
     private static final float MAX_GRASP = 2.0f;
 
     private MultiTouchArea gestureHandler = null;
@@ -59,7 +59,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
     private ImageView targetImage;
     private ImageView positionImage;
     private TextView msgText;
-    private TextView pitchText;
+    private TextView jawText;
     private TextView rollText;
 
     private PointNode targetPointNode;
@@ -91,7 +91,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
         targetImage = (ImageView) findViewById(R.id.targetView);
         positionImage = (ImageView) findViewById(R.id.positionView);
         msgText = (TextView) findViewById(R.id.msgTextView);
-        pitchText = (TextView) findViewById(R.id.textRotPitch);
+        jawText = (TextView) findViewById(R.id.textRotJaw);
         rollText = (TextView) findViewById(R.id.textRotRoll);
 
         imageStream = (RosImageView<CompressedImage>) findViewById(R.id.imageViewCenter);
@@ -125,7 +125,6 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
         emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
         emergencyNode.setPublishFreq(100);
         emergencyNode.setPublish_bool(true);
-        //emergencyNode.publishNow();
 
         vsNode = new BooleanNode();
         vsNode.publishTo(ENABLE_VS, true, 0);
@@ -184,8 +183,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
     }
     
     @Override
-    protected void onPause()
-    {
+    protected void onPause() {
         emergencyNode.setPublish_bool(false);
     	super.onPause();
     }
@@ -213,7 +211,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateTarget(){
+    private void updateTarget() {
         /** Update LongClick **/
         if(gestureHandler.getLongClickX()>0){
 
@@ -254,9 +252,9 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
         }
     }
 
-    private void updateConfirmTarget(){
-        if(gestureHandler.getDoubleTapX()>0){
-            if(targetPointNode.getPublish_point()[0] > 1){
+    private void updateConfirmTarget() {
+        if(gestureHandler.getDoubleTapX()>0) {
+            if(targetPointNode.getPublish_point()[0] > 1) {
                 targetPointNode.publishNow();
                 vsNode.setPublish_bool(true);
                 msg = String.format("Going to target (%d , %d) ",(int)targetPointNode.getPublish_point()[0],(int)targetPointNode.getPublish_point()[1]);
@@ -273,7 +271,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
         }
     }
 
-    private void updatePosition(){
+    private void updatePosition() {
         if(gestureHandler.getDoubleDragX()>0){
 
             final float x=gestureHandler.getDoubleDragX() - positionImage.getWidth()/2;
@@ -313,7 +311,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
         }
     }
 
-    private void updateRotation(){
+    private void updateRotation() {
         final float angle = gestureHandler.getAngle()*3.1416f/180f;
         if(!gestureHandler.isDetectingTwoFingerGesture()){
             gestureHandler.setAngle(0);
@@ -326,7 +324,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
                 rotationNode.getPublish_point()[1]=0;
 
             }else{
-                msg = String.format("Rotating Pitch += %.2f ",angle);
+                msg = String.format("Rotating Jaw += %.2f ",angle);
                 rotationNode.getPublish_point()[0]=0;
                 rotationNode.getPublish_point()[1]=angle;
             }
@@ -344,7 +342,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
 
     }
 
-    private void updateGrasping(){
+    private void updateGrasping() {
         float grasp = MAX_GRASP*(TwoFingerGestureDetector.MAX_SCALE-gestureHandler.getScale())/(TwoFingerGestureDetector.MAX_SCALE-TwoFingerGestureDetector.MIN_SCALE);
         if(grasp!=graspNode.getPublish_float()){
             graspNode.setPublish_float(grasp);
@@ -360,7 +358,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
         graspNode.publishNow();
     }
 
-    private void updateText(){
+    private void updateText() {
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -369,7 +367,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
         });
     }
 
-    private boolean validTarget(float x, float y){
+    private boolean validTarget(float x, float y) {
         if (x < 0 || y < 0)
             return false;
         if (x > imageStream.getDrawable().getIntrinsicWidth() ||  y > imageStream.getDrawable().getIntrinsicHeight())
@@ -391,11 +389,11 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
 
             if(Math.abs(y)>ROLL_THREASHOLD){
                 rollText.setAlpha(1.f);
-                pitchText.setAlpha(.1f);
+                jawText.setAlpha(.1f);
             }
-            if(Math.abs(z)>PITCH_THREASHOLD) {
+            if(Math.abs(z)>JAW_THREASHOLD) {
                 rollText.setAlpha(.1f);
-                pitchText.setAlpha(1.f);
+                jawText.setAlpha(1.f);
             }
         }
     }

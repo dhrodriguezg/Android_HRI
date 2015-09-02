@@ -37,12 +37,12 @@ public class CalibrationPositionNode implements NodeMain {
     private boolean hasServerMsg =false;
     private boolean hasClientMsg =false;
 
-    public void serverOf(String topic){
+    public void serverOf(String topic) {
         isServer =true;
         serverTopic =topic;
     }
 
-    public void clientOf(String topic){
+    public void clientOf(String topic) {
         isClient =true;
         clientTopic =topic;
     }
@@ -59,7 +59,7 @@ public class CalibrationPositionNode implements NodeMain {
     }
 
 
-    private void publish(final ConnectedNode connectedNode){
+    private void publish(final ConnectedNode connectedNode) {
         ServiceClient<AddTwoIntsRequest, AddTwoIntsResponse> serviceClient;
 
         try {

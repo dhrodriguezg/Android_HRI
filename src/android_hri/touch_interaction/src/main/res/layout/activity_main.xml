@@ -137,15 +137,15 @@
                 android:layout_height="0px"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="Leap Motion"
-                android:id="@+id/textViewMotion"
+                android:id="@+id/textViewLeapMotion"
                 android:layout_weight="1"
                 android:layout_gravity="center" />
 
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
-                android:src="@drawable/target"
-                android:id="@+id/imageViewPreviewMotion"
+                android:src="@drawable/interface_3"
+                android:id="@+id/imageViewPreviewLeapMotion"
                 android:layout_weight="3"
                 android:visibility="visible"
                 android:layout_gravity="center"/>
@@ -154,7 +154,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
                 android:text="Interface 3"
-                android:id="@+id/motionButton"
+                android:id="@+id/leapMotionButton"
                 android:layout_weight="1"
                 android:layout_gravity="center" />
 
