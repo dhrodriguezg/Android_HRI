@@ -3,12 +3,14 @@ package ualberta.cs.robotics.android_hri.touch_interaction;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.drawable.Drawable;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.WindowManager;
+import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -44,16 +46,28 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
     private static final String ROTATION= "/android/rotation_abs";
     private static final String GRASP="/android/grasping_abs";
 
+    private final int DISABLED = Color.RED;
+    private final int ENABLED = Color.GREEN;
+    private final int TRANSITION = Color.rgb(255,195,77); //orange
+    private final int MAX_TASK_COUNTER = 120;
+
+    private int selectCounter;
+    private int moveCounter;
+    private int rotateCounter;
+    private int graspCounter;
+
+    private int lastTask = -1;
+    private int currentTask = -1;
 
     private NodeMainExecutor nodeMain;
     private Controller mController;
     private LeapMotionListener mLeapMotionListener;
 
     private ToggleButton emergencyStop;
-    private ToggleButton selectButton;
-    private ToggleButton moveButton;
-    private ToggleButton rotateButton;
-    private ToggleButton graspButton;
+    private TextView statusGrasp;
+    private TextView statusRotate;
+    private TextView statusMove;
+    private TextView statusSelect;
 
     private static final float MAX_GRASP = 2.0f;
 
@@ -67,6 +81,10 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
     private StringNode stringNode;
     private BooleanNode emergencyNode;
     private BooleanNode vsNode;
+
+    private Switch rightHanded;
+    private CheckBox showLog;
+    private CheckBox showHands;
 
     //left hand
     private ImageView leftHand;
@@ -115,6 +133,12 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
         rightRing = (ImageView) findViewById(R.id.rightRingFinger);
         rightPinky = (ImageView) findViewById(R.id.rightPinkyFinger);
         rightThumb = (ImageView) findViewById(R.id.rightThumbFinger);
+
+        statusGrasp = (TextView) findViewById(R.id.statusGrasp);
+        statusRotate = (TextView) findViewById(R.id.statusRotate);
+        statusMove = (TextView) findViewById(R.id.statusMove);
+        statusSelect = (TextView) findViewById(R.id.statusSelect);
+        showLog = (CheckBox) findViewById(R.id.showLog);
 
         imageStream = (RosImageView<CompressedImage>) findViewById(R.id.imageViewCenter);
         if(debug)
@@ -172,51 +196,24 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
             }
         });
 
-        selectButton = (ToggleButton)findViewById(R.id.selectButton);
-        selectButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        showHands = (CheckBox) findViewById(R.id.showHands);
+        showHands.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
-                if (isChecked) {
-                    moveButton.setChecked(false);
-                    rotateButton.setChecked(false);
-                    graspButton.setChecked(false);
-                }
-            }
-        });
-        moveButton = (ToggleButton)findViewById(R.id.moveButton);
-        moveButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
-                if (isChecked) {
-                    selectButton.setChecked(false);
-                    rotateButton.setChecked(false);
-                    graspButton.setChecked(false);
-                }
-            }
-        });
-        rotateButton = (ToggleButton)findViewById(R.id.rotateButton);
-        rotateButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
-                if (isChecked) {
-                    moveButton.setChecked(false);
-                    selectButton.setChecked(false);
-                    graspButton.setChecked(false);
-                }
-            }
-        });
-        graspButton = (ToggleButton)findViewById(R.id.graspButton);
-        graspButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
-                if (isChecked) {
-                    moveButton.setChecked(false);
-                    rotateButton.setChecked(false);
-                    selectButton.setChecked(false);
+                if(!isChecked){
+                    hideLeftHand();
+                    hideRightHand();
                 }
             }
         });
 
+        rightHanded = (Switch) findViewById(R.id.rightHanded);
+        rightHanded.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
+                mLeapMotionListener.setRightHanded(isChecked);
+            }
+        });
     }
 
     @Override
@@ -251,31 +248,14 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateText(){
-        this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                msgText.setText(msg);
-            }
-        });
-    }
-
-    private boolean validTarget(float x, float y){
-        if (x < 0 || y < 0)
-            return false;
-        if (x > imageStream.getDrawable().getIntrinsicWidth() ||  y > imageStream.getDrawable().getIntrinsicHeight())
-            return false;
-        return true;
-    }
-
     @Override
     public void onHands(final boolean hands) {
         runOnUiThread(new Runnable() {
             public void run() {
-                if(hands){
+                if (hands) {
                     statusText.setText("OK!");
                     statusText.setBackgroundColor(Color.GREEN);
-                }else{
+                } else {
                     statusText.setText("No Hands!");
                     statusText.setBackgroundColor(Color.RED);
                 }
@@ -285,7 +265,8 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
 
     @Override
     public void onSelect(float x, float y, float z) {
-        if(!selectButton.isChecked())
+
+        if(((ColorDrawable)statusSelect.getBackground()).getColor() != ENABLED)
             return;
         // vsNode.setPublish_bool(true); TODO
         targetPointNode.getPublish_point()[0]=imageStream.getDrawable().getIntrinsicWidth() *x/2f;
@@ -309,7 +290,7 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
 
     @Override
     public void onMove(float x, float y, float z) {
-        if(!moveButton.isChecked())
+        if(((ColorDrawable)statusMove.getBackground()).getColor() != ENABLED)
             return;
         vsNode.setPublish_bool(true);
         targetPointNode.getPublish_point()[0]=imageStream.getDrawable().getIntrinsicWidth() *x/2f;
@@ -331,7 +312,7 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
 
     @Override
     public void onRotate(float x, float y, float z) {
-        if(!rotateButton.isChecked())
+        if(((ColorDrawable)statusRotate.getBackground()).getColor() != ENABLED)
             return;
         vsNode.setPublish_bool(false);
         rotationNode.getPublish_point()[0]=x;
@@ -341,7 +322,7 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
 
     @Override
     public void onGrasping(float g) {
-        if(!graspButton.isChecked())
+        if(((ColorDrawable)statusGrasp.getBackground()).getColor() != ENABLED)
             return;
         float grasp = (1f-g)*2f;
         graspNode.setPublish_float(grasp);
@@ -350,41 +331,93 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
 
     @Override
     public void onTask(final int task) {
-        if(task<0)
-            return;
+
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                switch (task){
-                    case 0: //palm
-                        imageStream.setBackgroundColor(Color.GREEN);
+                switch (task) {
+                    case -1:
+                        // nonvalid gesture (reset)
+                        resetTaskSelection();
                         break;
-                    case 1:
-                        selectButton.setChecked(true);
-                        moveButton.setChecked(false);
-                        rotateButton.setChecked(false);
-                        graspButton.setChecked(false);
+                    case 0:
+                        // all fingers closed (reset)
+                        resetTaskSelection();
                         break;
-                    case 2:
-                        moveButton.setChecked(true);
-                        selectButton.setChecked(false);
-                        rotateButton.setChecked(false);
-                        graspButton.setChecked(false);
+                    case 1: //select
+                        if (selectCounter > MAX_TASK_COUNTER) {
+                            lastTask = task;
+                            enableSelect();
+                            return;
+                        }
+                        if (((ColorDrawable) statusSelect.getBackground()).getColor() != ENABLED)
+                            statusSelect.setBackgroundColor(TRANSITION);
+                        if (((ColorDrawable) statusMove.getBackground()).getColor() != ENABLED)
+                            statusMove.setBackgroundColor(DISABLED);
+                        if (((ColorDrawable) statusRotate.getBackground()).getColor() != ENABLED)
+                            statusRotate.setBackgroundColor(DISABLED);
+                        if (((ColorDrawable) statusGrasp.getBackground()).getColor() != ENABLED)
+                            statusGrasp.setBackgroundColor(DISABLED);
+                        imageStream.setBackgroundColor(Color.TRANSPARENT);
+                        selectCounter++;
                         break;
-                    case 3:
-                        rotateButton.setChecked(true);
-                        selectButton.setChecked(false);
-                        moveButton.setChecked(false);
-                        graspButton.setChecked(false);
+                    case 2: //move
+                        if (moveCounter > MAX_TASK_COUNTER) {
+                            lastTask = task;
+                            enableMove();
+                            return;
+                        }
+                        if (((ColorDrawable) statusMove.getBackground()).getColor() != ENABLED)
+                            statusMove.setBackgroundColor(TRANSITION);
+                        if (((ColorDrawable) statusSelect.getBackground()).getColor() != ENABLED)
+                            statusSelect.setBackgroundColor(DISABLED);
+                        if (((ColorDrawable) statusRotate.getBackground()).getColor() != ENABLED)
+                            statusRotate.setBackgroundColor(DISABLED);
+                        if (((ColorDrawable) statusGrasp.getBackground()).getColor() != ENABLED)
+                            statusGrasp.setBackgroundColor(DISABLED);
+                        imageStream.setBackgroundColor(Color.TRANSPARENT);
+                        moveCounter++;
                         break;
-                    case 4:
-                        graspButton.setChecked(true);
-                        selectButton.setChecked(false);
-                        moveButton.setChecked(false);
-                        rotateButton.setChecked(false);
+                    case 3: //rotate
+                        if (rotateCounter > MAX_TASK_COUNTER) {
+                            lastTask = task;
+                            enableRotate();
+                            return;
+                        }
+                        if (((ColorDrawable) statusRotate.getBackground()).getColor() != ENABLED)
+                            statusRotate.setBackgroundColor(TRANSITION);
+                        if (((ColorDrawable) statusSelect.getBackground()).getColor() != ENABLED)
+                            statusSelect.setBackgroundColor(DISABLED);
+                        if (((ColorDrawable) statusMove.getBackground()).getColor() != ENABLED)
+                            statusMove.setBackgroundColor(DISABLED);
+                        if (((ColorDrawable) statusGrasp.getBackground()).getColor() != ENABLED)
+                            statusGrasp.setBackgroundColor(DISABLED);
+                        imageStream.setBackgroundColor(Color.TRANSPARENT);
+                        rotateCounter++;
+                        break;
+                    case 4: //grasp
+                        if (graspCounter > MAX_TASK_COUNTER) {
+                            lastTask = task;
+                            enableGrasp();
+                            return;
+                        }
+                        if (((ColorDrawable) statusGrasp.getBackground()).getColor() != ENABLED)
+                            statusGrasp.setBackgroundColor(TRANSITION);
+                        if (((ColorDrawable) statusSelect.getBackground()).getColor() != ENABLED)
+                            statusSelect.setBackgroundColor(DISABLED);
+                        if (((ColorDrawable) statusMove.getBackground()).getColor() != ENABLED)
+                            statusMove.setBackgroundColor(DISABLED);
+                        if (((ColorDrawable) statusRotate.getBackground()).getColor() != ENABLED)
+                            statusRotate.setBackgroundColor(DISABLED);
+                        imageStream.setBackgroundColor(Color.TRANSPARENT);
+                        graspCounter++;
                         break;
                     case 5:
-                        imageStream.setBackgroundColor(Color.WHITE);
+                        // all fingers opened (no task)
+                        resetTaskSelection();
+                        break;
+                    case 6: //confirm
+                        imageStream.setBackgroundColor(Color.CYAN);
                         break;
                     default:
                         break;
@@ -394,27 +427,106 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
 
     }
 
+    private void resetTaskSelection(){
+        selectCounter=0;
+        moveCounter=0;
+        rotateCounter=0;
+        graspCounter=0;
+        if (((ColorDrawable) statusSelect.getBackground()).getColor() != ENABLED)
+            statusSelect.setBackgroundColor(DISABLED);
+        if (((ColorDrawable) statusMove.getBackground()).getColor() != ENABLED)
+            statusMove.setBackgroundColor(DISABLED);
+        if (((ColorDrawable) statusRotate.getBackground()).getColor() != ENABLED)
+            statusRotate.setBackgroundColor(DISABLED);
+        if (((ColorDrawable) statusGrasp.getBackground()).getColor() != ENABLED)
+            statusGrasp.setBackgroundColor(DISABLED);
+        imageStream.setBackgroundColor(Color.TRANSPARENT);
+    }
+
+    private void enableSelect(){
+        statusSelect.setBackgroundColor(ENABLED);
+        statusMove.setBackgroundColor(DISABLED);
+        statusRotate.setBackgroundColor(DISABLED);
+        statusGrasp.setBackgroundColor(DISABLED);
+        moveCounter=0;
+        rotateCounter=0;
+        graspCounter=0;
+    }
+
+    private void enableMove(){
+        statusSelect.setBackgroundColor(DISABLED);
+        statusMove.setBackgroundColor(ENABLED);
+        statusRotate.setBackgroundColor(DISABLED);
+        statusGrasp.setBackgroundColor(DISABLED);
+        selectCounter=0;
+        rotateCounter=0;
+        graspCounter=0;
+    }
+
+    private void enableRotate(){
+        statusSelect.setBackgroundColor(DISABLED);
+        statusMove.setBackgroundColor(DISABLED);
+        statusRotate.setBackgroundColor(ENABLED);
+        statusGrasp.setBackgroundColor(DISABLED);
+        selectCounter=0;
+        moveCounter=0;
+        graspCounter=0;
+    }
+
+    private void enableGrasp(){
+        statusSelect.setBackgroundColor(DISABLED);
+        statusMove.setBackgroundColor(DISABLED);
+        statusRotate.setBackgroundColor(DISABLED);
+        statusGrasp.setBackgroundColor(ENABLED);
+        selectCounter=0;
+        moveCounter=0;
+        rotateCounter=0;
+    }
+
     @Override
     public void onUpdateMsg(final String msg) {
         stringNode.setPublish_string(msg);
         stringNode.publishNow();
-        if(!debug)
-            return;
+
         runOnUiThread(new Runnable() {
             public void run() {
+                if (!showLog.isChecked()) {
+                    msgText.setAlpha(0.0f);
+                    return;
+                }
                 msgText.setText(msg + "\n");
-                //msgText.setAlpha(0.5f);
+                msgText.setAlpha(0.5f);
             }
         });
     }
 
+    private void hideLeftHand(){
+        leftHand.setAlpha(0.0f);
+        leftIndex.setAlpha(0.0f);
+        leftMiddle.setAlpha(0.0f);
+        leftRing.setAlpha(0.0f);
+        leftPinky.setAlpha(0.0f);
+        leftThumb.setAlpha(0.0f);
+    }
+
+    private void hideRightHand(){
+        rightHand.setAlpha(0.0f);
+        rightIndex.setAlpha(0.0f);
+        rightMiddle.setAlpha(0.0f);
+        rightRing.setAlpha(0.0f);
+        rightPinky.setAlpha(0.0f);
+        rightThumb.setAlpha(0.0f);
+    }
+
     @Override
     public void onMoveLeftHand(final Vector[] positions) {
-        if(!debug)
-            return;
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                if(!showHands.isChecked() || positions==null){
+                    hideLeftHand();
+                    return;
+                }
                 int counter=0;
                 for(Vector position : positions){
                     float[] point = calculatePoint(imageStream.getDrawable().getIntrinsicWidth() * position.getX() , imageStream.getDrawable().getIntrinsicHeight() * position.getZ() );
@@ -460,11 +572,14 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
 
     @Override
     public void onMoveRightHand(final Vector[] positions) {
-        if(!debug)
-            return;
+
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                if(!showHands.isChecked()  || positions==null){
+                    hideRightHand();
+                    return;
+                }
                 int counter=0;
                 for(Vector position : positions){
                     float[] point = calculatePoint(imageStream.getDrawable().getIntrinsicWidth() * position.getX() , imageStream.getDrawable().getIntrinsicHeight() * position.getZ() );

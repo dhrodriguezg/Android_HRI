@@ -15,14 +15,14 @@
         android:layout_height="match_parent"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:id="@+id/msgTextView"
-        android:layout_above="@+id/emergencyButton"
-        android:layout_alignParentTop="true"
-        android:gravity="start"
         android:background="#ffffffff"
         android:alpha="0.0"
         android:textColor="#ff000000"
-        android:layout_alignRight="@+id/emergencyButton"
-        android:layout_alignParentLeft="true" />
+        android:layout_alignParentLeft="true"
+        android:layout_above="@+id/emergencyButton"
+        android:gravity="start"
+        android:layout_toLeftOf="@+id/tasksLayout"
+        android:layout_below="@+id/textView" />
 
     <ToggleButton
         android:layout_width="wrap_content"
@@ -36,49 +36,7 @@
         android:checked="false"
         android:textStyle="bold"
         />
-    <ToggleButton
-        android:layout_width="110dp"
-        android:layout_height="wrap_content"
-        android:text="Select"
-        android:textOn="Select: ON"
-        android:textOff="Select:OFF"
-        android:id="@+id/selectButton"
-        android:checked="false"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true" />
 
-    <ToggleButton
-        android:layout_width="110dp"
-        android:layout_height="wrap_content"
-        android:text="Move"
-        android:textOn="Move: ON"
-        android:textOff="Move:OFF"
-        android:id="@+id/moveButton"
-        android:layout_above="@+id/emergencyButton"
-        android:layout_alignParentLeft="true"
-        android:checked="false" />
-
-    <ToggleButton
-        android:layout_width="110dp"
-        android:layout_height="wrap_content"
-        android:text="Rotate"
-        android:textOn="Rotate: ON"
-        android:textOff="Rotate:OFF"
-        android:id="@+id/rotateButton"
-        android:layout_above="@+id/moveButton"
-        android:layout_alignParentLeft="true"
-        android:checked="false" />
-
-    <ToggleButton
-        android:layout_width="110dp"
-        android:layout_height="wrap_content"
-        android:text="Grasping"
-        android:textOn="Grasp: ON"
-        android:textOff="Grasp:OFF"
-        android:id="@+id/graspButton"
-        android:layout_above="@+id/rotateButton"
-        android:layout_alignParentLeft="true"
-        android:checked="false" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -185,6 +143,139 @@
         android:src="@drawable/hand_right"
         android:id="@+id/rightHand"
         android:alpha="0" />
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:id="@+id/tasksLayout">
+
+        <TextView
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:id="@+id/statusSelect"
+            android:background="#ffff0000"
+            android:text="   "
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Select"
+            android:id="@+id/textSelect"
+            android:layout_toRightOf="@+id/statusSelect"
+            android:layout_alignTop="@+id/statusSelect"
+            android:layout_alignBottom="@+id/statusSelect" />
+
+        <TextView
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:id="@+id/statusMove"
+            android:background="#ffff0000"
+            android:text="   "
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_below="@+id/statusSelect"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Move"
+            android:id="@+id/textMove"
+            android:layout_toRightOf="@+id/statusMove"
+            android:layout_alignTop="@+id/statusMove"
+            android:layout_alignBottom="@+id/statusMove" />
+
+        <TextView
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:id="@+id/statusRotate"
+            android:background="#ffff0000"
+            android:text="   "
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_below="@+id/statusMove"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Rotate"
+            android:id="@+id/textRotate"
+            android:layout_toRightOf="@+id/statusRotate"
+            android:layout_alignTop="@+id/statusRotate"
+            android:layout_alignBottom="@+id/statusRotate" />
+
+        <TextView
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:id="@+id/statusGrasp"
+            android:background="#ffff0000"
+            android:text="   "
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_below="@+id/statusRotate"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Grasp"
+            android:id="@+id/textGrasp"
+            android:layout_toRightOf="@+id/statusGrasp"
+            android:layout_alignTop="@+id/statusGrasp"
+            android:layout_alignBottom="@+id/statusGrasp" />
+    </RelativeLayout>
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Show Hands"
+        android:id="@+id/showHands"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:checked="true" />
+
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Show Log"
+        android:id="@+id/showLog"
+        android:checked="false"
+        android:layout_alignParentBottom="true"
+        android:layout_toLeftOf="@+id/showHands" />
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Left-Handed"
+        android:id="@+id/rightHanded"
+        android:checked="true"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Right-Handed"
+        android:textColor="#ff000000"
+        android:id="@+id/textView2"
+        android:layout_toRightOf="@+id/rightHanded"
+        android:layout_alignTop="@+id/rightHanded"
+        android:layout_alignBottom="@+id/rightHanded"
+        android:gravity="center_vertical" />
 
 
 </RelativeLayout>

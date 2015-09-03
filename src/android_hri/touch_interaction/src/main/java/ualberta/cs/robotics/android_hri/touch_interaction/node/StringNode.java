@@ -128,6 +128,10 @@ public class StringNode implements NodeMain {
         this.subcribe_string = subcribe_string;
     }
 
+    public void appendSubcribe_string(String subcribe_string) {
+        this.subcribe_string += subcribe_string;
+    }
+
     public String getPublish_string() {
         return publish_string;
     }
