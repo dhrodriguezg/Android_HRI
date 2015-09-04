@@ -21,6 +21,7 @@ public class MainActivity extends ActionBarActivity {
     private ImageView interface_1;
     private ImageView interface_2;
     private ImageView interface_3;
+    private ImageView interface_4;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,8 +31,8 @@ public class MainActivity extends ActionBarActivity {
         rosPort = (EditText) findViewById(R.id.editPort);
         interface_1 = (ImageView) findViewById(R.id.imageViewPreviewController);
         interface_2 = (ImageView) findViewById(R.id.imageViewPreviewDragging);
-        interface_3 = (ImageView) findViewById(R.id.imageViewPreviewLeapMotion);
-
+        interface_3 = (ImageView) findViewById(R.id.imageViewPreviewGamepad);
+        interface_4 = (ImageView) findViewById(R.id.imageViewPreviewLeapMotion);
 
         Button calibrationButton = (Button) findViewById(R.id.calibrationButton);
         calibrationButton.setOnClickListener(new View.OnClickListener() {
@@ -69,6 +70,20 @@ public class MainActivity extends ActionBarActivity {
             }
         });
 
+        Button gamepadButton = (Button) findViewById(R.id.gamepadButton);
+        gamepadButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startGamepadActivity();
+            }
+        });
+        interface_3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startGamepadActivity();
+            }
+        });
+
         Button leapButton = (Button) findViewById(R.id.leapMotionButton);
         leapButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -76,7 +91,7 @@ public class MainActivity extends ActionBarActivity {
                 startLeapMotionActivity();
             }
         });
-        interface_3.setOnClickListener(new View.OnClickListener() {
+        interface_4.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startLeapMotionActivity();
@@ -124,6 +139,13 @@ public class MainActivity extends ActionBarActivity {
     private void startDraggingActivity(){
         if (isMasterValid()){
             Intent myIntent = new Intent(MainActivity.this, DraggingActivity.class);
+            MainActivity.this.startActivity(myIntent);
+        }
+    }
+
+    private void startGamepadActivity(){
+        if (isMasterValid()){
+            Intent myIntent = new Intent(MainActivity.this, GamepadActivity.class);
             MainActivity.this.startActivity(myIntent);
         }
     }
