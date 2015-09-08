@@ -17,13 +17,229 @@
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true" />
 
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:id="@+id/tasksLayout_ON">
+
+        <TextView
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:id="@+id/statusPos1_ON"
+            android:background="#ffff0000"
+            android:text="   "
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Pos1"
+            android:id="@+id/textPos1_ON"
+            android:layout_toRightOf="@+id/statusPos1_ON"
+            android:layout_alignTop="@+id/statusPos1_ON"
+            android:layout_alignBottom="@+id/statusPos1_ON" />
+
+        <TextView
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:id="@+id/statusSpread_ON"
+            android:background="#ffff0000"
+            android:text="   "
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_below="@+id/statusPos1_ON"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Spread"
+            android:id="@+id/textSpread_ON"
+            android:layout_toRightOf="@+id/statusSpread_ON"
+            android:layout_alignTop="@+id/statusSpread_ON"
+            android:layout_alignBottom="@+id/statusSpread_ON" />
+
+        <TextView
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:id="@+id/statusGrasp_ON"
+            android:background="#ffff0000"
+            android:text="   "
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_below="@+id/statusSpread_ON"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Gasp"
+            android:id="@+id/textGrasp_ON"
+            android:layout_toRightOf="@+id/statusGrasp_ON"
+            android:layout_alignTop="@+id/statusGrasp_ON"
+            android:layout_alignBottom="@+id/statusGrasp_ON" />
+
+        <TextView
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:id="@+id/statusPos2_ON"
+            android:background="#ffff0000"
+            android:text="   "
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_below="@+id/statusGrasp_ON"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Pos 2"
+            android:id="@+id/textPos2_ON"
+            android:layout_toRightOf="@+id/statusPos2_ON"
+            android:layout_alignTop="@+id/statusPos2_ON"
+            android:layout_alignBottom="@+id/statusPos2_ON" />
+
+        <ToggleButton
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:textOn="Init"
+            android:textOff="Init"
+            android:id="@+id/buttonON"
+            android:layout_below="@+id/statusPos2_ON"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="10dp"/>
+
+    </RelativeLayout>
+
+
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tasksLayout_OFF"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true">
+
+        <TextView
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:id="@+id/statusPos2_OFF"
+            android:background="#ffff0000"
+            android:text="   "
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Pos 2"
+            android:id="@+id/textPos2_OFF"
+            android:layout_toRightOf="@+id/statusPos2_OFF"
+            android:layout_alignTop="@+id/statusPos2_OFF"
+            android:layout_alignBottom="@+id/statusPos2_OFF" />
+
+        <TextView
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:id="@+id/statusPos1_OFF"
+            android:background="#ffff0000"
+            android:text="   "
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_below="@+id/statusPos2_OFF"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Pos. 1"
+            android:id="@+id/textPos1_OFF"
+            android:layout_toRightOf="@+id/statusPos1_OFF"
+            android:layout_alignTop="@+id/statusPos1_OFF"
+            android:layout_alignBottom="@+id/statusPos1_OFF" />
+
+        <TextView
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:id="@+id/statusGrasp_OFF"
+            android:background="#ffff0000"
+            android:text="   "
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_below="@+id/statusPos1_OFF"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Gasp"
+            android:id="@+id/textGrasp_OFF"
+            android:layout_toRightOf="@+id/statusGrasp_OFF"
+            android:layout_alignTop="@+id/statusGrasp_OFF"
+            android:layout_alignBottom="@+id/statusGrasp_OFF" />
+
+        <TextView
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:id="@+id/statusSpread_OFF"
+            android:background="#ffff0000"
+            android:text="   "
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_below="@+id/statusGrasp_OFF"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Spread"
+            android:id="@+id/textSpread_OFF"
+            android:layout_toRightOf="@+id/statusSpread_OFF"
+            android:layout_alignTop="@+id/statusSpread_OFF"
+            android:layout_alignBottom="@+id/statusSpread_OFF" />
+
+        <ToggleButton
+            android:layout_width="70dp"
+            android:layout_height="wrap_content"
+            android:textOn="Exit"
+            android:textOff="Exit"
+            android:id="@+id/buttonOFF"
+            android:layout_below="@+id/statusSpread_OFF"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="10dp" />
+    </RelativeLayout>
+    
+
     <Switch
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Start"
+        android:text="Enable"
         android:id="@+id/startSwitch"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true" />
+        android:layout_alignParentLeft="true"
+        android:checked="false"
+        android:visibility="gone"/>
 
     <Button
         android:layout_width="wrap_content"
@@ -32,32 +248,7 @@
         android:id="@+id/confirmButton"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:enabled="false" />
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_alignTop="@+id/imageTarget"
-        android:id="@+id/controlFeedback"
-        android:layout_toLeftOf="@+id/imageTarget"
-        android:layout_above="@+id/startSwitch">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:id="@+id/Pos1State"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentLeft="true" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Position 1"
-            android:id="@+id/textPosition1"
-            android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true" />
-    </RelativeLayout>
+        android:enabled="false"
+        android:visibility="gone"/>
 
 </RelativeLayout>

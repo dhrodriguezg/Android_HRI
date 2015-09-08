@@ -160,7 +160,9 @@
             android:text="   "
             android:gravity="center_vertical|center_horizontal"
             android:layout_alignParentTop="true"
-            android:layout_alignParentLeft="true" />
+            android:layout_alignParentLeft="true"
+            android:enabled="false"
+            android:visibility="gone"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -170,7 +172,10 @@
             android:id="@+id/textSelect"
             android:layout_toRightOf="@+id/statusSelect"
             android:layout_alignTop="@+id/statusSelect"
-            android:layout_alignBottom="@+id/statusSelect" />
+            android:layout_alignBottom="@+id/statusSelect"
+            android:enabled="false"
+            android:visibility="gone"
+            />
 
         <TextView
             android:layout_width="20dp"
@@ -237,6 +242,28 @@
             android:layout_toRightOf="@+id/statusGrasp"
             android:layout_alignTop="@+id/statusGrasp"
             android:layout_alignBottom="@+id/statusGrasp" />
+
+        <TextView
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:id="@+id/statusAll"
+            android:background="#ffff0000"
+            android:text="   "
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_below="@+id/statusGrasp"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="ALL"
+            android:id="@+id/textAll"
+            android:layout_toRightOf="@+id/statusAll"
+            android:layout_alignTop="@+id/statusAll"
+            android:layout_alignBottom="@+id/statusAll" />
     </RelativeLayout>
 
     <CheckBox
@@ -276,6 +303,5 @@
         android:layout_alignTop="@+id/rightHanded"
         android:layout_alignBottom="@+id/rightHanded"
         android:gravity="center_vertical" />
-
 
 </RelativeLayout>

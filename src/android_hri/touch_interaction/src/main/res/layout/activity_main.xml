@@ -52,7 +52,7 @@
         android:text="Calibration"
         android:id="@+id/calibrationButton"
         android:layout_gravity="center"
-        android:layout_weight="1"/>
+        android:layout_weight="1" />
 
     <LinearLayout
         android:orientation="horizontal"

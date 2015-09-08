@@ -9,7 +9,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
@@ -43,6 +42,8 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
     private static final String TARGET_POINT="/android/target_point";
+    private static final String POSITION="/android/position_abs";
+
     private static final String ENABLE_VS = "/android/enable_vs";
     private static final String ROTATION= "/android/rotation_rel";
     private static final String GRASP="/android/grasping_abs";
@@ -52,6 +53,10 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
     private static final float ROLL_THREASHOLD = 6.0f;
     private static final float JAW_THREASHOLD = 8.5f;
     private static final float MAX_GRASP = 2.0f;
+    private static final float WORKSPACE_WIDTH = 0.4889f;
+    private static final float WORKSPACE_HEIGHT = 0.3822f;
+    private static final float WORKSPACE_X_OFFSET = 0.2366f;
+    private static final float WORKSPACE_Y_OFFSET = 0.9476f;
 
     private MultiTouchArea gestureHandler = null;
 
@@ -63,6 +68,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
     private TextView rollText;
 
     private PointNode targetPointNode;
+    private PointNode positionNode;
     private Float32Node graspNode;
     private PointNode rotationNode;
     private BooleanNode emergencyNode;
@@ -108,11 +114,15 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
         gestureHandler.enableDragging();
         gestureHandler.enableRotating();
         gestureHandler.enableOneFingerGestures();
-        gestureHandler.enableDoubleTap();
-        gestureHandler.enableLongPress();
+        //Disabled Select target gestures
+        //gestureHandler.enableDoubleTap();
+        //gestureHandler.enableLongPress();
 
         targetPointNode = new PointNode();
         targetPointNode.publishTo(TARGET_POINT, false, 10);
+
+        positionNode = new PointNode();
+        positionNode.publishTo(POSITION, false, 10);
 
         graspNode = new Float32Node();
         graspNode.publishTo(GRASP, false, 2);
@@ -289,10 +299,15 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
                 return;
             }
 
-            targetPointNode.getPublish_point()[0]=positionPixel[0];
-            targetPointNode.getPublish_point()[1]=positionPixel[1];
-            targetPointNode.publishNow();
-            vsNode.setPublish_bool(true);
+            positionNode.getPublish_point()[0] = WORKSPACE_Y_OFFSET - positionPixel[1]*WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
+            positionNode.getPublish_point()[1] = WORKSPACE_X_OFFSET - positionPixel[0]*WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
+            positionNode.getPublish_point()[2] = 0;
+
+            positionNode.publishNow();
+            //targetPointNode.getPublish_point()[0]=positionPixel[0];
+            //targetPointNode.getPublish_point()[1]=positionPixel[1];
+            //targetPointNode.publishNow();
+            //vsNode.setPublish_bool(true);
             this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -303,7 +318,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
                     targetImage.setAlpha(0.f);
                     targetImage.setX(0);
                     targetImage.setY(0);
-                    msg = String.format("Moving to (%d , %d) ", (int) targetPointNode.getPublish_point()[0], (int) targetPointNode.getPublish_point()[1]);
+                    msg = String.format("Moving to (%.4f , %.4f) ", positionNode.getPublish_point()[0], positionNode.getPublish_point()[1]);
                 }
             });
             gestureHandler.setDoubleDragX(0);
@@ -377,8 +392,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-
-
+        /*
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             float x = event.values[0];
             float y = event.values[1];
@@ -396,6 +410,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
                 jawText.setAlpha(1.f);
             }
         }
+        */
     }
 
     @Override
@@ -410,6 +425,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
         nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING+"sub"));
 
         nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
+        nodeMainExecutor.execute(positionNode, nodeConfiguration.setNodeName(POSITION));
         nodeMainExecutor.execute(graspNode, nodeConfiguration.setNodeName(GRASP));
         nodeMainExecutor.execute(rotationNode, nodeConfiguration.setNodeName(ROTATION));
         nodeMainExecutor.execute(emergencyNode, nodeConfiguration.setNodeName(EMERGENCY_STOP));
