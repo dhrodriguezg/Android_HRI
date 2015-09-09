@@ -11,13 +11,13 @@
         android:layout_width="match_parent" />
 
     <ImageView
-    android:layout_width="100dp"
-    android:layout_height="100dp"
-    android:src="@drawable/target_cool"
-    android:id="@+id/imageTarget"
-    android:layout_centerVertical="true"
-    android:layout_centerHorizontal="true"
-    android:alpha="0"/>
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@drawable/target_cool"
+        android:id="@+id/imageTarget"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:alpha="0"/>
 
     <RelativeLayout
         android:layout_width="match_parent"

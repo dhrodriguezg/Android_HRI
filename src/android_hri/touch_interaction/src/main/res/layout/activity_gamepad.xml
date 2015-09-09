@@ -10,6 +10,88 @@
         android:layout_height="match_parent"
         android:layout_width="match_parent" />
 
+    <ImageView
+        android:id="@+id/virtual_joystick_pos"
+        android:src="@drawable/stick_4c"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="2D Position"
+        android:id="@+id/positionTextView"
+        android:gravity="center_vertical|center_horizontal"
+        android:textColor="#ff3f3f3f"
+        android:layout_gravity="center_vertical"
+        android:layout_alignTop="@+id/virtual_joystick_pos"
+        android:layout_alignParentLeft="true"
+        android:layout_alignRight="@+id/virtual_joystick_pos" />
+
+    <ImageView
+        android:id="@+id/virtual_joystick_rot"
+        android:src="@drawable/stick_4c"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="2D Rotation"
+        android:id="@+id/rotationTextView"
+        android:gravity="center_vertical|center_horizontal"
+        android:textColor="#ff3f3f3f"
+        android:layout_gravity="center_vertical"
+        android:layout_alignTop="@+id/virtual_joystick_rot"
+        android:layout_alignParentRight="true"
+        android:layout_alignLeft="@+id/virtual_joystick_rot" />
+
+    <ImageView
+        android:id="@+id/virtual_trigger_close"
+        android:src="@drawable/trigger_4c"
+        android:layout_width="100dp"
+        android:layout_height="70dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Close Grasping"
+        android:id="@+id/triggerCloseTextView"
+        android:gravity="center_vertical|center_horizontal"
+        android:textColor="#ff3f3f3f"
+        android:layout_gravity="center_vertical"
+        android:layout_below="@+id/virtual_trigger_close"
+        android:layout_alignParentLeft="true" />
+
+    <ImageView
+        android:id="@+id/virtual_trigger_open"
+        android:src="@drawable/trigger_4c"
+        android:layout_width="100dp"
+        android:layout_height="70dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Open Grasping"
+        android:id="@+id/triggerOpenTextView"
+        android:gravity="center_vertical|center_horizontal"
+        android:textColor="#ff3f3f3f"
+        android:layout_gravity="center_vertical"
+        android:layout_below="@+id/virtual_trigger_open"
+        android:layout_alignParentRight="true" />
+
     <ToggleButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -49,7 +49,7 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="0px"
-        android:text="Calibration"
+        android:text="Setup"
         android:id="@+id/calibrationButton"
         android:layout_gravity="center"
         android:layout_weight="1" />
@@ -144,7 +144,7 @@
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
-                android:src="@drawable/interface_1"
+                android:src="@drawable/interface_3"
                 android:id="@+id/imageViewPreviewGamepad"
                 android:layout_weight="3"
                 android:visibility="visible"
@@ -178,7 +178,7 @@
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
-                android:src="@drawable/interface_3"
+                android:src="@drawable/interface_4"
                 android:id="@+id/imageViewPreviewLeapMotion"
                 android:layout_weight="3"
                 android:visibility="visible"
