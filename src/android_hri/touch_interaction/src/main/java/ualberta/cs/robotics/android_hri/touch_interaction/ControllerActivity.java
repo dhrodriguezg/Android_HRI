@@ -30,6 +30,7 @@ import sensor_msgs.CompressedImage;
 
 import ualberta.cs.robotics.android_hri.touch_interaction.node.BooleanNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.Float32Node;
+import ualberta.cs.robotics.android_hri.touch_interaction.node.Int32Node;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.PointNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.TwistNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.TouchArea;
@@ -41,6 +42,7 @@ public class ControllerActivity extends RosActivity {
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
     private static final String TARGET_POINT="/android/target_point";
+    private static final String INTERFACE_NUMBER="/android/interface_number";
     private static final String ENABLE_VS = "/android/enable_vs";
     private static final String POSITION= "/android/joystick_position";
     private static final String ROTATION= "/android/joystick_rotation";
@@ -56,6 +58,7 @@ public class ControllerActivity extends RosActivity {
 
     private PointNode targetPointNode;
     private Float32Node graspNode;
+    private Int32Node interfaceNumberNode;
     private BooleanNode emergencyNode;
     private BooleanNode vsNode;
     private TwistNode targetControlNode;
@@ -93,7 +96,7 @@ public class ControllerActivity extends RosActivity {
         imageStream = (RosImageView<CompressedImage>) findViewById(R.id.visualization);
 
         positionListenerNode = new TwistNode();
-        positionListenerNode.subscribeTo(POSITION+"/cmd_vel");
+        positionListenerNode.subscribeTo(POSITION + "/cmd_vel");
         rotationListenerNode = new TwistNode();
         rotationListenerNode.subscribeTo(ROTATION + "/cmd_vel");
 
@@ -103,6 +106,11 @@ public class ControllerActivity extends RosActivity {
 
         targetPointNode = new PointNode();
         targetPointNode.publishTo(TARGET_POINT, false, 10);
+
+        interfaceNumberNode = new Int32Node();
+        interfaceNumberNode.publishTo(INTERFACE_NUMBER, true, 0);
+        interfaceNumberNode.setPublishFreq(100);
+        interfaceNumberNode.setPublish_int(2);
 
         emergencyNode = new BooleanNode();
         emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
@@ -308,6 +316,7 @@ public class ControllerActivity extends RosActivity {
         nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
         nodeMainExecutor.execute(emergencyNode, nodeConfiguration.setNodeName(EMERGENCY_STOP));
         nodeMainExecutor.execute(vsNode, nodeConfiguration.setNodeName(ENABLE_VS));
+        nodeMainExecutor.execute(interfaceNumberNode, nodeConfiguration.setNodeName(INTERFACE_NUMBER));
 
         nodeMainExecutor.execute(targetControlNode, nodeConfiguration.setNodeName(TARGET+"sub"));
         nodeMainExecutor.execute(positionListenerNode, nodeConfiguration.setNodeName(POSITION+"sub"));

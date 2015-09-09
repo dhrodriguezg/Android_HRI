@@ -24,6 +24,7 @@ import java.net.URI;
 import sensor_msgs.CompressedImage;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.BooleanNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.Float32Node;
+import ualberta.cs.robotics.android_hri.touch_interaction.node.Int32Node;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.TwistNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.utils.Gamepad;
 
@@ -33,6 +34,7 @@ public class GamepadActivity extends RosActivity {
     private static final String STREAMING= "/camera/rgb/image_raw/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
+    private static final String INTERFACE_NUMBER="/android/interface_number";
     private static final String TARGET_POINT="/android/target_point";
     private static final String ENABLE_VS = "/android/enable_vs";
     private static final String POSITION= "/android/joystick_position";
@@ -49,6 +51,7 @@ public class GamepadActivity extends RosActivity {
     private TwistNode positionNode;
     private TwistNode rotationNode;
     private Float32Node graspNode;
+    private Int32Node interfaceNumberNode;
 
     private Gamepad gamepad;
 
@@ -78,6 +81,11 @@ public class GamepadActivity extends RosActivity {
         graspNode = new Float32Node();
         graspNode.setPublishFreq(500);
         graspNode.publishTo(GRASP, true, 0);
+
+        interfaceNumberNode = new Int32Node();
+        interfaceNumberNode.publishTo(INTERFACE_NUMBER, true, 0);
+        interfaceNumberNode.setPublishFreq(100);
+        interfaceNumberNode.setPublish_int(4);
 
         emergencyNode = new BooleanNode();
         emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
@@ -237,5 +245,6 @@ public class GamepadActivity extends RosActivity {
         nodeMainExecutor.execute(vsNode, nodeConfiguration.setNodeName(ENABLE_VS));
         nodeMainExecutor.execute(positionNode, nodeConfiguration.setNodeName(POSITION));
         nodeMainExecutor.execute(rotationNode, nodeConfiguration.setNodeName(ROTATION));
+        nodeMainExecutor.execute(interfaceNumberNode, nodeConfiguration.setNodeName(INTERFACE_NUMBER));
     }
 }

@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -43,19 +42,20 @@ public class CalibrationActivity extends RosActivity {
     private static final String ENABLE_VS = "/android/enable_vs";
     private static final String TRACKER_POINT ="/android/tracker_point";
     private static final String TARGET_POINT="/android/target_point";
+    private static final String INTERFACE_NUMBER="/android/interface_number";
     private static final String SETUP_ON="/android/setup/on";
     private static final String SETUP_OFF="/android/setup/off";
-    private static final String POS1_STATE="/android/setup/pos1State";
-    private static final String POS2_STATE="/android/setup/pos2State";
-    private static final String GRASP_STATE="/android/setup/graspState";
-    private static final String SPREAD_STATE="/android/setup/spreadState";
+    private static final String POS1_STATE="/android/setup/pos1_state";
+    private static final String POS2_STATE="/android/setup/pos2_state";
+    private static final String GRASP_STATE="/android/setup/grasp_state";
+    private static final String SPREAD_STATE="/android/setup/spread_state";
     private final int DISABLED = Color.RED;
     private final int ENABLED = Color.GREEN;
     private final int TRANSITION = Color.rgb(255,195,77); //orange
 
     private NodeMainExecutor nodeMain;
 
-    private static final boolean debug = false;
+    private static final boolean debug = true;
     private MultiTouchArea dragHandler = null;
 
     private RosImageView<CompressedImage> imageStream;
@@ -91,8 +91,9 @@ public class CalibrationActivity extends RosActivity {
     private Int32Node pos2State;
     private Int32Node graspState;
     private Int32Node spreadState;
-    private BooleanNode setupON;
-    private BooleanNode setupOFF;
+    private Int32Node interfaceNumberNode;
+    private BooleanNode setupONNode;
+    private BooleanNode setupOFFNode;
     private BooleanNode emergencyNode;
     private BooleanNode vsNode;
 
@@ -140,11 +141,11 @@ public class CalibrationActivity extends RosActivity {
             imageStream.setTopicName(STREAMING);
         imageStream.setMessageType(STREAMING_MSG);
 
-        setupON = new BooleanNode();
-        setupON.publishTo(SETUP_ON, false, 100);
+        setupONNode = new BooleanNode();
+        setupONNode.publishTo(SETUP_ON, false, 100);
 
-        setupOFF = new BooleanNode();
-        setupOFF.publishTo(SETUP_OFF, false, 100);
+        setupOFFNode = new BooleanNode();
+        setupOFFNode.publishTo(SETUP_OFF, false, 100);
 
         pos1State = new Int32Node();
         pos1State.subscribeTo(POS1_STATE);
@@ -160,6 +161,11 @@ public class CalibrationActivity extends RosActivity {
 
         targetPointNode = new PointNode();
         targetPointNode.publishTo(TARGET_POINT, false, 10);
+
+        interfaceNumberNode = new Int32Node();
+        interfaceNumberNode.publishTo(INTERFACE_NUMBER, true, 0);
+        interfaceNumberNode.setPublishFreq(100);
+        interfaceNumberNode.setPublish_int(-1);
 
         emergencyNode = new BooleanNode();
         emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
@@ -180,12 +186,16 @@ public class CalibrationActivity extends RosActivity {
             public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
                 if (isChecked) {
                     Toast.makeText(getApplicationContext(), "Going to Task position", Toast.LENGTH_LONG).show();
-                    setupON.setPublish_bool(true);
-                    setupON.publishNow();
+                    setupONNode.setPublish_bool(true);
+                    setupONNode.publishNow();
                     buttonOFF.setEnabled(false);
+                    statusPos1_ON.setBackgroundColor(DISABLED);
+                    statusPos2_ON.setBackgroundColor(DISABLED);
+                    statusGrasp_ON.setBackgroundColor(DISABLED);
+                    statusSpread_ON.setBackgroundColor(DISABLED);
                 } else {
-                    setupON.setPublish_bool(false);
-                    setupON.publishNow();
+                    setupONNode.setPublish_bool(false);
+                    setupONNode.publishNow();
                     buttonOFF.setEnabled(true);
                 }
             }
@@ -197,12 +207,16 @@ public class CalibrationActivity extends RosActivity {
             public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
                 if (isChecked) {
                     Toast.makeText(getApplicationContext(), "Going to Initial position", Toast.LENGTH_LONG).show();
-                    setupOFF.setPublish_bool(true);
-                    setupOFF.publishNow();
+                    setupOFFNode.setPublish_bool(true);
+                    setupOFFNode.publishNow();
                     buttonON.setEnabled(false);
+                    statusPos1_OFF.setBackgroundColor(DISABLED);
+                    statusPos2_OFF.setBackgroundColor(DISABLED);
+                    statusGrasp_OFF.setBackgroundColor(DISABLED);
+                    statusSpread_OFF.setBackgroundColor(DISABLED);
                 } else {
-                    setupOFF.setPublish_bool(false);
-                    setupOFF.publishNow();
+                    setupOFFNode.setPublish_bool(false);
+                    setupOFFNode.publishNow();
                     buttonON.setEnabled(true);
                 }
             }
@@ -247,6 +261,22 @@ public class CalibrationActivity extends RosActivity {
             }
         });
 
+        ToggleButton emergencyStop = (ToggleButton)findViewById(R.id.emergencyButton) ;
+        emergencyStop.setOnCheckedChangeListener( new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
+                if(isChecked){
+                    Toast.makeText(getApplicationContext(), "EMERGENCY STOP ACTIVATED!", Toast.LENGTH_LONG).show();
+                    imageStream.setBackgroundColor(Color.RED);
+                    emergencyNode.setPublish_bool(false);
+                }else{
+                    Toast.makeText(getApplicationContext(), "EMERGENCY STOP DEACTIVATED!", Toast.LENGTH_LONG).show();
+                    imageStream.setBackgroundColor(Color.GREEN);
+                    emergencyNode.setPublish_bool(true);
+                }
+            }
+        });
+
         dragHandler = new MultiTouchArea(this, imageStream);
         dragHandler.enableScaling();
         dragHandler.enableOneFingerGestures();
@@ -257,6 +287,7 @@ public class CalibrationActivity extends RosActivity {
                 while(running){
                     try {
                         updateTarget();
+                        updateStatuses();
                         Thread.sleep(20);
                     } catch (InterruptedException e) {
                         e.getStackTrace();
@@ -311,11 +342,10 @@ public class CalibrationActivity extends RosActivity {
             @Override
             public void run() {
 
-                if(buttonON.isChecked()){
-
-                    if(pos1State.hasReceivedMsg()){
+                if (buttonON.isChecked()) {
+                    if (pos1State.hasReceivedMsg()) {
                         pos1State.setHasReceivedMsg(false);
-                        switch (pos1State.getSubcribe_int()){
+                        switch (pos1State.getSubcribe_int()) {
                             case -1:
                                 statusPos1_ON.setBackgroundColor(DISABLED);
                                 break;
@@ -331,9 +361,9 @@ public class CalibrationActivity extends RosActivity {
                         }
                     }
 
-                    if(pos2State.hasReceivedMsg()){
+                    if (pos2State.hasReceivedMsg()) {
                         pos2State.setHasReceivedMsg(false);
-                        switch (pos2State.getSubcribe_int()){
+                        switch (pos2State.getSubcribe_int()) {
                             case -1:
                                 statusPos2_ON.setBackgroundColor(DISABLED);
                                 break;
@@ -349,9 +379,9 @@ public class CalibrationActivity extends RosActivity {
                         }
                     }
 
-                    if(spreadState.hasReceivedMsg()){
+                    if (spreadState.hasReceivedMsg()) {
                         spreadState.setHasReceivedMsg(false);
-                        switch (spreadState.getSubcribe_int()){
+                        switch (spreadState.getSubcribe_int()) {
                             case -1:
                                 statusSpread_ON.setBackgroundColor(DISABLED);
                                 break;
@@ -367,9 +397,9 @@ public class CalibrationActivity extends RosActivity {
                         }
                     }
 
-                    if(graspState.hasReceivedMsg()){
+                    if (graspState.hasReceivedMsg()) {
                         graspState.setHasReceivedMsg(false);
-                        switch (graspState.getSubcribe_int()){
+                        switch (graspState.getSubcribe_int()) {
                             case -1:
                                 statusGrasp_ON.setBackgroundColor(ENABLED);
                                 break;
@@ -384,11 +414,11 @@ public class CalibrationActivity extends RosActivity {
                         }
                     }
 
-                }else if(buttonOFF.isChecked()){
+                } else if (buttonOFF.isChecked()) {
                     //logic for OFF
-                    if(pos1State.hasReceivedMsg()){
+                    if (pos1State.hasReceivedMsg()) {
                         pos1State.setHasReceivedMsg(false);
-                        switch (pos1State.getSubcribe_int()){
+                        switch (pos1State.getSubcribe_int()) {
                             case -1:
                                 statusPos1_OFF.setBackgroundColor(DISABLED);
                                 break;
@@ -404,9 +434,9 @@ public class CalibrationActivity extends RosActivity {
                         }
                     }
 
-                    if(pos2State.hasReceivedMsg()){
+                    if (pos2State.hasReceivedMsg()) {
                         pos2State.setHasReceivedMsg(false);
-                        switch (pos2State.getSubcribe_int()){
+                        switch (pos2State.getSubcribe_int()) {
                             case -1:
                                 statusPos2_OFF.setBackgroundColor(DISABLED);
                                 break;
@@ -422,9 +452,9 @@ public class CalibrationActivity extends RosActivity {
                         }
                     }
 
-                    if(spreadState.hasReceivedMsg()){
+                    if (spreadState.hasReceivedMsg()) {
                         spreadState.setHasReceivedMsg(false);
-                        switch (spreadState.getSubcribe_int()){
+                        switch (spreadState.getSubcribe_int()) {
                             case -1:
                                 statusSpread_OFF.setBackgroundColor(ENABLED);
                                 break;
@@ -439,9 +469,9 @@ public class CalibrationActivity extends RosActivity {
                         }
                     }
 
-                    if(graspState.hasReceivedMsg()){
+                    if (graspState.hasReceivedMsg()) {
                         graspState.setHasReceivedMsg(false);
-                        switch (graspState.getSubcribe_int()){
+                        switch (graspState.getSubcribe_int()) {
                             case -1:
                                 statusGrasp_OFF.setBackgroundColor(DISABLED);
                                 break;
@@ -528,7 +558,6 @@ public class CalibrationActivity extends RosActivity {
                 float scaleCorrectionX = focusX - errorPoint[0];
                 float scaleCorrectionY = focusY - errorPoint[1];
 
-                Log.d(TAG, String.format("Centers [ %.4f %.4f %.4f %.4f ]", errorPoint[0], errorPoint[1], targetPixel[0], targetPixel[1]));
                 tracker_x=targetPixel[0];
                 tracker_y=targetPixel[1];
 
@@ -568,8 +597,9 @@ public class CalibrationActivity extends RosActivity {
         nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
         nodeMainExecutor.execute(emergencyNode, nodeConfiguration.setNodeName(EMERGENCY_STOP));
         nodeMainExecutor.execute(vsNode, nodeConfiguration.setNodeName(ENABLE_VS));
-        nodeMainExecutor.execute(setupON, nodeConfiguration.setNodeName(SETUP_ON));
-        nodeMainExecutor.execute(setupOFF, nodeConfiguration.setNodeName(SETUP_OFF));
+        nodeMainExecutor.execute(setupONNode, nodeConfiguration.setNodeName(SETUP_ON));
+        nodeMainExecutor.execute(setupOFFNode, nodeConfiguration.setNodeName(SETUP_OFF));
+        nodeMainExecutor.execute(interfaceNumberNode, nodeConfiguration.setNodeName(INTERFACE_NUMBER));
     }
 
 }

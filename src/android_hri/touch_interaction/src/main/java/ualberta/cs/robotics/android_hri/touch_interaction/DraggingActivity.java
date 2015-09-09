@@ -30,6 +30,7 @@ import java.net.URI;
 import sensor_msgs.CompressedImage;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.BooleanNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.Float32Node;
+import ualberta.cs.robotics.android_hri.touch_interaction.node.Int32Node;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.PointNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiTouchArea;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.gesture_detector.TwoFingerGestureDetector;
@@ -41,6 +42,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
     private static final String STREAMING= "/image_converter/output_video/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
+    private static final String INTERFACE_NUMBER="/android/interface_number";
     private static final String TARGET_POINT="/android/target_point";
     private static final String POSITION="/android/position_abs";
 
@@ -50,8 +52,6 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
 
     private NodeMainExecutor nodeMain;
 
-    private static final float ROLL_THREASHOLD = 6.0f;
-    private static final float JAW_THREASHOLD = 8.5f;
     private static final float MAX_GRASP = 2.0f;
     private static final float WORKSPACE_WIDTH = 0.4889f;
     private static final float WORKSPACE_HEIGHT = 0.3822f;
@@ -70,6 +70,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
     private PointNode targetPointNode;
     private PointNode positionNode;
     private Float32Node graspNode;
+    private Int32Node interfaceNumberNode;
     private PointNode rotationNode;
     private BooleanNode emergencyNode;
     private BooleanNode vsNode;
@@ -130,6 +131,11 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
 
         rotationNode = new PointNode();
         rotationNode.publishTo(ROTATION, false, 10);
+
+        interfaceNumberNode = new Int32Node();
+        interfaceNumberNode.publishTo(INTERFACE_NUMBER, true, 0);
+        interfaceNumberNode.setPublishFreq(100);
+        interfaceNumberNode.setPublish_int(3);
 
         emergencyNode = new BooleanNode();
         emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
@@ -302,8 +308,8 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
             positionNode.getPublish_point()[0] = WORKSPACE_Y_OFFSET - positionPixel[1]*WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
             positionNode.getPublish_point()[1] = WORKSPACE_X_OFFSET - positionPixel[0]*WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
             positionNode.getPublish_point()[2] = 0;
-
             positionNode.publishNow();
+
             //targetPointNode.getPublish_point()[0]=positionPixel[0];
             //targetPointNode.getPublish_point()[1]=positionPixel[1];
             //targetPointNode.publishNow();
@@ -430,6 +436,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
         nodeMainExecutor.execute(rotationNode, nodeConfiguration.setNodeName(ROTATION));
         nodeMainExecutor.execute(emergencyNode, nodeConfiguration.setNodeName(EMERGENCY_STOP));
         nodeMainExecutor.execute(vsNode, nodeConfiguration.setNodeName(ENABLE_VS));
+        nodeMainExecutor.execute(interfaceNumberNode, nodeConfiguration.setNodeName(INTERFACE_NUMBER));
     }
 
 }

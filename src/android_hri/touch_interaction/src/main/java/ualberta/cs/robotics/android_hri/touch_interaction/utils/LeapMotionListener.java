@@ -19,11 +19,11 @@ public class LeapMotionListener extends Listener {
     private static final float MIN_POS_Y = 0;
     private static final float MIN_POS_Z = -200;
     private static final float MAX_POS_X =  200;
-    private static final float MAX_POS_Y =  400;
+    private static final float MAX_POS_Y =  600;
     private static final float MAX_POS_Z =  200;
     private static final float MIN_GRAP =  30;
-    private static final float MAX_GRAP =  60;
-    private static final float OPEN_THRESHOLD =  0.1875f;
+    private static final float MAX_GRAP =  80;
+    private static final float OPEN_THRESHOLD =  0.2f;
 
     private LeapMotionFrameListener mListener;
     private Activity mActivity;
@@ -108,9 +108,9 @@ public class LeapMotionListener extends Listener {
         else if (radius < MIN_GRAP)
             radius = MIN_GRAP;
         Vector handNormal = new Vector(hand.palmNormal());
-        handNormal.setX(toRadians(handNormal.getX()));
-        handNormal.setY(toRadians(handNormal.getY()));
-        handNormal.setZ(toRadians(handNormal.getZ()));
+        handNormal.setX(dir2Radians(handNormal.getX()));
+        handNormal.setY(dir2Radians(handNormal.getY()));
+        handNormal.setZ(dir2Radians(handNormal.getZ()));
         float grasp = (radius - MIN_GRAP) / (MAX_GRAP - MIN_GRAP);
 
         msg.append(String.format("\n      Select Task: (%.2f, %.2f, %.2f)", rightPositions[1].getX(), rightPositions[1].getY(), rightPositions[1].getZ()));
@@ -238,12 +238,12 @@ public class LeapMotionListener extends Listener {
         else if(position.getZ() < MIN_POS_Z)
             position.setZ(MIN_POS_Z);
 
-        Vector result = new Vector( (1 + position.getX() / MAX_POS_X)/2f, (1 + position.getY() / MAX_POS_Y)/2f, (1 + position.getZ() / MAX_POS_Z)/2); //values from 0 to 1
+        Vector result = new Vector( (1 + position.getX() / MAX_POS_X)/2f, position.getY() / MAX_POS_Y, (1 + position.getZ() / MAX_POS_Z)/2); //values from 0 to 1
         msg.append(String.format("(%.4f, %.4f, %.4f) ", result.getX(), result.getY(), result.getZ()));
         return result;
     }
 
-    private float toRadians(float dir){
+    private float dir2Radians(float dir){
         return dir*3.1416f/2f;
     }
 
