@@ -41,11 +41,10 @@
         android:textOff="EMERGENCY STOP"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:id="@+id/emergencyButton"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
         android:checked="false"
         android:textStyle="bold"
-        />
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@+id/targetView" />
 
     <TextView
         android:layout_width="60dp"

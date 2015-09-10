@@ -11,12 +11,13 @@
         android:layout_width="match_parent" />
 
     <ImageView
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:src="@drawable/target_cool"
         android:id="@+id/imageTarget"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="120dp"
         android:alpha="0"/>
 
     <RelativeLayout
@@ -31,16 +32,18 @@
             android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
             android:layout_above="@+id/virtual_joystick_pos"
-            android:layout_alignRight="@+id/virtual_joystick_pos">
+            android:layout_alignRight="@+id/virtual_joystick_pos"
+            android:gravity="center_vertical|center_horizontal">
 
             <RelativeLayout
-                android:layout_width="0px"
+                android:layout_width="60dp"
                 android:layout_height="match_parent"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentRight="true"
                 android:layout_above="@+id/virtual_joystick_rot"
                 android:layout_alignLeft="@+id/virtual_joystick_rot"
-                android:layout_weight="1"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="13dp"
                 android:id="@+id/relativeLayout">
 
                 <ImageView
@@ -71,21 +74,27 @@
                     android:layout_width="wrap_content"
                     android:layout_height="30dp"
                     android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:text="Grasping"
-                    android:id="@+id/graspingTextView"
+                    android:text="Open H."
+                    android:id="@+id/graspingOpenTextView"
                     android:gravity="center_vertical|center_horizontal"
                     android:textColor="#ff32a9ff"
                     android:layout_alignParentTop="true"
-                    android:layout_alignParentRight="true" />
+                    android:layout_alignParentLeft="true" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="30dp"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="Close H."
+                    android:id="@+id/graspingCloseTextView"
+                    android:gravity="center_vertical|center_horizontal"
+                    android:textColor="#ff32a9ff"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentLeft="true" />
 
             </RelativeLayout>
 
-            <ImageView
-                android:layout_width="0px"
-                android:layout_height="match_parent"
-                android:src="@drawable/empty"
-                android:id="@+id/emptyView"
-                android:layout_weight="1"/>
+
 
         </LinearLayout>
 
