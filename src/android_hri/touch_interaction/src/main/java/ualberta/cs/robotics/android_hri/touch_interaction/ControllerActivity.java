@@ -46,8 +46,15 @@ public class ControllerActivity extends RosActivity {
     private static final String ENABLE_VS = "/android/enable_vs";
     private static final String POSITION= "/android/joystick_position";
     private static final String ROTATION= "/android/joystick_rotation";
+    private static final String POSITION_ABS= "/android/position_abs";
+    private static final String ROTATION_REL= "/android/rotation_rel";
     private static final String GRASP="/android/grasping_rel";
     private static final String TARGET= "/android/joystick_target_tmp";
+
+    private static final float WORKSPACE_WIDTH = 0.4889f;
+    private static final float WORKSPACE_HEIGHT = 0.3822f;
+    private static final float WORKSPACE_X_OFFSET = 0.2366f;
+    private static final float WORKSPACE_Y_OFFSET = 0.9476f;
 
     private NodeMainExecutor nodeMain;
 
@@ -57,11 +64,15 @@ public class ControllerActivity extends RosActivity {
     private RosImageView<CompressedImage> imageStream;
 
     private PointNode targetPointNode;
+    private PointNode positionPointNode;
+    private PointNode rotationPointNode;
+
     private Float32Node graspNode;
     private Int32Node interfaceNumberNode;
     private BooleanNode emergencyNode;
     private BooleanNode vsNode;
-    private TwistNode targetControlNode;
+
+    private TwistNode targetListenerNode;
     private TwistNode positionListenerNode;
     private TwistNode rotationListenerNode;
 
@@ -107,6 +118,12 @@ public class ControllerActivity extends RosActivity {
         targetPointNode = new PointNode();
         targetPointNode.publishTo(TARGET_POINT, false, 10);
 
+        positionPointNode =  new PointNode();
+        positionPointNode.publishTo(POSITION_ABS, false, 100);
+
+        rotationPointNode =  new PointNode();
+        rotationPointNode.publishTo(ROTATION_REL, false, 100);
+
         interfaceNumberNode = new Int32Node();
         interfaceNumberNode.publishTo(INTERFACE_NUMBER, true, 0);
         interfaceNumberNode.setPublishFreq(100);
@@ -121,8 +138,8 @@ public class ControllerActivity extends RosActivity {
         vsNode.publishTo(ENABLE_VS, true, 0);
         vsNode.setPublish_bool(false);
 
-        targetControlNode = new TwistNode();
-        targetControlNode.subscribeTo(TARGET+"/cmd_vel");
+        targetListenerNode = new TwistNode();
+        targetListenerNode.subscribeTo(TARGET + "/cmd_vel");
 
         sliderTouch = (ImageView) findViewById(R.id.sliderControl);
         sliderImage = (ImageView) findViewById(R.id.imageSlider_p);
@@ -146,7 +163,7 @@ public class ControllerActivity extends RosActivity {
         confirmTarget.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!targetControlNode.hasReceivedMsg()) {
+                if (!targetListenerNode.hasReceivedMsg()) {
                     Toast.makeText(getApplicationContext(), "Select a target first! Use the Joystick at the top-right hand corner of the screen.", Toast.LENGTH_LONG).show();
                     return;
                 }
@@ -181,12 +198,15 @@ public class ControllerActivity extends RosActivity {
                             updateSlider();
                         }
                         updateTarget();
+                        updatePosition();
+                        updateRotation();
+                        /*
                         if(positionListenerNode.hasReceivedMsg() || rotationListenerNode.hasReceivedMsg()){
                             vsNode.setPublish_bool(false);
                             positionListenerNode.setHasReceivedMsg(false);
                             rotationListenerNode.setHasReceivedMsg(false);
                             Log.d(TAG, String.format("MANUAL OPT [ %b ]", true));
-                        }
+                        }*/
                     } catch (InterruptedException e) {
                         e.getStackTrace();
                     }
@@ -263,11 +283,11 @@ public class ControllerActivity extends RosActivity {
 
     private void updateTarget() {
 
-        if(targetControlNode.hasReceivedMsg()) {
+        if(targetListenerNode.hasReceivedMsg()) {
             targetImage.setAlpha(1.0f);
         }
 
-        float[] xy = targetControlNode.getSubcribe_linear();
+        float[] xy = targetListenerNode.getSubcribe_linear();
         final float x=targetImage.getX() - 10.f*xy[0];
         final float y=targetImage.getY() - 10.f*xy[1];
 
@@ -293,6 +313,52 @@ public class ControllerActivity extends RosActivity {
         });
     }
 
+    private void updatePosition() {
+
+        float[] xy = positionListenerNode.getSubcribe_linear();
+        final float x=targetImage.getX() - 2.f*xy[0];
+        final float y=targetImage.getY() - 2.f*xy[1];
+
+        float[] targetPoint = new float[]{x+targetImage.getWidth()/2 , y+targetImage.getHeight()/2};
+        float[] targetPixel = new float[2];
+
+        Matrix streamMatrix = new Matrix();
+        imageStream.getImageMatrix().invert(streamMatrix);
+        streamMatrix.mapPoints(targetPixel, targetPoint);
+        if(!validTarget(targetPixel[0],targetPixel[1])){
+            return;
+        }
+
+        positionPointNode.getPublish_point()[0] = WORKSPACE_Y_OFFSET - targetPixel[1]*WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
+        positionPointNode.getPublish_point()[1] = WORKSPACE_X_OFFSET - targetPixel[0]*WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
+        positionPointNode.getPublish_point()[2] = 0;
+
+        if(positionListenerNode.hasReceivedMsg())
+            positionPointNode.publishNow();
+        positionListenerNode.setHasReceivedMsg(false);
+
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                targetImage.setX(x);
+                targetImage.setY(y);
+                targetImage.setAlpha(1.0f);
+            }
+        });
+    }
+
+    private void updateRotation() {
+
+        float[] xy = rotationListenerNode.getSubcribe_linear();
+        rotationPointNode.getPublish_point()[0] = xy[1];
+        rotationPointNode.getPublish_point()[1] = xy[0];
+        rotationPointNode.getPublish_point()[2] = 0;
+
+        if(rotationListenerNode.hasReceivedMsg())
+            rotationPointNode.publishNow();
+        rotationListenerNode.setHasReceivedMsg(false);
+    }
+
     private boolean validTarget(float x, float y) {
         if (x < 0 || y < 0)
             return false;
@@ -312,13 +378,16 @@ public class ControllerActivity extends RosActivity {
         nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING+"sub"));
 
         //Custom
+
         nodeMainExecutor.execute(graspNode, nodeConfiguration.setNodeName(GRASP));
         nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
+        nodeMainExecutor.execute(positionPointNode, nodeConfiguration.setNodeName(POSITION_ABS));
+        nodeMainExecutor.execute(rotationPointNode, nodeConfiguration.setNodeName(ROTATION_REL));
         nodeMainExecutor.execute(emergencyNode, nodeConfiguration.setNodeName(EMERGENCY_STOP));
         nodeMainExecutor.execute(vsNode, nodeConfiguration.setNodeName(ENABLE_VS));
         nodeMainExecutor.execute(interfaceNumberNode, nodeConfiguration.setNodeName(INTERFACE_NUMBER));
 
-        nodeMainExecutor.execute(targetControlNode, nodeConfiguration.setNodeName(TARGET+"sub"));
+        nodeMainExecutor.execute(targetListenerNode, nodeConfiguration.setNodeName(TARGET+"sub"));
         nodeMainExecutor.execute(positionListenerNode, nodeConfiguration.setNodeName(POSITION+"sub"));
         nodeMainExecutor.execute(rotationListenerNode, nodeConfiguration.setNodeName(ROTATION+"sub"));
     }

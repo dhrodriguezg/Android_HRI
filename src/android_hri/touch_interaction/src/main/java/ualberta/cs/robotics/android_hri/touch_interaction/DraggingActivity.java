@@ -112,7 +112,8 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
 
         gestureHandler = new MultiTouchArea(this, imageStream);
         gestureHandler.enableScaling();
-        gestureHandler.enableDragging();
+        //gestureHandler.enableDragging();
+        gestureHandler.enableScroll(); //single dragging
         gestureHandler.enableRotating();
         gestureHandler.enableOneFingerGestures();
         //Disabled Select target gestures
@@ -288,6 +289,51 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
     }
 
     private void updatePosition() {
+        if(gestureHandler.getSingleDragX()>0){
+
+            final float x=gestureHandler.getSingleDragX() - positionImage.getWidth()/2;
+            final float y=gestureHandler.getSingleDragY() - positionImage.getHeight()/2;
+
+            float[] positionPoint = new float[]{gestureHandler.getSingleDragX(), gestureHandler.getSingleDragY()};
+            float[] positionPixel = new float[2];
+
+            Matrix streamMatrix = new Matrix();
+            imageStream.getImageMatrix().invert(streamMatrix);
+            streamMatrix.mapPoints(positionPixel, positionPoint);
+
+            if(!validTarget(positionPixel[0],positionPixel[1])){
+                gestureHandler.setSingleDragX(0);
+                return;
+            }
+
+            positionNode.getPublish_point()[0] = WORKSPACE_Y_OFFSET - positionPixel[1]*WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
+            positionNode.getPublish_point()[1] = WORKSPACE_X_OFFSET - positionPixel[0]*WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
+            positionNode.getPublish_point()[2] = 0;
+            positionNode.publishNow();
+
+            //targetPointNode.getPublish_point()[0]=positionPixel[0];
+            //targetPointNode.getPublish_point()[1]=positionPixel[1];
+            //targetPointNode.publishNow();
+            //vsNode.setPublish_bool(true);
+            this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    positionImage.setX(x);
+                    positionImage.setY(y);
+                    positionImage.setAlpha(0.4f);
+
+                    targetImage.setAlpha(0.f);
+                    targetImage.setX(0);
+                    targetImage.setY(0);
+                    msg = String.format("Moving to (%.4f , %.4f) ", positionNode.getPublish_point()[0], positionNode.getPublish_point()[1]);
+                }
+            });
+            gestureHandler.setSingleDragX(0);
+            gestureHandler.setLongClickX(0);
+        }
+    }
+
+    private void updatePositionOld() {
         if(gestureHandler.getDoubleDragX()>0){
 
             final float x=gestureHandler.getDoubleDragX() - positionImage.getWidth()/2;
@@ -338,7 +384,6 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
             gestureHandler.setAngle(0);
         }
         if(angle!=0){
-
             if (rollText.getAlpha()>0.9f){
                 msg = String.format("Rotating Roll += %.2f ",angle);
                 rotationNode.getPublish_point()[0]=angle;

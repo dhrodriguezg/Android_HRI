@@ -25,9 +25,8 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     public static float MAX_DRAGGING_DISTANCE=0.2f;
     public static float MAX_RESOLUTION=0;
 
-    public static final float MIN_SCALE = 0.1f;//full open 0
-    public static final float MAX_SCALE = 10.1f;//full close 3.2
-    //calculate grasp ->   (MAX_SCALE-X)*3.2/(MAX_SCALE-MIN_SCALE)
+    public static final float MIN_SCALE = 10f;
+    public static final float MAX_SCALE = 50f;
     private boolean detectingGesture =false;
     private float fX, fY, sX, sY;
     private int ptrID1, ptrID2;
@@ -168,9 +167,9 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
         if(scaling) {
             initTime = detector.getEventTime();
             initScale = mScale;
-            testScale = 10.f;
-            //rotating=false;
-            //dragging=false;
+            testScale = 10f;
+            rotating=false;
+            dragging=false;
         }
         return true;
     }
@@ -179,10 +178,10 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     public boolean onScale(ScaleGestureDetector detector){
         if(scaling) {
             testScale *= detector.getScaleFactor();
-            if(Math.abs(10.f-testScale) > 1.f){
+            /*if(Math.abs(10f-testScale) > 1.f){
                 rotating=false;
                 dragging=false;
-            }
+            }*/
             mScaleFocusX=detector.getFocusX();
             mScaleFocusY=detector.getFocusY();
             mScale *= detector.getScaleFactor();

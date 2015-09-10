@@ -68,26 +68,30 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
     /** Low-level events **/
 
     public boolean onTouchEvent(View view, MotionEvent event){
-        if (event.getPointerCount() < 2) {
-            detectingMultiGesture=false;
-            mView = view;
-            checkGestureState(event);
-            return mGestureDetector.onTouchEvent(event);
-        }else{
-            detectingMultiGesture=true;
-        }
-        return true;
+        mView = view;
+        checkGestureState(event);
+        return mGestureDetector.onTouchEvent(event);
     }
 
     private void checkGestureState(MotionEvent event){
-        if(event.getAction()==MotionEvent.ACTION_DOWN){
-            detectingGesture = true;
-            mListener.onOneFingerGestureState(detectingGesture);
-            Log.d(TAG, String.format("Detecting [ %b ]", detectingGesture));
-        }else if(event.getAction()==MotionEvent.ACTION_UP){
-            detectingGesture = false;
-            mListener.onOneFingerGestureState(detectingGesture);
-            Log.d(TAG, String.format("Detecting [ %b ]", detectingGesture));
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                detectingGesture = true;
+                detectingMultiGesture=false;
+                mListener.onOneFingerGestureState(detectingGesture);
+                Log.d(TAG, String.format("Detecting [ %b ]", detectingGesture));
+                break;
+            case MotionEvent.ACTION_UP:
+                detectingGesture = false;
+                mListener.onOneFingerGestureState(detectingGesture);
+                Log.d(TAG, String.format("Detecting [ %b ]", detectingGesture));
+                break;
+            case MotionEvent.ACTION_POINTER_DOWN: //second finger detected, stop
+                detectingMultiGesture=true;
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                //detectingMultiGesture=false;
+                break;
         }
     }
 
@@ -120,6 +124,8 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
     public boolean onDoubleTap(MotionEvent event) {
         if(!enableDoubleTap)
             return true;
+        if(detectingMultiGesture)
+            return true;
         dtX =event.getX(); dtY =event.getY();
         float[] normalizedXY = normalizedValues(event,mView);
         normalizedDTX = normalizedXY[0];
@@ -132,6 +138,8 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
     @Override
     public boolean onScroll(MotionEvent initial_event, MotionEvent current_event, float distanceX, float distanceY) {
         if(!enableScroll)
+            return true;
+        if(detectingMultiGesture)
             return true;
         sX =initial_event.getX(); sY =initial_event.getY();
         sdX = distanceX; sdY=distanceY;
@@ -149,6 +157,8 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
     @Override
     public boolean onFling(MotionEvent initial_event, MotionEvent current_event, float velocityX, float velocityY) {
         if(!enableFling)
+            return true;
+        if(detectingMultiGesture)
             return true;
         fX = initial_event.getX();
         fY = initial_event.getY();

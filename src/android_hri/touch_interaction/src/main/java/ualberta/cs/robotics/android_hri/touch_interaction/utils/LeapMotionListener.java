@@ -102,24 +102,25 @@ public class LeapMotionListener extends Listener {
         Vector[] rightPositions = extractPositions(hand,msg);
         if (rightPositions==null)
             return;
-        float radius = hand.sphereRadius();
+        /*float radius = hand.sphereRadius();
         if (radius > MAX_GRAP)
             radius = MAX_GRAP;
         else if (radius < MIN_GRAP)
             radius = MIN_GRAP;
+        float grasp = (radius - MIN_GRAP) / (MAX_GRAP - MIN_GRAP); */
         Vector handNormal = new Vector(hand.palmNormal());
         handNormal.setX(dir2Radians(handNormal.getX()));
         handNormal.setY(dir2Radians(handNormal.getY()));
         handNormal.setZ(dir2Radians(handNormal.getZ()));
-        float grasp = (radius - MIN_GRAP) / (MAX_GRAP - MIN_GRAP);
+        float grasp = calculateGrasping(rightPositions);
 
         msg.append(String.format("\n      Select Task: (%.2f, %.2f, %.2f)", rightPositions[1].getX(), rightPositions[1].getY(), rightPositions[1].getZ()));
-        msg.append(String.format("\n      Move Task: (%.2f, %.2f, %.2f)", rightPositions[0].getX(), rightPositions[0].getY(), rightPositions[0].getZ()));
+        msg.append(String.format("\n      Move Task: (%.2f, %.2f, %.2f)", rightPositions[6].getX(), rightPositions[6].getY(), rightPositions[6].getZ()));
         msg.append(String.format("\n      Rotate Task: (%.2f, %.2f, %.2f)", handNormal.getY(), handNormal.getX(), handNormal.getZ()));
         msg.append(String.format("\n      GraspInv Task: (%.2f)", grasp));
 
-        mListener.onMove(rightPositions[0].getX(), rightPositions[0].getY(), rightPositions[0].getZ());
         mListener.onSelect(rightPositions[1].getX(), rightPositions[1].getY(), rightPositions[1].getZ());
+        mListener.onMove(rightPositions[6].getX(), rightPositions[6].getY(), rightPositions[6].getZ());
         mListener.onRotate(handNormal.getY(), handNormal.getX(), handNormal.getZ());
         mListener.onGrasping(grasp); //values from 0 to 1.
         mListener.onMoveRightHand(rightPositions);
@@ -132,8 +133,6 @@ public class LeapMotionListener extends Listener {
             return;
 
         mListener.onMoveLeftHand(leftPositions);
-
-        Vector palm = leftPositions[0];
 
         double indexLenght=Math.hypot( leftPositions[0].getX()-leftPositions[1].getX() , leftPositions[0].getY()-leftPositions[1].getY() );
         indexLenght = Math.hypot( indexLenght , leftPositions[0].getZ()-leftPositions[1].getZ() );
@@ -159,7 +158,6 @@ public class LeapMotionListener extends Listener {
         boolean isThumb = thumbLenght > OPEN_THRESHOLD;
 
         int numOfFingers=0;
-
 
         if(isIndex && isMiddle && isRing && isPinky && isThumb){
             msg.append("\n      Task: 5 (open hand, no task)");
@@ -188,16 +186,39 @@ public class LeapMotionListener extends Listener {
         }
     }
 
+    private float calculateGrasping(Vector[] fingerPosition){
+        // It's calculated with the mean of the distance between the fingers and the thumb.
+        double indexLenght=Math.hypot( fingerPosition[5].getX()-fingerPosition[1].getX() , fingerPosition[5].getY()-fingerPosition[1].getY() );
+        indexLenght = Math.hypot( indexLenght , fingerPosition[5].getZ()-fingerPosition[1].getZ() );
+
+        double middleLenght=Math.hypot( fingerPosition[5].getX()-fingerPosition[2].getX() , fingerPosition[5].getY()-fingerPosition[2].getY() );
+        middleLenght = Math.hypot( middleLenght , fingerPosition[5].getZ()-fingerPosition[2].getZ() );
+
+        double ringLenght=Math.hypot( fingerPosition[5].getX()-fingerPosition[3].getX() , fingerPosition[5].getY()-fingerPosition[3].getY() );
+        ringLenght = Math.hypot( ringLenght , fingerPosition[5].getZ()-fingerPosition[3].getZ() );
+
+        double pinkyLenght=Math.hypot(fingerPosition[5].getX() - fingerPosition[4].getX(), fingerPosition[5].getY() - fingerPosition[4].getY());
+        pinkyLenght = Math.hypot( pinkyLenght , fingerPosition[5].getZ()-fingerPosition[4].getZ() );
+
+        float meanDistance = (float) (indexLenght + middleLenght + ringLenght + pinkyLenght)/4.f;
+        meanDistance = (meanDistance - 0.05f) / (0.30f - 0.05f);
+
+        if(meanDistance > 1f){
+            meanDistance = 1f;
+        }
+        if(meanDistance < 0f){
+            meanDistance = 0f;
+        }
+        return meanDistance;
+    }
+
     private Vector[] extractPositions(Hand hand, StringBuffer msg){
         int numFingers=0;
-        Vector[] positions = new Vector[6];
+        Vector[] positions = new Vector[7];
 
         msg.append("\n      Palm: ");
         positions[0] = applyPositionLimits( new Vector(hand.palmPosition()), msg); //palm -> 0;
-
-
         FingerList fingers = hand.fingers();
-
         for (Finger finger : fingers) {
             numFingers++;
             if (finger.type().equals(Finger.Type.TYPE_INDEX)){
@@ -220,6 +241,8 @@ public class LeapMotionListener extends Listener {
 
         if(numFingers<5)
             return null;
+        msg.append("\n         Wrist:  ");
+        positions[6] = applyPositionLimits( new Vector(hand.wristPosition()), msg); //wrist -> 6;
         return positions;
     }
 

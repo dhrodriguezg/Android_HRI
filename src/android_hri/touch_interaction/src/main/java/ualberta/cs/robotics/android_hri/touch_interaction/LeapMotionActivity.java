@@ -354,7 +354,7 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
             return;
         if(((ColorDrawable)statusGrasp.getBackground()).getColor() != ENABLED && ((ColorDrawable)statusAll.getBackground()).getColor() != ENABLED)
             return;
-        float grasp = (1f-g)*2f;
+        float grasp = (1f-g)*1.75f;
         graspNode.setPublish_float(grasp);
         graspNode.publishNow();
     }
