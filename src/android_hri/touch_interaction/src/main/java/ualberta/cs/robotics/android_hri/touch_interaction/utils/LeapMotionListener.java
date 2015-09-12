@@ -23,7 +23,7 @@ public class LeapMotionListener extends Listener {
     private static final float MAX_POS_Z =  200;
     private static final float MIN_GRAP =  30;
     private static final float MAX_GRAP =  80;
-    private static final float OPEN_THRESHOLD =  0.2f;
+    private static final float OPEN_THRESHOLD =  0.17f;
 
     private LeapMotionFrameListener mListener;
     private Activity mActivity;

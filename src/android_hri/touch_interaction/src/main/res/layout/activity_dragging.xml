@@ -34,6 +34,37 @@
         android:layout_below="@+id/textRotRoll"
         android:layout_alignParentLeft="true" />
 
+    <TextView
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/textRotRoll"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Roll"
+        android:alpha="0.1"
+        android:background="#ffff0000"
+        android:gravity="center_vertical|center_horizontal"
+        android:textColor="#ff000000"
+        android:layout_alignParentTop="true"
+        android:layout_alignLeft="@+id/emergencyButton"
+        android:visibility="invisible"/>
+
+    <TextView
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:id="@+id/textRotJaw"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Jaw"
+        android:alpha="1.0"
+        android:background="#ff00ff00"
+        android:gravity="center_vertical|center_horizontal"
+        android:textColor="#ff000000"
+        android:layout_alignParentTop="true"
+        android:layout_alignRight="@+id/emergencyButton"
+        android:visibility="invisible"/>
+
+
+
+
     <ToggleButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -47,30 +78,37 @@
         android:layout_toRightOf="@+id/targetView" />
 
     <TextView
-        android:layout_width="60dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/textRotRoll"
+        android:id="@+id/rotateStatus"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Roll"
-        android:alpha="0.1"
-        android:background="#ffff0000"
-        android:gravity="center_vertical|center_horizontal"
+        android:text="Rotating"
         android:textColor="#ff000000"
-        android:layout_alignParentTop="true"
-        android:layout_alignLeft="@+id/emergencyButton" />
+        android:layout_centerVertical="true"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="5dp"/>
 
     <TextView
-        android:layout_width="60dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/textRotJaw"
+        android:id="@+id/moveStatus"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Jaw"
-        android:alpha="1.0"
-        android:background="#ff00ff00"
-        android:gravity="center_vertical|center_horizontal"
+        android:text="Moving"
         android:textColor="#ff000000"
-        android:layout_alignParentTop="true"
-        android:layout_alignRight="@+id/emergencyButton" />
+        android:layout_above="@+id/rotateStatus"
+        android:layout_alignLeft="@+id/rotateStatus"
+        android:layout_marginBottom="20dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/graspStatus"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Grasping"
+        android:textColor="#ff000000"
+        android:layout_below="@+id/rotateStatus"
+        android:layout_alignLeft="@+id/rotateStatus"
+        android:layout_marginTop="20dp"/>
 
 
 </RelativeLayout>

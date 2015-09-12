@@ -16,6 +16,12 @@ import java.io.IOException;
 public class MainActivity extends ActionBarActivity {
 
     public static String ROS_MASTER = "";
+
+    public static final float WORKSPACE_X_OFFSET = 0.2306f;
+    public static final float WORKSPACE_WIDTH = 0.4889f;
+    public static final float WORKSPACE_Y_OFFSET = 0.9100f;
+    public static final float WORKSPACE_HEIGHT = 0.3546f;
+
     private EditText rosIP;
     private EditText rosPort;
     private ImageView interface_1;

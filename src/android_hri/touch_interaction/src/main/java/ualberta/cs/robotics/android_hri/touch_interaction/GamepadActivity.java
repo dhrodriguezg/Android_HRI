@@ -4,12 +4,14 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -37,30 +39,20 @@ public class GamepadActivity extends RosActivity {
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
     private static final String INTERFACE_NUMBER="/android/interface_number";
-    private static final String TARGET_POINT="/android/target_point";
     private static final String ENABLE_VS = "/android/enable_vs";
-    private static final String POSITION= "/android/joystick_position";
-    private static final String POSITION_ABS= "/android/position_abs";
-    private static final String ROTATION= "/android/joystick_rotation";
+    private static final String POSITION= "/android/position_abs";
+    private static final String ROTATION= "/android/rotation_rel";
     private static final String GRASP="/android/grasping_rel";
-    private static final String TARGET= "/android/joystick_target_tmp";
-
-    private static final float WORKSPACE_WIDTH = 0.4889f;
-    private static final float WORKSPACE_HEIGHT = 0.3822f;
-    private static final float WORKSPACE_X_OFFSET = 0.2366f;
-    private static final float WORKSPACE_Y_OFFSET = 0.9476f;
 
     private NodeMainExecutor nodeMain;
 
     private RosImageView<CompressedImage> imageStream;
-
-    private PointNode positionPointNode;
     private ImageView targetImage;
 
     private BooleanNode emergencyNode;
     private BooleanNode vsNode;
-    private TwistNode positionNode;
-    private TwistNode rotationNode;
+    private PointNode positionNode;
+    private PointNode rotationNode;
     private Float32Node graspNode;
     private Int32Node interfaceNumberNode;
 
@@ -85,11 +77,16 @@ public class GamepadActivity extends RosActivity {
         imageStream = (RosImageView<CompressedImage>) findViewById(R.id.visualization);
 
         targetImage = (ImageView) findViewById(R.id.imageTarget);
+        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 105, getResources().getDisplayMetrics()); //convert pid to pixel
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
+        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        params.rightMargin=px;
 
-        positionNode = new TwistNode();
-        positionNode.publishTo(POSITION + "/cmd_vel", false, 10);
-        rotationNode = new TwistNode();
-        rotationNode.publishTo(ROTATION + "/cmd_vel", false, 10);
+        positionNode = new PointNode();
+        positionNode.publishTo(POSITION, false, 10);
+        rotationNode = new PointNode();
+        rotationNode.publishTo(ROTATION, false, 10);
 
         graspNode = new Float32Node();
         graspNode.setPublishFreq(500);
@@ -99,9 +96,6 @@ public class GamepadActivity extends RosActivity {
         interfaceNumberNode.publishTo(INTERFACE_NUMBER, true, 0);
         interfaceNumberNode.setPublishFreq(100);
         interfaceNumberNode.setPublish_int(4);
-
-        positionPointNode =  new PointNode();
-        positionPointNode.publishTo(POSITION_ABS, false, 10);
 
         emergencyNode = new BooleanNode();
         emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
@@ -158,9 +152,8 @@ public class GamepadActivity extends RosActivity {
             public void run(){
                 while(running){
                     try {
-                        Thread.sleep(16);
+                        Thread.sleep(10);
                         sendGamepadValues();
-                        updatePosition();
                     } catch (InterruptedException e) {
                         e.getStackTrace();
                     }
@@ -228,17 +221,38 @@ public class GamepadActivity extends RosActivity {
         float posY=-gamepad.getAxisValue(MotionEvent.AXIS_Y);
         if(Math.abs(posX) > 0.1 || Math.abs(posY) > 0.1){
             //send positions
-            positionNode.getPublish_linear()[0]=posX;
-            positionNode.getPublish_linear()[1]=posY;
-            positionNode.publishNow();
+            final float x=targetImage.getX() - 2.f*posX;
+            final float y=targetImage.getY() - 2.f*posY;
+            float[] targetPoint = new float[]{x+targetImage.getWidth()/2 , y+targetImage.getHeight()/2};
+            float[] targetPixel = new float[2];
+
+            Matrix streamMatrix = new Matrix();
+            imageStream.getImageMatrix().invert(streamMatrix);
+            streamMatrix.mapPoints(targetPixel, targetPoint);
+            if(validTarget(targetPixel[0],targetPixel[1])){
+                positionNode.getPublish_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - targetPixel[1]*MainActivity.WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
+                positionNode.getPublish_point()[1] = MainActivity.WORKSPACE_X_OFFSET - targetPixel[0]*MainActivity.WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
+                positionNode.getPublish_point()[2] = 0;
+                positionNode.publishNow();
+
+                this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        targetImage.setX(x);
+                        targetImage.setY(y);
+                        targetImage.setAlpha(1.0f);
+                    }
+                });
+            }
+
         }
 
         float rotX=-gamepad.getAxisValue(MotionEvent.AXIS_Z);
         float rotY=-gamepad.getAxisValue(MotionEvent.AXIS_RZ);
         if(Math.abs(rotX) > 0.1 || Math.abs(rotY) > 0.1){
             //send rotations
-            rotationNode.getPublish_linear()[0]=rotX;
-            rotationNode.getPublish_linear()[1]=rotY;
+            rotationNode.getPublish_point()[0]=rotY;
+            rotationNode.getPublish_point()[1]=rotX;
             rotationNode.publishNow();
         }
 
@@ -247,43 +261,6 @@ public class GamepadActivity extends RosActivity {
         if(gamepad.isAttached()){
             graspNode.setPublish_float(graspP+graspN);
         }
-    }
-
-    private void updatePosition() {
-
-        float posX=-gamepad.getAxisValue(MotionEvent.AXIS_X);
-        float posY=-gamepad.getAxisValue(MotionEvent.AXIS_Y);
-        if(Math.abs(posX) > 0.1 || Math.abs(posY) > 0.1){
-            //send positions
-            final float x=targetImage.getX() - 2.f*posX;
-            final float y=targetImage.getY() - 2.f*posY;
-
-            float[] targetPoint = new float[]{x+targetImage.getWidth()/2 , y+targetImage.getHeight()/2};
-            float[] targetPixel = new float[2];
-
-            Matrix streamMatrix = new Matrix();
-            imageStream.getImageMatrix().invert(streamMatrix);
-            streamMatrix.mapPoints(targetPixel, targetPoint);
-            if(!validTarget(targetPixel[0],targetPixel[1])){
-                return;
-            }
-
-            positionPointNode.getPublish_point()[0] = WORKSPACE_Y_OFFSET - targetPixel[1]*WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
-            positionPointNode.getPublish_point()[1] = WORKSPACE_X_OFFSET - targetPixel[0]*WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
-            positionPointNode.getPublish_point()[2] = 0;
-            positionPointNode.publishNow();
-
-            this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    targetImage.setX(x);
-                    targetImage.setY(y);
-                    targetImage.setAlpha(1.0f);
-                }
-            });
-        }
-
-
     }
 
     private boolean validTarget(float x, float y) {
@@ -308,7 +285,5 @@ public class GamepadActivity extends RosActivity {
         nodeMainExecutor.execute(positionNode, nodeConfiguration.setNodeName(POSITION));
         nodeMainExecutor.execute(rotationNode, nodeConfiguration.setNodeName(ROTATION));
         nodeMainExecutor.execute(interfaceNumberNode, nodeConfiguration.setNodeName(INTERFACE_NUMBER));
-
-        nodeMainExecutor.execute(positionPointNode, nodeConfiguration.setNodeName(POSITION_ABS));
     }
 }

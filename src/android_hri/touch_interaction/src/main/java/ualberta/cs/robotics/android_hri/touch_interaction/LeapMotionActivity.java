@@ -49,11 +49,6 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
     private static final String ROTATION= "/android/rotation_abs";
     private static final String GRASP="/android/grasping_abs";
 
-    private static final float WORKSPACE_WIDTH = 0.4889f;
-    private static final float WORKSPACE_HEIGHT = 0.3822f;
-    private static final float WORKSPACE_X_OFFSET = 0.2366f;
-    private static final float WORKSPACE_Y_OFFSET = 0.9476f;
-
     private final int DISABLED = Color.RED;
     private final int ENABLED = Color.GREEN;
     private final int TRANSITION = Color.rgb(255,195,77); //orange
@@ -319,8 +314,8 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
             return;
         vsNode.setPublish_bool(true);
 
-        positionNode.getPublish_point()[0] = WORKSPACE_Y_OFFSET - z*WORKSPACE_HEIGHT;
-        positionNode.getPublish_point()[1] = WORKSPACE_X_OFFSET - x*WORKSPACE_WIDTH;
+        positionNode.getPublish_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - z*MainActivity.WORKSPACE_HEIGHT;
+        positionNode.getPublish_point()[1] = MainActivity.WORKSPACE_X_OFFSET - x*MainActivity.WORKSPACE_WIDTH;
         positionNode.publishNow();
 
         float[] point = calculatePoint(imageStream.getDrawable().getIntrinsicWidth()*x, imageStream.getDrawable().getIntrinsicHeight()*z);

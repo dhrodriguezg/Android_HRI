@@ -1,16 +1,19 @@
 package ualberta.cs.robotics.android_hri.touch_interaction;
 
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -50,11 +53,6 @@ public class ControllerActivity extends RosActivity {
     private static final String ROTATION_REL= "/android/rotation_rel";
     private static final String GRASP="/android/grasping_rel";
     private static final String TARGET= "/android/joystick_target_tmp";
-
-    private static final float WORKSPACE_WIDTH = 0.4889f;
-    private static final float WORKSPACE_HEIGHT = 0.3822f;
-    private static final float WORKSPACE_X_OFFSET = 0.2366f;
-    private static final float WORKSPACE_Y_OFFSET = 0.9476f;
 
     private NodeMainExecutor nodeMain;
 
@@ -119,10 +117,10 @@ public class ControllerActivity extends RosActivity {
         targetPointNode.publishTo(TARGET_POINT, false, 10);
 
         positionPointNode =  new PointNode();
-        positionPointNode.publishTo(POSITION_ABS, false, 100);
+        positionPointNode.publishTo(POSITION_ABS, false, 50);
 
         rotationPointNode =  new PointNode();
-        rotationPointNode.publishTo(ROTATION_REL, false, 100);
+        rotationPointNode.publishTo(ROTATION_REL, false, 50);
 
         interfaceNumberNode = new Int32Node();
         interfaceNumberNode.publishTo(INTERFACE_NUMBER, true, 0);
@@ -144,6 +142,13 @@ public class ControllerActivity extends RosActivity {
         sliderTouch = (ImageView) findViewById(R.id.sliderControl);
         sliderImage = (ImageView) findViewById(R.id.imageSlider_p);
         targetImage = (ImageView) findViewById(R.id.imageTarget);
+        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
+        int py = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics()); //convert pid to pixel
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
+        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        params.rightMargin=px;
+        params.bottomMargin=py;
 
         sliderHandler = new TouchArea(this, sliderTouch);
         sliderHandler.enableScroll();
@@ -193,11 +198,10 @@ public class ControllerActivity extends RosActivity {
             public void run(){
                 while(running){
                     try {
-                        Thread.sleep(16);
+                        Thread.sleep(10);
                         if(sliderHandler.getSingleDragY() > 0  || graspNode.getPublish_float() != 0){
                             updateSlider();
                         }
-                        updateTarget();
                         updatePosition();
                         updateRotation();
                         /*
@@ -329,8 +333,8 @@ public class ControllerActivity extends RosActivity {
             return;
         }
 
-        positionPointNode.getPublish_point()[0] = WORKSPACE_Y_OFFSET - targetPixel[1]*WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
-        positionPointNode.getPublish_point()[1] = WORKSPACE_X_OFFSET - targetPixel[0]*WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
+        positionPointNode.getPublish_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - targetPixel[1]*MainActivity.WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
+        positionPointNode.getPublish_point()[1] = MainActivity.WORKSPACE_X_OFFSET - targetPixel[0]*MainActivity.WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
         positionPointNode.getPublish_point()[2] = 0;
 
         if(positionListenerNode.hasReceivedMsg())
@@ -387,8 +391,8 @@ public class ControllerActivity extends RosActivity {
         nodeMainExecutor.execute(vsNode, nodeConfiguration.setNodeName(ENABLE_VS));
         nodeMainExecutor.execute(interfaceNumberNode, nodeConfiguration.setNodeName(INTERFACE_NUMBER));
 
-        nodeMainExecutor.execute(targetListenerNode, nodeConfiguration.setNodeName(TARGET+"sub"));
-        nodeMainExecutor.execute(positionListenerNode, nodeConfiguration.setNodeName(POSITION+"sub"));
-        nodeMainExecutor.execute(rotationListenerNode, nodeConfiguration.setNodeName(ROTATION+"sub"));
+        nodeMainExecutor.execute(targetListenerNode, nodeConfiguration.setNodeName(TARGET+"_sub"));
+        nodeMainExecutor.execute(positionListenerNode, nodeConfiguration.setNodeName(POSITION+"_sub"));
+        nodeMainExecutor.execute(rotationListenerNode, nodeConfiguration.setNodeName(ROTATION+"_sub"));
     }
 }

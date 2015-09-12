@@ -53,10 +53,6 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
     private NodeMainExecutor nodeMain;
 
     private static final float MAX_GRASP = 2.0f;
-    private static final float WORKSPACE_WIDTH = 0.4889f;
-    private static final float WORKSPACE_HEIGHT = 0.3822f;
-    private static final float WORKSPACE_X_OFFSET = 0.2366f;
-    private static final float WORKSPACE_Y_OFFSET = 0.9476f;
 
     private MultiTouchArea gestureHandler = null;
 
@@ -66,6 +62,10 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
     private TextView msgText;
     private TextView jawText;
     private TextView rollText;
+
+    private TextView moveStatus;
+    private TextView rotateStatus;
+    private TextView graspStatus;
 
     private PointNode targetPointNode;
     private PointNode positionNode;
@@ -78,6 +78,10 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
     private String msg="";
     private boolean running = true;
     private boolean debug = true;
+
+    private boolean enableMoveStatus = false;
+    private boolean enableRotateStatus = false;
+    private boolean enableGraspStatus = false;
 
     private SensorManager senSensorManager;
     private Sensor senAccelerometer;
@@ -100,6 +104,9 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
         msgText = (TextView) findViewById(R.id.msgTextView);
         jawText = (TextView) findViewById(R.id.textRotJaw);
         rollText = (TextView) findViewById(R.id.textRotRoll);
+        moveStatus = (TextView) findViewById(R.id.moveStatus);
+        rotateStatus = (TextView) findViewById(R.id.rotateStatus);
+        graspStatus = (TextView) findViewById(R.id.graspStatus);
 
         imageStream = (RosImageView<CompressedImage>) findViewById(R.id.imageViewCenter);
         if(debug)
@@ -174,6 +181,9 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
             public void run(){
                 while(running){
                     try {
+                        enableMoveStatus = false;
+                        enableRotateStatus = false;
+                        enableGraspStatus = false;
                         TwoFingerGestureDetector.MAX_RESOLUTION=imageStream.getWidth();
                         updateTarget();
                         updateConfirmTarget();
@@ -229,6 +239,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
     }
 
     private void updateTarget() {
+
         /** Update LongClick **/
         if(gestureHandler.getLongClickX()>0){
 
@@ -306,11 +317,11 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
                 return;
             }
 
-            positionNode.getPublish_point()[0] = WORKSPACE_Y_OFFSET - positionPixel[1]*WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
-            positionNode.getPublish_point()[1] = WORKSPACE_X_OFFSET - positionPixel[0]*WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
+            positionNode.getPublish_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - positionPixel[1]*MainActivity.WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
+            positionNode.getPublish_point()[1] = MainActivity.WORKSPACE_X_OFFSET - positionPixel[0]*MainActivity.WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
             positionNode.getPublish_point()[2] = 0;
             positionNode.publishNow();
-
+            enableMoveStatus = true;
             //targetPointNode.getPublish_point()[0]=positionPixel[0];
             //targetPointNode.getPublish_point()[1]=positionPixel[1];
             //targetPointNode.publishNow();
@@ -326,6 +337,9 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
                     targetImage.setX(0);
                     targetImage.setY(0);
                     msg = String.format("Moving to (%.4f , %.4f) ", positionNode.getPublish_point()[0], positionNode.getPublish_point()[1]);
+                    moveStatus.setBackgroundColor(Color.GREEN);
+                    rotateStatus.setBackgroundColor(Color.TRANSPARENT);
+                    graspStatus.setBackgroundColor(Color.TRANSPARENT);
                 }
             });
             gestureHandler.setSingleDragX(0);
@@ -351,11 +365,10 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
                 return;
             }
 
-            positionNode.getPublish_point()[0] = WORKSPACE_Y_OFFSET - positionPixel[1]*WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
-            positionNode.getPublish_point()[1] = WORKSPACE_X_OFFSET - positionPixel[0]*WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
+            positionNode.getPublish_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - positionPixel[1]*MainActivity.WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
+            positionNode.getPublish_point()[1] = MainActivity.WORKSPACE_X_OFFSET - positionPixel[0]*MainActivity.WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
             positionNode.getPublish_point()[2] = 0;
             positionNode.publishNow();
-
             //targetPointNode.getPublish_point()[0]=positionPixel[0];
             //targetPointNode.getPublish_point()[1]=positionPixel[1];
             //targetPointNode.publishNow();
@@ -379,7 +392,7 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
     }
 
     private void updateRotation() {
-        final float angle = gestureHandler.getAngle()*3.1416f/180f;
+        final float angle = 0.5f*gestureHandler.getAngle()*3.1416f/180f;
         if(!gestureHandler.isDetectingTwoFingerGesture()){
             gestureHandler.setAngle(0);
         }
@@ -397,11 +410,16 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
             gestureHandler.setDoubleDragX(0);
             rotationNode.publishNow();
             vsNode.setPublish_bool(false);
+            enableRotateStatus = true;
             this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     positionImage.setAlpha(0.0f);
                     targetImage.setAlpha(0.0f);
+
+                    moveStatus.setBackgroundColor(Color.TRANSPARENT);
+                    rotateStatus.setBackgroundColor(Color.GREEN);
+                    graspStatus.setBackgroundColor(Color.TRANSPARENT);
                 }
             });
         }
@@ -412,12 +430,16 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
         float grasp = MAX_GRASP*(TwoFingerGestureDetector.MAX_SCALE-gestureHandler.getScale())/(TwoFingerGestureDetector.MAX_SCALE-TwoFingerGestureDetector.MIN_SCALE);
         if(grasp!=graspNode.getPublish_float()){
             graspNode.setPublish_float(grasp);
+            enableGraspStatus = true;
             msg = String.format("Grasping = %.2f ",grasp);
             this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     positionImage.setAlpha(0.0f);
                     targetImage.setAlpha(0.0f);
+                    moveStatus.setBackgroundColor(Color.TRANSPARENT);
+                    rotateStatus.setBackgroundColor(Color.TRANSPARENT);
+                    graspStatus.setBackgroundColor(Color.GREEN);
                 }
             });
         }
@@ -429,6 +451,21 @@ public class DraggingActivity extends RosActivity implements SensorEventListener
             @Override
             public void run() {
                 msgText.setText(msg);
+                /*if(enableMoveStatus)
+                    moveStatus.setBackgroundColor(Color.GREEN);
+                else
+                    moveStatus.setBackgroundColor(Color.TRANSPARENT);
+
+                if(enableRotateStatus)
+                    rotateStatus.setBackgroundColor(Color.GREEN);
+                else
+                    rotateStatus.setBackgroundColor(Color.TRANSPARENT);
+
+                if(enableGraspStatus)
+                    graspStatus.setBackgroundColor(Color.GREEN);
+                else
+                    graspStatus.setBackgroundColor(Color.TRANSPARENT);
+                    */
             }
         });
     }
