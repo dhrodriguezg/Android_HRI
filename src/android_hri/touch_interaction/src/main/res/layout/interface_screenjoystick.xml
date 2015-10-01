@@ -1,6 +1,7 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent" android:layout_height="match_parent"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:ignore="ContentDescription"
     tools:context=".ControllerActivity"
     android:orientation="horizontal">
 
@@ -37,10 +38,6 @@
             <RelativeLayout
                 android:layout_width="60dp"
                 android:layout_height="match_parent"
-                android:layout_alignParentTop="true"
-                android:layout_alignParentRight="true"
-                android:layout_above="@+id/virtual_joystick_rot"
-                android:layout_alignLeft="@+id/virtual_joystick_rot"
                 android:layout_marginTop="20dp"
                 android:layout_marginBottom="13dp"
                 android:id="@+id/relativeLayout">
@@ -73,7 +70,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="30dp"
                     android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:text="Open H."
+                    android:text="@string/open_hand"
                     android:id="@+id/graspingOpenTextView"
                     android:gravity="center_vertical|center_horizontal"
                     android:textColor="#ff32a9ff"
@@ -84,7 +81,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="30dp"
                     android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:text="Close H."
+                    android:text="@string/close_hand"
                     android:id="@+id/graspingCloseTextView"
                     android:gravity="center_vertical|center_horizontal"
                     android:textColor="#ff32a9ff"
@@ -117,7 +114,7 @@
             android:layout_width="wrap_content"
             android:layout_height="30dp"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="2D Rotation"
+            android:text="@string/rotation_control"
             android:id="@+id/rotationTextView"
             android:layout_below="@+id/linearLayout"
             android:layout_alignLeft="@+id/virtual_joystick_rot"
@@ -129,7 +126,7 @@
             android:layout_width="wrap_content"
             android:layout_height="30dp"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="2D Position"
+            android:text="@string/position_control"
             android:id="@+id/positionTextView"
             android:gravity="center_vertical|center_horizontal"
             android:textColor="#ffd9d9d9"
@@ -138,53 +135,17 @@
             android:layout_alignParentLeft="true"
             android:layout_alignRight="@+id/virtual_joystick_pos" />
 
-        <org.ros.android.view.VirtualJoystickView
-            android:id="@+id/virtual_joystick_target"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"
-            android:enabled="false"
-            android:visibility="gone" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="30dp"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:text="2D Target"
-            android:id="@+id/targetTextView"
-            android:gravity="center_vertical|center_horizontal"
-            android:textColor="#ffd9d9d9"
-            android:layout_gravity="center_vertical"
-            android:layout_alignParentTop="true"
-            android:layout_alignRight="@+id/virtual_joystick_target"
-            android:layout_alignLeft="@+id/virtual_joystick_target"
-            android:enabled="false"
-            android:visibility="gone"/>
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Go to Target"
-            android:id="@+id/confirmTarget"
-            android:layout_below="@+id/virtual_joystick_target"
-            android:layout_alignLeft="@+id/virtual_joystick_target"
-            android:layout_alignParentRight="true"
-            android:enabled="false"
-            android:visibility="gone" />
-
         <ToggleButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textOn="STOPING ROBOT"
-            android:textOff="EMERGENCY STOP"
+            android:textOn="@string/emergency_on"
+            android:textOff="@string/emergency_off"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:id="@+id/emergencyButton"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
             android:checked="false"
-            android:textStyle="bold"
-            />
+            android:textStyle="bold" />
 
     </RelativeLayout>
 

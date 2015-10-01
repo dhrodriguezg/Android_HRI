@@ -6,19 +6,16 @@ import android.graphics.Matrix;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
-
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import org.ros.address.InetAddressFactory;
 import org.ros.android.BitmapFromCompressedImage;
+import org.ros.android.NodeMainExecutorService;
 import org.ros.android.RosActivity;
 import org.ros.android.view.RosImageView;
 import org.ros.node.NodeConfiguration;
@@ -33,9 +30,9 @@ import ualberta.cs.robotics.android_hri.touch_interaction.node.PointNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiTouchArea;
 
 
-public class CalibrationActivity extends RosActivity {
+public class SetupActivity extends RosActivity {
 
-	private static final String TAG = "CalibrationActivity";
+	private static final String TAG = "SetupActivity";
     private static final String STREAMING= "/image_converter/output_video/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
@@ -53,14 +50,12 @@ public class CalibrationActivity extends RosActivity {
     private final int ENABLED = Color.GREEN;
     private final int TRANSITION = Color.rgb(255,195,77); //orange
 
-    private NodeMainExecutor nodeMain;
+    private NodeMainExecutorService nodeMain;
 
     private static final boolean debug = true;
     private MultiTouchArea dragHandler = null;
 
     private RosImageView<CompressedImage> imageStream;
-    private Button confirmButton = null;
-    private Switch startSwitch = null;
     private boolean running = true;
     private boolean updateCenter=false;
 
@@ -70,8 +65,6 @@ public class CalibrationActivity extends RosActivity {
     private float scaleTemp=1.f;
     private float traslationTempX=0.f;
     private float traslationTempY=0.f;
-    private float tracker_x;
-    private float tracker_y;
 
     private ToggleButton buttonON;
     private TextView statusPos1_ON;
@@ -101,7 +94,7 @@ public class CalibrationActivity extends RosActivity {
     private static final int MAX_TRACKERS=2;
     private int trackerNumber=0;
 
-    public CalibrationActivity() {
+    public SetupActivity() {
         super(TAG, TAG, URI.create(MainActivity.ROS_MASTER));
     }
 
@@ -112,7 +105,7 @@ public class CalibrationActivity extends RosActivity {
         super.onCreate(savedInstanceState);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        setContentView(R.layout.activity_calibration);
+        setContentView(R.layout.activity_setup);
 
         statusPos1_ON = (TextView) findViewById(R.id.statusPos1_ON);
         statusPos2_ON = (TextView) findViewById(R.id.statusPos2_ON);
@@ -222,45 +215,6 @@ public class CalibrationActivity extends RosActivity {
             }
         });
 
-
-        confirmButton = (Button) findViewById(R.id.confirmButton);
-        confirmButton.setOnClickListener( new View.OnClickListener() {
-            @Override
-            public void onClick( View v ) {
-                vsNode.publishNow();
-                switch (trackerNumber){
-                    case 0:
-                        trackerPointNode.getPublish_point()[0]=tracker_x;
-                        trackerPointNode.getPublish_point()[1]=tracker_y;
-                        trackerPointNode.getPublish_point()[2]=0;
-                        trackerPointNode.publishNow();
-                        Toast.makeText(getApplicationContext(), "Tracker selected at: "+(int)tracker_x + " , " + (int)tracker_y, Toast.LENGTH_LONG).show();
-                        break;
-                    case 1:
-                        targetPointNode.getPublish_point()[0]=tracker_x;
-                        targetPointNode.getPublish_point()[1]=tracker_y;
-                        targetPointNode.getPublish_point()[2]=0;
-                        targetPointNode.publishNow();
-                        Toast.makeText(getApplicationContext(), "Target selected at: "+(int)tracker_x + " , " + (int)tracker_y, Toast.LENGTH_LONG).show();
-                        break;
-                    default:
-                        Toast.makeText(getApplicationContext(), "You can't add more markers, MAX: "+MAX_TRACKERS, Toast.LENGTH_LONG).show();
-                        break;
-                }
-                trackerNumber++;
-            }
-        } );
-        startSwitch = (Switch) findViewById(R.id.startSwitch);
-        startSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                confirmButton.setEnabled(isChecked);
-                if (isChecked){
-                    Toast.makeText(getApplicationContext(), "Starting the calibration, select tracker and target...", Toast.LENGTH_LONG).show();
-                    trackerNumber=0;
-                }
-            }
-        });
-
         ToggleButton emergencyStop = (ToggleButton)findViewById(R.id.emergencyButton) ;
         emergencyStop.setOnCheckedChangeListener( new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -271,7 +225,7 @@ public class CalibrationActivity extends RosActivity {
                     emergencyNode.setPublish_bool(false);
                 }else{
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP DEACTIVATED!", Toast.LENGTH_LONG).show();
-                    imageStream.setBackgroundColor(Color.GREEN);
+                    imageStream.setBackgroundColor(Color.TRANSPARENT);
                     emergencyNode.setPublish_bool(true);
                 }
             }
@@ -317,7 +271,7 @@ public class CalibrationActivity extends RosActivity {
     public void onDestroy() {
         emergencyNode.setPublish_bool(false);
         vsNode.setPublish_bool(false);
-        nodeMain.shutdown();
+        nodeMain.forceShutdown();
         running=false;
         super.onDestroy();
     }
@@ -329,10 +283,6 @@ public class CalibrationActivity extends RosActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -558,9 +508,6 @@ public class CalibrationActivity extends RosActivity {
                 float scaleCorrectionX = focusX - errorPoint[0];
                 float scaleCorrectionY = focusY - errorPoint[1];
 
-                tracker_x=targetPixel[0];
-                tracker_y=targetPixel[1];
-
                 Matrix finalTMatrix = new Matrix();
                 finalTMatrix.setScale(scale, scale);
                 finalTMatrix.postTranslate(finalScaledCenteredX + scaleCorrectionX, finalScaledCenteredY + scaleCorrectionY);
@@ -585,7 +532,7 @@ public class CalibrationActivity extends RosActivity {
 
     @Override
     protected void init(NodeMainExecutor nodeMainExecutor) {
-        nodeMain=nodeMainExecutor;
+        nodeMain=(NodeMainExecutorService)nodeMainExecutor;
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
         nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING + "sub"));
         nodeMainExecutor.execute(pos1State, nodeConfiguration.setNodeName(POS1_STATE + "sub"));

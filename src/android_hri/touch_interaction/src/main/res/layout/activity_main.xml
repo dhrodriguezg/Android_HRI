@@ -1,22 +1,22 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent" android:layout_height="match_parent"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:ignore="ContentDescription"
     tools:context=".MainActivity"
     android:orientation="vertical">
 
-
     <LinearLayout
+        android:baselineAligned="false"
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="0px"
         android:layout_weight="1">
 
-
         <TextView
             android:layout_width="0px"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="ROS Master Address:"
+            android:text="@string/ros_master_ip"
             android:id="@+id/textViewIP"
             android:layout_weight="3"/>
 
@@ -25,13 +25,14 @@
             android:layout_height="wrap_content"
             android:id="@+id/editIP"
             android:text="@string/default_master_ip"
+            android:inputType="phone"
             android:layout_weight="2"/>
 
         <TextView
             android:layout_width="0px"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="ROS Master Port:"
+            android:text="@string/ros_master_port"
             android:id="@+id/textViewPort"
             android:layout_weight="2"/>
 
@@ -49,12 +50,13 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="0px"
-        android:text="Setup"
+        android:text="@string/setup"
         android:id="@+id/calibrationButton"
         android:layout_gravity="center"
         android:layout_weight="1" />
 
     <LinearLayout
+        android:baselineAligned="false"
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="0px"
@@ -69,11 +71,12 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:text="Controller"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/interface_screenjoystick_name"
                 android:id="@+id/textViewController"
                 android:layout_gravity="center"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:gravity="center_vertical|center_horizontal" />
 
             <ImageView
                 android:layout_width="wrap_content"
@@ -86,7 +89,7 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
-                android:text="Interface 1"
+                android:text="@string/interface_screenjoystick_number"
                 android:id="@+id/controllerButton"
                 android:layout_gravity="center"
                 android:layout_weight="1"/>
@@ -102,11 +105,12 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:text="Dragging"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/interface_directmanipulation_name"
                 android:id="@+id/textViewDragging"
                 android:layout_weight="1"
-                android:layout_gravity="center" />
+                android:layout_gravity="center"
+                android:gravity="center_vertical|center_horizontal" />
 
             <ImageView
                 android:layout_width="wrap_content"
@@ -119,7 +123,7 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
-                android:text="Interface 2"
+                android:text="@string/interface_directmanipulation_number"
                 android:id="@+id/draggingButton"
                 android:layout_weight="1"
                 android:layout_gravity="center" />
@@ -135,11 +139,12 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:text="Gamepad"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/interface_gamepad_name"
                 android:id="@+id/textViewGamepad"
                 android:layout_weight="1"
-                android:layout_gravity="center" />
+                android:layout_gravity="center"
+                android:gravity="center_vertical|center_horizontal" />
 
             <ImageView
                 android:layout_width="wrap_content"
@@ -153,7 +158,7 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
-                android:text="Interface 3"
+                android:text="@string/interface_gamepad_number"
                 android:id="@+id/gamepadButton"
                 android:layout_weight="1"
                 android:layout_gravity="center" />
@@ -169,11 +174,12 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:text="Leap Motion"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/interface_leapmotion_name"
                 android:id="@+id/textViewLeapMotion"
                 android:layout_weight="1"
-                android:layout_gravity="center" />
+                android:layout_gravity="center"
+                android:gravity="center_vertical|center_horizontal" />
 
             <ImageView
                 android:layout_width="wrap_content"
@@ -187,7 +193,7 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="0px"
-                android:text="Interface 4"
+                android:text="@string/interface_leapmotion_number"
                 android:id="@+id/leapMotionButton"
                 android:layout_weight="1"
                 android:layout_gravity="center" />

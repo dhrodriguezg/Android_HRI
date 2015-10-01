@@ -1,4 +1,4 @@
-package ualberta.cs.robotics.android_hri.touch_interaction;
+package ualberta.cs.robotics.android_hri.touch_interaction.interfaces;
 
 import android.content.Intent;
 import android.graphics.Color;
@@ -20,6 +20,7 @@ import com.leapmotion.leap.Vector;
 
 import org.ros.address.InetAddressFactory;
 import org.ros.android.BitmapFromCompressedImage;
+import org.ros.android.NodeMainExecutorService;
 import org.ros.android.RosActivity;
 import org.ros.android.view.RosImageView;
 import org.ros.node.NodeConfiguration;
@@ -28,6 +29,8 @@ import org.ros.node.NodeMainExecutor;
 import java.net.URI;
 
 import sensor_msgs.CompressedImage;
+import ualberta.cs.robotics.android_hri.touch_interaction.MainActivity;
+import ualberta.cs.robotics.android_hri.touch_interaction.R;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.BooleanNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.Float32Node;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.Int32Node;
@@ -35,9 +38,9 @@ import ualberta.cs.robotics.android_hri.touch_interaction.node.PointNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.StringNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.utils.LeapMotionListener;
 
-public class LeapMotionActivity extends RosActivity implements LeapMotionListener.LeapMotionFrameListener{
+public class LeapMotionInterface extends RosActivity implements LeapMotionListener.LeapMotionFrameListener{
 
-	private static final String TAG = "LeapMotionActivity";
+	private static final String TAG = "LeapMotionInterface";
     private static final String STREAMING= "/image_converter/output_video/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
@@ -52,13 +55,8 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
     private final int DISABLED = Color.RED;
     private final int ENABLED = Color.GREEN;
     private final int TRANSITION = Color.rgb(255,195,77); //orange
-    private final int MAX_TASK_COUNTER = 120;
+    private final int MAX_TASK_COUNTER = 90;
 
-    private int selectCounter;
-    private int moveCounter;
-    private int rotateCounter;
-    private int graspCounter;
-    private int allCounter;
     private int confirmCounter;
     private boolean isConfirm=false;
     private boolean isEnable=true;
@@ -66,22 +64,18 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
     private int lastTask = -1;
     private int currentTask = -1;
 
-    private NodeMainExecutor nodeMain;
+    private NodeMainExecutorService nodeMain;
     private Controller mController;
     private LeapMotionListener mLeapMotionListener;
 
     private ToggleButton emergencyStop;
-    private TextView statusGrasp;
-    private TextView statusRotate;
-    private TextView statusMove;
-    private TextView statusSelect;
-    private TextView statusAll;
 
     private static final float MAX_GRASP = 2.0f;
 
     private RosImageView<CompressedImage> imageStream;
     private TextView msgText;
     private TextView statusText;
+    private TextView trackingText;
 
     private PointNode positionNode;
     private Float32Node graspNode;
@@ -116,7 +110,7 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
     private boolean running = true;
     private boolean debug = true;
 
-    public LeapMotionActivity() {
+    public LeapMotionInterface() {
         super(TAG, TAG, URI.create(MainActivity.ROS_MASTER));
     }
 
@@ -127,12 +121,11 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
         super.onCreate(savedInstanceState);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        setContentView(R.layout.activity_leapmotion);
+        setContentView(R.layout.interface_leapmotion);
 
         msgText = (TextView) findViewById(R.id.msgTextView);
 
         targetMove = (ImageView) findViewById(R.id.imageTarget);
-
         leftHand = (ImageView) findViewById(R.id.leftHand);
         leftIndex = (ImageView) findViewById(R.id.leftIndexFinger);
         leftMiddle = (ImageView) findViewById(R.id.leftMiddleFinger);
@@ -146,11 +139,7 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
         rightPinky = (ImageView) findViewById(R.id.rightPinkyFinger);
         rightThumb = (ImageView) findViewById(R.id.rightThumbFinger);
 
-        statusGrasp = (TextView) findViewById(R.id.statusGrasp);
-        statusRotate = (TextView) findViewById(R.id.statusRotate);
-        statusMove = (TextView) findViewById(R.id.statusMove);
-        statusSelect = (TextView) findViewById(R.id.statusSelect);
-        statusAll = (TextView) findViewById(R.id.statusAll);
+
         showLog = (CheckBox) findViewById(R.id.showLog);
 
         imageStream = (RosImageView<CompressedImage>) findViewById(R.id.imageViewCenter);
@@ -197,6 +186,7 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
         mController.addListener(mLeapMotionListener);
 
         statusText = (TextView)findViewById(R.id.statusView);
+        trackingText = (TextView) findViewById(R.id.statusTracking);
 
         emergencyStop = (ToggleButton)findViewById(R.id.emergencyButton);
         emergencyStop.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -208,7 +198,7 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
                     emergencyNode.setPublish_bool(false);
                 } else {
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP DEACTIVATED!", Toast.LENGTH_LONG).show();
-                    imageStream.setBackgroundColor(Color.GREEN);
+                    imageStream.setBackgroundColor(Color.TRANSPARENT);
                     emergencyNode.setPublish_bool(true);
                 }
             }
@@ -252,17 +242,13 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
     public void onDestroy() {
         emergencyNode.setPublish_bool(false);
         vsNode.setPublish_bool(false);
-        nodeMain.shutdown();
+        nodeMain.forceShutdown();
         running=false;
         super.onDestroy();
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -272,10 +258,10 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
             public void run() {
                 if (hands) {
                     statusText.setText("OK!");
-                    statusText.setBackgroundColor(Color.GREEN);
+                    statusText.setBackgroundColor(ENABLED);
                 } else {
                     statusText.setText("No Hands!");
-                    statusText.setBackgroundColor(Color.RED);
+                    statusText.setBackgroundColor(DISABLED);
                 }
             }
         });
@@ -285,35 +271,14 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
     public void onSelect(float x, float y, float z) {
         if(!isConfirm)
             return;
-        if(((ColorDrawable)statusSelect.getBackground()).getColor() != ENABLED)
-            return;
-        positionNode.getPublish_point()[0]=imageStream.getDrawable().getIntrinsicWidth() *x/2f;
-        positionNode.getPublish_point()[1]=imageStream.getDrawable().getIntrinsicHeight()*z/2f;
-        float xt=imageStream.getDrawable().getIntrinsicWidth() *x/2f;
-        float yt=imageStream.getDrawable().getIntrinsicHeight()*z/2f;
-
-        float[] point = calculatePoint(xt, yt);
-        final float xm = point[0] - rightIndex.getWidth()/2;
-        final float ym = point[1] - rightIndex.getHeight()/2;
-        this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                rightIndex.setX(xm);
-                rightIndex.setY(ym);
-                rightIndex.setAlpha(1.0f);
-                //positionImage.setAlpha(0.f);
-            }
-        });
     }
 
     @Override
     public void onMove(float x, float y, float z) {
         if(!isConfirm)
             return;
-        if(((ColorDrawable)statusMove.getBackground()).getColor() != ENABLED && ((ColorDrawable)statusAll.getBackground()).getColor() != ENABLED)
-            return;
-        vsNode.setPublish_bool(true);
 
+        vsNode.setPublish_bool(true);
         positionNode.getPublish_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - z*MainActivity.WORKSPACE_HEIGHT;
         positionNode.getPublish_point()[1] = MainActivity.WORKSPACE_X_OFFSET - x*MainActivity.WORKSPACE_WIDTH;
         positionNode.publishNow();
@@ -335,8 +300,6 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
     public void onRotate(float x, float y, float z) {
         if(!isConfirm)
             return;
-        if(((ColorDrawable)statusRotate.getBackground()).getColor() != ENABLED && ((ColorDrawable)statusAll.getBackground()).getColor() != ENABLED)
-            return;
         vsNode.setPublish_bool(false);
         rotationNode.getPublish_point()[0]=y+1.57f;
         rotationNode.getPublish_point()[1]=z;
@@ -346,8 +309,6 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
     @Override
     public void onGrasping(float g) {
         if(!isConfirm)
-            return;
-        if(((ColorDrawable)statusGrasp.getBackground()).getColor() != ENABLED && ((ColorDrawable)statusAll.getBackground()).getColor() != ENABLED)
             return;
         float grasp = (1f-g)*1.75f;
         graspNode.setPublish_float(grasp);
@@ -362,129 +323,32 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
             @Override
             public void run() {
                 switch (task) {
-                    case -1:
-                        // nonvalid gesture (reset)
-                        resetTaskSelection();
+                    case -1: // nonvalid gesture (reset): unused
                         break;
-                    case 0:
-                        // all fingers closed (reset)
-                        resetTaskSelection();
+                    case 0: // all fingers closed (reset): unused
                         break;
-                    case 9: //select
-                        if (selectCounter > MAX_TASK_COUNTER) {
-                            imageStream.setBackgroundColor(Color.TRANSPARENT);
-                            isConfirm=false;
-                            lastTask = task;
-                            enableSelect();
-                            return;
-                        }
-                        if (((ColorDrawable) statusSelect.getBackground()).getColor() != ENABLED)
-                            statusSelect.setBackgroundColor(TRANSITION);
-                        if (((ColorDrawable) statusMove.getBackground()).getColor() != ENABLED)
-                            statusMove.setBackgroundColor(DISABLED);
-                        if (((ColorDrawable) statusRotate.getBackground()).getColor() != ENABLED)
-                            statusRotate.setBackgroundColor(DISABLED);
-                        if (((ColorDrawable) statusGrasp.getBackground()).getColor() != ENABLED)
-                            statusGrasp.setBackgroundColor(DISABLED);
-                        if (((ColorDrawable) statusAll.getBackground()).getColor() != ENABLED)
-                            statusAll.setBackgroundColor(DISABLED);
-                        selectCounter++;
+
+                    case 1: //move: unused
                         break;
-                    case 1: //move
-                        if (moveCounter > MAX_TASK_COUNTER) {
-                            imageStream.setBackgroundColor(Color.TRANSPARENT);
-                            isConfirm=false;
-                            lastTask = task;
-                            enableMove();
-                            return;
-                        }
-                        if (((ColorDrawable) statusMove.getBackground()).getColor() != ENABLED)
-                            statusMove.setBackgroundColor(TRANSITION);
-                        if (((ColorDrawable) statusSelect.getBackground()).getColor() != ENABLED)
-                            statusSelect.setBackgroundColor(DISABLED);
-                        if (((ColorDrawable) statusRotate.getBackground()).getColor() != ENABLED)
-                            statusRotate.setBackgroundColor(DISABLED);
-                        if (((ColorDrawable) statusGrasp.getBackground()).getColor() != ENABLED)
-                            statusGrasp.setBackgroundColor(DISABLED);
-                        if (((ColorDrawable) statusAll.getBackground()).getColor() != ENABLED)
-                            statusAll.setBackgroundColor(DISABLED);
-                        moveCounter++;
+                    case 2: //rotate: unused
                         break;
-                    case 2: //rotate
-                        if (rotateCounter > MAX_TASK_COUNTER) {
-                            imageStream.setBackgroundColor(Color.TRANSPARENT);
-                            isConfirm=false;
-                            lastTask = task;
-                            enableRotate();
-                            return;
-                        }
-                        if (((ColorDrawable) statusRotate.getBackground()).getColor() != ENABLED)
-                            statusRotate.setBackgroundColor(TRANSITION);
-                        if (((ColorDrawable) statusSelect.getBackground()).getColor() != ENABLED)
-                            statusSelect.setBackgroundColor(DISABLED);
-                        if (((ColorDrawable) statusMove.getBackground()).getColor() != ENABLED)
-                            statusMove.setBackgroundColor(DISABLED);
-                        if (((ColorDrawable) statusGrasp.getBackground()).getColor() != ENABLED)
-                            statusGrasp.setBackgroundColor(DISABLED);
-                        if (((ColorDrawable) statusAll.getBackground()).getColor() != ENABLED)
-                            statusAll.setBackgroundColor(DISABLED);
-                        rotateCounter++;
+                    case 3: //grasp: unused
                         break;
-                    case 3: //grasp
-                        if (graspCounter > MAX_TASK_COUNTER) {
-                            imageStream.setBackgroundColor(Color.TRANSPARENT);
-                            isConfirm=false;
-                            lastTask = task;
-                            enableGrasp();
-                            return;
-                        }
-                        if (((ColorDrawable) statusGrasp.getBackground()).getColor() != ENABLED)
-                            statusGrasp.setBackgroundColor(TRANSITION);
-                        if (((ColorDrawable) statusSelect.getBackground()).getColor() != ENABLED)
-                            statusSelect.setBackgroundColor(DISABLED);
-                        if (((ColorDrawable) statusMove.getBackground()).getColor() != ENABLED)
-                            statusMove.setBackgroundColor(DISABLED);
-                        if (((ColorDrawable) statusRotate.getBackground()).getColor() != ENABLED)
-                            statusRotate.setBackgroundColor(DISABLED);
-                        if (((ColorDrawable) statusAll.getBackground()).getColor() != ENABLED)
-                            statusAll.setBackgroundColor(DISABLED);
-                        graspCounter++;
+                    case 4: //AAAAAALLLLL: unused
                         break;
-                    case 4: //AAAAAALLLLL
-                        if (allCounter > MAX_TASK_COUNTER) {
-                            imageStream.setBackgroundColor(Color.TRANSPARENT);
-                            isConfirm=false;
-                            lastTask = task;
-                            enableAll();
-                            return;
-                        }
-                        if (((ColorDrawable) statusAll.getBackground()).getColor() != ENABLED)
-                            statusAll.setBackgroundColor(TRANSITION);
-                        if (((ColorDrawable) statusSelect.getBackground()).getColor() != ENABLED)
-                            statusSelect.setBackgroundColor(DISABLED);
-                        if (((ColorDrawable) statusMove.getBackground()).getColor() != ENABLED)
-                            statusMove.setBackgroundColor(DISABLED);
-                        if (((ColorDrawable) statusRotate.getBackground()).getColor() != ENABLED)
-                            statusRotate.setBackgroundColor(DISABLED);
-                        if (((ColorDrawable) statusGrasp.getBackground()).getColor() != ENABLED)
-                            statusGrasp.setBackgroundColor(DISABLED);
-                        allCounter++;
-                        break;
-                    case 5:
-                        // all fingers opened (no task)
-                        resetTaskSelection();
+                    case 5: // all fingers opened (no task): unused
                         break;
                     case 6: //confirm
                         if (confirmCounter > MAX_TASK_COUNTER) {
-                            confirmCounter=0;
-                            isConfirm=!isConfirm;
+                            confirmCounter = 0;
+                            isConfirm = !isConfirm;
                             lastTask = task;
-                            if(isConfirm){
-                                imageStream.setBackgroundColor(Color.GREEN);
-                                Toast.makeText(getApplicationContext(), "Movement activated", Toast.LENGTH_LONG).show();
+                            if (isConfirm) {
+                                trackingText.setBackgroundColor(ENABLED);
+                                Toast.makeText(getApplicationContext(), "Tracking activated", Toast.LENGTH_LONG).show();
                             } else {
-                                imageStream.setBackgroundColor(Color.TRANSPARENT);
-                                Toast.makeText(getApplicationContext(), "Movement deactivated", Toast.LENGTH_LONG).show();
+                                trackingText.setBackgroundColor(DISABLED);
+                                Toast.makeText(getApplicationContext(), "Tracking deactivated", Toast.LENGTH_LONG).show();
                             }
                             return;
                         }
@@ -499,96 +363,8 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
     }
 
     private void resetTasks(){
-        selectCounter=0;
-        moveCounter=0;
-        rotateCounter=0;
-        graspCounter=0;
-        allCounter=0;
         isConfirm=false;
-        statusSelect.setBackgroundColor(DISABLED);
-        statusMove.setBackgroundColor(DISABLED);
-        statusRotate.setBackgroundColor(DISABLED);
-        statusGrasp.setBackgroundColor(DISABLED);
-        statusAll.setBackgroundColor(DISABLED);
         imageStream.setBackgroundColor(Color.TRANSPARENT);
-    }
-
-    private void resetTaskSelection(){
-        selectCounter=0;
-        moveCounter=0;
-        rotateCounter=0;
-        graspCounter=0;
-        allCounter=0;
-        if (((ColorDrawable) statusSelect.getBackground()).getColor() != ENABLED)
-            statusSelect.setBackgroundColor(DISABLED);
-        if (((ColorDrawable) statusMove.getBackground()).getColor() != ENABLED)
-            statusMove.setBackgroundColor(DISABLED);
-        if (((ColorDrawable) statusRotate.getBackground()).getColor() != ENABLED)
-            statusRotate.setBackgroundColor(DISABLED);
-        if (((ColorDrawable) statusGrasp.getBackground()).getColor() != ENABLED)
-            statusGrasp.setBackgroundColor(DISABLED);
-        if (((ColorDrawable) statusAll.getBackground()).getColor() != ENABLED)
-            statusAll.setBackgroundColor(DISABLED);
-    }
-
-    private void enableSelect(){
-        statusSelect.setBackgroundColor(ENABLED);
-        statusMove.setBackgroundColor(DISABLED);
-        statusRotate.setBackgroundColor(DISABLED);
-        statusGrasp.setBackgroundColor(DISABLED);
-        statusAll.setBackgroundColor(DISABLED);
-        moveCounter=0;
-        rotateCounter=0;
-        graspCounter=0;
-        allCounter=0;
-    }
-
-    private void enableMove(){
-        statusSelect.setBackgroundColor(DISABLED);
-        statusMove.setBackgroundColor(ENABLED);
-        statusRotate.setBackgroundColor(DISABLED);
-        statusGrasp.setBackgroundColor(DISABLED);
-        statusAll.setBackgroundColor(DISABLED);
-        selectCounter=0;
-        rotateCounter=0;
-        graspCounter=0;
-        allCounter=0;
-    }
-
-    private void enableRotate(){
-        statusSelect.setBackgroundColor(DISABLED);
-        statusMove.setBackgroundColor(DISABLED);
-        statusRotate.setBackgroundColor(ENABLED);
-        statusGrasp.setBackgroundColor(DISABLED);
-        statusAll.setBackgroundColor(DISABLED);
-        selectCounter=0;
-        moveCounter=0;
-        graspCounter=0;
-        allCounter=0;
-    }
-
-    private void enableGrasp(){
-        statusSelect.setBackgroundColor(DISABLED);
-        statusMove.setBackgroundColor(DISABLED);
-        statusRotate.setBackgroundColor(DISABLED);
-        statusGrasp.setBackgroundColor(ENABLED);
-        statusAll.setBackgroundColor(DISABLED);
-        selectCounter=0;
-        moveCounter=0;
-        rotateCounter=0;
-        allCounter=0;
-    }
-
-    private void enableAll(){
-        statusSelect.setBackgroundColor(DISABLED);
-        statusMove.setBackgroundColor(DISABLED);
-        statusRotate.setBackgroundColor(DISABLED);
-        statusGrasp.setBackgroundColor(DISABLED);
-        statusAll.setBackgroundColor(ENABLED);
-        selectCounter=0;
-        moveCounter=0;
-        rotateCounter=0;
-        graspCounter=0;
     }
 
     @Override
@@ -748,7 +524,7 @@ public class LeapMotionActivity extends RosActivity implements LeapMotionListene
 
     @Override
     protected void init(NodeMainExecutor nodeMainExecutor) {
-        nodeMain=nodeMainExecutor;
+        nodeMain=(NodeMainExecutorService)nodeMainExecutor;
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
         nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING+"sub"));
 

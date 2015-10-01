@@ -1,4 +1,4 @@
-package ualberta.cs.robotics.android_hri.touch_interaction;
+package ualberta.cs.robotics.android_hri.touch_interaction.interfaces;
 
 import android.content.Intent;
 import android.graphics.Color;
@@ -17,6 +17,7 @@ import android.widget.ToggleButton;
 
 import org.ros.address.InetAddressFactory;
 import org.ros.android.BitmapFromCompressedImage;
+import org.ros.android.NodeMainExecutorService;
 import org.ros.android.RosActivity;
 import org.ros.android.view.RosImageView;
 import org.ros.node.NodeConfiguration;
@@ -25,16 +26,17 @@ import org.ros.node.NodeMainExecutor;
 import java.net.URI;
 
 import sensor_msgs.CompressedImage;
+import ualberta.cs.robotics.android_hri.touch_interaction.MainActivity;
+import ualberta.cs.robotics.android_hri.touch_interaction.R;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.BooleanNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.Float32Node;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.Int32Node;
 import ualberta.cs.robotics.android_hri.touch_interaction.node.PointNode;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.TwistNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.utils.Gamepad;
 
-public class GamepadActivity extends RosActivity {
+public class GamepadInterface extends RosActivity {
 
-    private static final String TAG = "GamepadActivity";
+    private static final String TAG = "GamepadInterface";
     private static final String STREAMING= "/camera/rgb/image_raw/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
@@ -44,7 +46,7 @@ public class GamepadActivity extends RosActivity {
     private static final String ROTATION= "/android/rotation_rel";
     private static final String GRASP="/android/grasping_rel";
 
-    private NodeMainExecutor nodeMain;
+    private NodeMainExecutorService nodeMain;
 
     private RosImageView<CompressedImage> imageStream;
     private ImageView targetImage;
@@ -61,7 +63,7 @@ public class GamepadActivity extends RosActivity {
     private boolean running=true;
     private boolean debug=true;
 
-    public GamepadActivity() {
+    public GamepadInterface() {
         super(TAG, TAG, URI.create(MainActivity.ROS_MASTER));;
     }
 
@@ -70,7 +72,7 @@ public class GamepadActivity extends RosActivity {
         super.onCreate(savedInstanceState);
 
         Intent intent = getIntent();
-        setContentView(R.layout.activity_gamepad);
+        setContentView(R.layout.interface_gamepad);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -142,7 +144,7 @@ public class GamepadActivity extends RosActivity {
                     emergencyNode.setPublish_bool(false);
                 } else {
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP DEACTIVATED!", Toast.LENGTH_LONG).show();
-                    imageStream.setBackgroundColor(Color.GREEN);
+                    imageStream.setBackgroundColor(Color.TRANSPARENT);
                     emergencyNode.setPublish_bool(true);
                 }
             }
@@ -182,7 +184,7 @@ public class GamepadActivity extends RosActivity {
     public void onDestroy() {
         emergencyNode.setPublish_bool(false);
         vsNode.setPublish_bool(false);
-        nodeMain.shutdown();
+        nodeMain.forceShutdown();
         running=false;
         super.onDestroy();
     }
@@ -197,23 +199,6 @@ public class GamepadActivity extends RosActivity {
     public boolean dispatchKeyEvent(KeyEvent keyEvent){
         super.dispatchKeyEvent(keyEvent);
         return gamepad.dispatchKeyEvent(keyEvent);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.virtual_joystick_snap:
-                if (!item.isChecked()) {
-                    item.setChecked(true);
-                } else {
-                    item.setChecked(false);
-                }
-                return true;
-            case R.id.action_settings:
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
     }
 
     private void sendGamepadValues(){
@@ -273,7 +258,7 @@ public class GamepadActivity extends RosActivity {
 
     @Override
     protected void init(NodeMainExecutor nodeMainExecutor) {
-        nodeMain=nodeMainExecutor;
+        nodeMain=(NodeMainExecutorService)nodeMainExecutor;
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
         // Default ROS
         nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING+"sub"));

@@ -1,10 +1,12 @@
 package ualberta.cs.robotics.android_hri.touch_interaction;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -12,6 +14,12 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.Locale;
+
+import ualberta.cs.robotics.android_hri.touch_interaction.interfaces.GamepadInterface;
+import ualberta.cs.robotics.android_hri.touch_interaction.interfaces.ScreenJoystickInterface;
+import ualberta.cs.robotics.android_hri.touch_interaction.interfaces.DirectManipulationInterface;
+import ualberta.cs.robotics.android_hri.touch_interaction.interfaces.LeapMotionInterface;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -28,10 +36,15 @@ public class MainActivity extends ActionBarActivity {
     private ImageView interface_2;
     private ImageView interface_3;
     private ImageView interface_4;
+    private MenuItem[] language;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        loadGUI();
+    }
+
+    private void loadGUI(){
         setContentView(R.layout.activity_main);
         rosIP = (EditText) findViewById(R.id.editIP);
         rosPort = (EditText) findViewById(R.id.editPort);
@@ -103,13 +116,14 @@ public class MainActivity extends ActionBarActivity {
                 startLeapMotionActivity();
             }
         });
-
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
+        language = new MenuItem[2]; //for now...
+        language[0]= menu.add(1,1,Menu.NONE,"English");
+        language[1]= menu.add(1,2,Menu.NONE,"Espanol");
         return true;
     }
 
@@ -118,10 +132,28 @@ public class MainActivity extends ActionBarActivity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+        int gid = item.getGroupId();
+        int iid = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if(gid==1 && iid==1){
+            //english
+            String languageToLoad  = "en";
+            Locale locale = new Locale(languageToLoad);
+            Locale.setDefault(locale);
+            Configuration config = new Configuration();
+            config.locale = locale;
+            getBaseContext().getResources().updateConfiguration(config, getBaseContext().getResources().getDisplayMetrics());
+            loadGUI();
+            return true;
+        }else if(gid==1 && iid==2){
+            //spanish
+            String languageToLoad  = "es";
+            Locale locale = new Locale(languageToLoad);
+            Locale.setDefault(locale);
+            Configuration config = new Configuration();
+            config.locale = locale;
+            getBaseContext().getResources().updateConfiguration(config, getBaseContext().getResources().getDisplayMetrics());
+            loadGUI();
             return true;
         }
 
@@ -130,35 +162,35 @@ public class MainActivity extends ActionBarActivity {
 
     private void startCalibrationActivity(){
         if (isMasterValid()){
-            Intent myIntent = new Intent(MainActivity.this, CalibrationActivity.class);
+            Intent myIntent = new Intent(MainActivity.this, SetupActivity.class);
             MainActivity.this.startActivity(myIntent);
         }
     }
 
     private void startControllerActivity(){
         if (isMasterValid()){
-            Intent myIntent = new Intent(MainActivity.this, ControllerActivity.class);
+            Intent myIntent = new Intent(MainActivity.this, ScreenJoystickInterface.class);
             MainActivity.this.startActivity(myIntent);
         }
     }
 
     private void startDraggingActivity(){
         if (isMasterValid()){
-            Intent myIntent = new Intent(MainActivity.this, DraggingActivity.class);
+            Intent myIntent = new Intent(MainActivity.this, DirectManipulationInterface.class);
             MainActivity.this.startActivity(myIntent);
         }
     }
 
     private void startGamepadActivity(){
         if (isMasterValid()){
-            Intent myIntent = new Intent(MainActivity.this, GamepadActivity.class);
+            Intent myIntent = new Intent(MainActivity.this, GamepadInterface.class);
             MainActivity.this.startActivity(myIntent);
         }
     }
 
     private void startLeapMotionActivity(){
         if (isMasterValid()){
-            Intent myIntent = new Intent(MainActivity.this, LeapMotionActivity.class);
+            Intent myIntent = new Intent(MainActivity.this, LeapMotionInterface.class);
             MainActivity.this.startActivity(myIntent);
         }
     }
@@ -187,6 +219,10 @@ public class MainActivity extends ActionBarActivity {
         }
 
         return exit;
+    }
+
+    private void updateLanguage(){
+
     }
 
 }
