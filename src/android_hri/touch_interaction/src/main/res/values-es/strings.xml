@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- GLOBAL TEXT -->
+    <string name="emergency_off">PARADA EMERGENCIA</string>
+    <string name="emergency_on">DETENIENDO EL ROBOTSTOPPING ROBOT</string>
+
+    <!-- MAIN TEXT -->
+    <string name="app_name">Interface Android para WAM</string>
+    <string name="ros_master_ip">Direccion ROS Maestro:</string>
+    <string name="ros_master_port">Puerto ROS M.:</string>
+    <string name="default_master_ip">192.168.1.121</string>
+    <string name="default_master_port">11311</string>
+    <string name="setup">Configurar</string>
+    <string name="interface_screenjoystick_name">Joystick en Pantalla</string>
+    <string name="interface_screenjoystick_number">Interface 1</string>
+    <string name="interface_directmanipulation_name">Maniputacion Directa</string>
+    <string name="interface_directmanipulation_number">Interface 2</string>
+    <string name="interface_gamepad_name">Gamepad</string>
+    <string name="interface_gamepad_number">Interface 3</string>
+    <string name="interface_leapmotion_name">Leap Motion</string>
+    <string name="interface_leapmotion_number">Interface 4</string>
+
+    <!-- SETUP TEXT -->
+    <string name="empty"></string>
+    <string name="empty_X3">   </string>
+    <string name="short_pos1">Pos. 1</string>
+    <string name="short_pos2">Pos. 2</string>
+    <string name="spread">Abertura</string>
+    <string name="grasp">Agarre</string>
+    <string name="start">Inicio</string>
+    <string name="finish">Fin</string>
+    <string name="enable">Habilitar</string>
+    <string name="disable">Deshabilitar</string>
+    <string name="confirm_point">Confirmar Punto</string>
+
+    <!-- DIRECTMANIPULATION TEXT -->
+    <string name="rotating">Rotando</string>
+    <string name="moving">Moviendo</string>
+    <string name="grasping">Agarre</string>
+
+    <!-- SCREENJOYSTICK TEXT -->
+    <string name="open_hand">Abrir</string>
+    <string name="close_hand">Cerrar</string>
+
+    <!-- GAMEPAD TEXT -->
+    <string name="position_control">Posición 2D</string>
+    <string name="rotation_control">Rotación 1D</string>
+    <string name="grasping_open">Soltar</string>
+    <string name="grasping_close">Agarrar</string>
+
+    <!-- LEAPMOTION TEXT -->
+    <string name="status"> :Estado</string>
+    <string name="status_fail">0 Manos!</string>
+    <string name="status_ok">OK!</string>
+    <string name="tracking">Siguiendo: </string>
+    <string name="show_hands">Ver Manos</string>
+    <string name="show_log">Ver Log</string>
+    <string name="left_handed">Soy zurdo</string>
+    <string name="right_handed">Soy diestro</string>
+
+</resources>

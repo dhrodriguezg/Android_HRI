@@ -3,7 +3,6 @@ package ualberta.cs.robotics.android_hri.touch_interaction.interfaces;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.WindowManager;
@@ -31,16 +30,19 @@ import java.net.URI;
 import sensor_msgs.CompressedImage;
 import ualberta.cs.robotics.android_hri.touch_interaction.MainActivity;
 import ualberta.cs.robotics.android_hri.touch_interaction.R;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.BooleanNode;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.Float32Node;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.Int32Node;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.PointNode;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.StringNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.BooleanTopic;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.Float32Topic;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.Int32Topic;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.PointTopic;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.StringTopic;
+import ualberta.cs.robotics.android_hri.touch_interaction.utils.AndroidNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.utils.LeapMotionListener;
 
 public class LeapMotionInterface extends RosActivity implements LeapMotionListener.LeapMotionFrameListener{
 
 	private static final String TAG = "LeapMotionInterface";
+    private static final String NODE_NAME="/android/"+TAG.toLowerCase();
+
     private static final String STREAMING= "/image_converter/output_video/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
@@ -77,13 +79,15 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
     private TextView statusText;
     private TextView trackingText;
 
-    private PointNode positionNode;
-    private Float32Node graspNode;
-    private Int32Node interfaceNumberNode;
-    private PointNode rotationNode;
-    private StringNode stringNode;
-    private BooleanNode emergencyNode;
-    private BooleanNode vsNode;
+
+    private AndroidNode androidNode;
+    private PointTopic positionNode;
+    private Float32Topic graspNode;
+    private Int32Topic interfaceNumberNode;
+    private PointTopic rotationNode;
+    private StringTopic stringNode;
+    private BooleanTopic emergencyNode;
+    private BooleanTopic vsNode;
 
     private Switch rightHanded;
     private CheckBox showLog;
@@ -153,33 +157,37 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
         imageStream.setMessageToBitmapCallable(new BitmapFromCompressedImage());
         imageStream.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
-        positionNode = new PointNode();
+        positionNode = new PointTopic();
         positionNode.publishTo(POSITION, false, 10);
 
-        graspNode = new Float32Node();
+        graspNode = new Float32Topic();
         graspNode.publishTo(GRASP, false, 2);
-        graspNode.setPublishFreq(500);
+        graspNode.setPublishingFreq(500);
 
-        rotationNode = new PointNode();
+        rotationNode = new PointTopic();
         rotationNode.publishTo(ROTATION, false, 10);
 
-        interfaceNumberNode = new Int32Node();
+        interfaceNumberNode = new Int32Topic();
         interfaceNumberNode.publishTo(INTERFACE_NUMBER, true, 0);
-        interfaceNumberNode.setPublishFreq(100);
-        interfaceNumberNode.setPublish_int(5);
+        interfaceNumberNode.setPublishingFreq(100);
+        interfaceNumberNode.setPublisher_int(5);
 
-        emergencyNode = new BooleanNode();
+        emergencyNode = new BooleanTopic();
         emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
-        emergencyNode.setPublishFreq(100);
-        emergencyNode.setPublish_bool(true);
+        emergencyNode.setPublishingFreq(100);
+        emergencyNode.setPublisher_bool(true);
 
-        stringNode = new StringNode();
+        stringNode = new StringTopic();
         stringNode.publishTo(STRING_LOG, false, 10);
-        stringNode.setPublishFreq(100);
+        stringNode.setPublishingFreq(100);
 
-        vsNode = new BooleanNode();
+        vsNode = new BooleanTopic();
         vsNode.publishTo(ENABLE_VS, true, 0);
-        vsNode.setPublish_bool(false);
+        vsNode.setPublisher_bool(false);
+
+        androidNode = new AndroidNode(NODE_NAME);
+        androidNode.addTopics(positionNode, graspNode, rotationNode, emergencyNode, vsNode, stringNode, interfaceNumberNode);
+        androidNode.addNodeMain(imageStream);
 
         mController = new Controller();
         mLeapMotionListener = new LeapMotionListener(this, this);
@@ -195,11 +203,11 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
                 if (isChecked) {
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP ACTIVATED!", Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.RED);
-                    emergencyNode.setPublish_bool(false);
+                    emergencyNode.setPublisher_bool(false);
                 } else {
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP DEACTIVATED!", Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.TRANSPARENT);
-                    emergencyNode.setPublish_bool(true);
+                    emergencyNode.setPublisher_bool(true);
                 }
             }
         });
@@ -227,21 +235,21 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
     @Override
     public void onResume() {
         super.onResume();
-        emergencyNode.setPublish_bool(true);
+        emergencyNode.setPublisher_bool(true);
         running=true;
     }
     
     @Override
     protected void onPause()
     {
-        emergencyNode.setPublish_bool(false);
+        emergencyNode.setPublisher_bool(false);
     	super.onPause();
     }
     
     @Override
     public void onDestroy() {
-        emergencyNode.setPublish_bool(false);
-        vsNode.setPublish_bool(false);
+        emergencyNode.setPublisher_bool(false);
+        vsNode.setPublisher_bool(false);
         nodeMain.forceShutdown();
         running=false;
         super.onDestroy();
@@ -278,9 +286,9 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
         if(!isConfirm)
             return;
 
-        vsNode.setPublish_bool(true);
-        positionNode.getPublish_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - z*MainActivity.WORKSPACE_HEIGHT;
-        positionNode.getPublish_point()[1] = MainActivity.WORKSPACE_X_OFFSET - x*MainActivity.WORKSPACE_WIDTH;
+        vsNode.setPublisher_bool(true);
+        positionNode.getPublisher_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - z*MainActivity.WORKSPACE_HEIGHT;
+        positionNode.getPublisher_point()[1] = MainActivity.WORKSPACE_X_OFFSET - x*MainActivity.WORKSPACE_WIDTH;
         positionNode.publishNow();
 
         float[] point = calculatePoint(imageStream.getDrawable().getIntrinsicWidth()*x, imageStream.getDrawable().getIntrinsicHeight()*z);
@@ -300,9 +308,9 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
     public void onRotate(float x, float y, float z) {
         if(!isConfirm)
             return;
-        vsNode.setPublish_bool(false);
-        rotationNode.getPublish_point()[0]=y+1.57f;
-        rotationNode.getPublish_point()[1]=z;
+        vsNode.setPublisher_bool(false);
+        rotationNode.getPublisher_point()[0]=y+1.57f;
+        rotationNode.getPublisher_point()[1]=z;
         rotationNode.publishNow();
     }
 
@@ -311,7 +319,7 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
         if(!isConfirm)
             return;
         float grasp = (1f-g)*1.75f;
-        graspNode.setPublish_float(grasp);
+        graspNode.setPublisher_float(grasp);
         graspNode.publishNow();
     }
 
@@ -369,7 +377,7 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
 
     @Override
     public void onUpdateMsg(final String msg) {
-        stringNode.setPublish_string(msg);
+        stringNode.setPublisher_string(msg);
         stringNode.publishNow();
 
         runOnUiThread(new Runnable() {
@@ -526,14 +534,6 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
     protected void init(NodeMainExecutor nodeMainExecutor) {
         nodeMain=(NodeMainExecutorService)nodeMainExecutor;
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
-        nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING+"sub"));
-
-        nodeMainExecutor.execute(positionNode, nodeConfiguration.setNodeName(TARGET_POINT));
-        nodeMainExecutor.execute(graspNode, nodeConfiguration.setNodeName(GRASP));
-        nodeMainExecutor.execute(rotationNode, nodeConfiguration.setNodeName(ROTATION));
-        nodeMainExecutor.execute(emergencyNode, nodeConfiguration.setNodeName(EMERGENCY_STOP));
-        nodeMainExecutor.execute(vsNode, nodeConfiguration.setNodeName(ENABLE_VS));
-        nodeMainExecutor.execute(stringNode, nodeConfiguration.setNodeName(STRING_LOG));
-        nodeMainExecutor.execute(interfaceNumberNode, nodeConfiguration.setNodeName(INTERFACE_NUMBER));
+        nodeMainExecutor.execute(androidNode, nodeConfiguration.setNodeName(androidNode.getName()));
     }
 }

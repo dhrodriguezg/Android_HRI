@@ -30,24 +30,27 @@ import sensor_msgs.CompressedImage;
 
 import ualberta.cs.robotics.android_hri.touch_interaction.MainActivity;
 import ualberta.cs.robotics.android_hri.touch_interaction.R;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.BooleanNode;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.Float32Node;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.Int32Node;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.PointNode;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.TwistNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.BooleanTopic;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.Float32Topic;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.Int32Topic;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.PointTopic;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.TwistTopic;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.TouchArea;
+import ualberta.cs.robotics.android_hri.touch_interaction.utils.AndroidNode;
 
 public class ScreenJoystickInterface extends RosActivity {
 
     private static final String TAG = "ScreenJoystickInterface";
+    private static final String NODE_NAME="/android/"+TAG.toLowerCase();
+
     private static final String STREAMING= "/camera/rgb/image_raw/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
     private static final String TARGET_POINT="/android/target_point";
     private static final String INTERFACE_NUMBER="/android/interface_number";
     private static final String ENABLE_VS = "/android/enable_vs";
-    private static final String POSITION= "/android/joystick_position";
-    private static final String ROTATION= "/android/joystick_rotation";
+    private static final String POSITION= "/android/joystick_position/cmd_vel";
+    private static final String ROTATION= "/android/joystick_rotation/cmd_vel";
     private static final String POSITION_ABS= "/android/position_abs";
     private static final String ROTATION_REL= "/android/rotation_rel";
     private static final String GRASP="/android/grasping_rel";
@@ -59,18 +62,17 @@ public class ScreenJoystickInterface extends RosActivity {
     private VirtualJoystickView mVirtualJoystickViewRotation;
     private RosImageView<CompressedImage> imageStream;
 
-    private PointNode targetPointNode;
-    private PointNode positionPointNode;
-    private PointNode rotationPointNode;
-
-    private Float32Node graspNode;
-    private Int32Node interfaceNumberNode;
-    private BooleanNode emergencyNode;
-    private BooleanNode vsNode;
-
-    private TwistNode targetListenerNode;
-    private TwistNode positionListenerNode;
-    private TwistNode rotationListenerNode;
+    private AndroidNode androidNode;
+    private PointTopic targetPointNode;
+    private PointTopic positionPointNode;
+    private PointTopic rotationPointNode;
+    private Float32Topic graspNode;
+    private Int32Topic interfaceNumberNode;
+    private BooleanTopic emergencyNode;
+    private BooleanTopic vsNode;
+    private TwistTopic targetListenerNode;
+    private TwistTopic positionListenerNode;
+    private TwistTopic rotationListenerNode;
 
     private TouchArea sliderHandler = null;
     private ImageView sliderTouch;
@@ -95,45 +97,51 @@ public class ScreenJoystickInterface extends RosActivity {
 
         mVirtualJoystickViewPosition = (VirtualJoystickView) findViewById(R.id.virtual_joystick_pos);
         mVirtualJoystickViewRotation = (VirtualJoystickView) findViewById(R.id.virtual_joystick_rot);
+        mVirtualJoystickViewPosition.setTopicName(POSITION);
+        mVirtualJoystickViewRotation.setTopicName(ROTATION);
         mVirtualJoystickViewPosition.setHolonomic(true);
         mVirtualJoystickViewRotation.setHolonomic(true);
 
         imageStream = (RosImageView<CompressedImage>) findViewById(R.id.visualization);
 
-        positionListenerNode = new TwistNode();
-        positionListenerNode.subscribeTo(POSITION + "/cmd_vel");
-        rotationListenerNode = new TwistNode();
-        rotationListenerNode.subscribeTo(ROTATION + "/cmd_vel");
+        positionListenerNode = new TwistTopic();
+        positionListenerNode.subscribeTo(POSITION);
+        rotationListenerNode = new TwistTopic();
+        rotationListenerNode.subscribeTo(ROTATION);
 
-        graspNode = new Float32Node();
-        graspNode.setPublishFreq(500);
+        graspNode = new Float32Topic();
+        graspNode.setPublishingFreq(500);
         graspNode.publishTo(GRASP, true, 0);
 
-        targetPointNode = new PointNode();
+        targetPointNode = new PointTopic();
         targetPointNode.publishTo(TARGET_POINT, false, 10);
 
-        positionPointNode =  new PointNode();
+        positionPointNode =  new PointTopic();
         positionPointNode.publishTo(POSITION_ABS, false, 50);
 
-        rotationPointNode =  new PointNode();
+        rotationPointNode =  new PointTopic();
         rotationPointNode.publishTo(ROTATION_REL, false, 50);
 
-        interfaceNumberNode = new Int32Node();
+        interfaceNumberNode = new Int32Topic();
         interfaceNumberNode.publishTo(INTERFACE_NUMBER, true, 0);
-        interfaceNumberNode.setPublishFreq(100);
-        interfaceNumberNode.setPublish_int(2);
+        interfaceNumberNode.setPublishingFreq(100);
+        interfaceNumberNode.setPublisher_int(2);
 
-        emergencyNode = new BooleanNode();
+        emergencyNode = new BooleanTopic();
         emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
-        emergencyNode.setPublishFreq(100);
-        emergencyNode.setPublish_bool(true);
+        emergencyNode.setPublishingFreq(100);
+        emergencyNode.setPublisher_bool(true);
 
-        vsNode = new BooleanNode();
+        vsNode = new BooleanTopic();
         vsNode.publishTo(ENABLE_VS, true, 0);
-        vsNode.setPublish_bool(false);
+        vsNode.setPublisher_bool(false);
 
-        targetListenerNode = new TwistNode();
-        targetListenerNode.subscribeTo(TARGET + "/cmd_vel");
+        targetListenerNode = new TwistTopic();
+        targetListenerNode.subscribeTo(TARGET);
+
+        androidNode = new AndroidNode(NODE_NAME);
+        androidNode.addTopics(graspNode,targetPointNode,positionPointNode,rotationPointNode,emergencyNode,vsNode,interfaceNumberNode,targetListenerNode,positionListenerNode,rotationListenerNode);//
+        androidNode.addNodeMains(mVirtualJoystickViewPosition, mVirtualJoystickViewRotation, imageStream);
 
         sliderTouch = (ImageView) findViewById(R.id.sliderControl);
         sliderImage = (ImageView) findViewById(R.id.imageSlider_p);
@@ -150,7 +158,7 @@ public class ScreenJoystickInterface extends RosActivity {
         sliderHandler.enableScroll();
 
         sliderImage.setTranslationY(sliderHandler.getHeight() / 2 - sliderImage.getHeight() / 2);
-        graspNode.setPublish_float(0.01f); //it's just to init the thread below
+        graspNode.setPublisher_float(0.01f); //it's just to init the thread below
 
         if(debug)
             imageStream.setTopicName("/usb_cam/image_raw/compressed");
@@ -167,11 +175,11 @@ public class ScreenJoystickInterface extends RosActivity {
                 if(isChecked){
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP ACTIVATED!", Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.RED);
-                    emergencyNode.setPublish_bool(false);
+                    emergencyNode.setPublisher_bool(false);
                 }else{
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP DEACTIVATED!", Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.TRANSPARENT);
-                    emergencyNode.setPublish_bool(true);
+                    emergencyNode.setPublisher_bool(true);
                 }
             }
         });
@@ -181,18 +189,11 @@ public class ScreenJoystickInterface extends RosActivity {
                 while(running){
                     try {
                         Thread.sleep(10);
-                        if(sliderHandler.getSingleDragY() > 0  || graspNode.getPublish_float() != 0){
+                        if(sliderHandler.getSingleDragY() > 0  || graspNode.getPublisher_float() != 0){
                             updateSlider();
                         }
                         updatePosition();
                         updateRotation();
-                        /*
-                        if(positionListenerNode.hasReceivedMsg() || rotationListenerNode.hasReceivedMsg()){
-                            vsNode.setPublish_bool(false);
-                            positionListenerNode.setHasReceivedMsg(false);
-                            rotationListenerNode.setHasReceivedMsg(false);
-                            Log.d(TAG, String.format("MANUAL OPT [ %b ]", true));
-                        }*/
                     } catch (InterruptedException e) {
                         e.getStackTrace();
                     }
@@ -206,23 +207,23 @@ public class ScreenJoystickInterface extends RosActivity {
     @Override
     public void onResume() {
         super.onResume();
-        emergencyNode.setPublish_bool(true);
-        vsNode.setPublish_bool(false);
+        emergencyNode.setPublisher_bool(true);
+        vsNode.setPublisher_bool(false);
         sliderImage.setTranslationY(sliderHandler.getHeight() / 2 - sliderImage.getHeight() / 2);
         running=true;
     }
 
     @Override
     protected void onPause() {
-        emergencyNode.setPublish_bool(false);
-        vsNode.setPublish_bool(false);
+        emergencyNode.setPublisher_bool(false);
+        vsNode.setPublisher_bool(false);
         super.onPause();
     }
 
     @Override
     public void onDestroy() {
-        emergencyNode.setPublish_bool(false);
-        vsNode.setPublish_bool(false);
+        emergencyNode.setPublisher_bool(false);
+        vsNode.setPublisher_bool(false);
         nodeMain.forceShutdown();
         running=false;
         super.onDestroy();
@@ -258,11 +259,11 @@ public class ScreenJoystickInterface extends RosActivity {
             public void run() {
                 if (sliderHandler.isDetectingOneFingerGesture() && sliderHandler.getSingleDragY() > 0) {
                     sliderImage.setTranslationY(sliderHandler.getSingleDragY() - sliderImage.getHeight() / 2);
-                    graspNode.setPublish_float(sliderHandler.getSingleDragNormalizedY());
+                    graspNode.setPublisher_float(sliderHandler.getSingleDragNormalizedY());
                 } else {
                     sliderHandler.resetValuesOnRelease();
                     sliderImage.setTranslationY(sliderHandler.getHeight() / 2 - sliderImage.getHeight() / 2);
-                    graspNode.setPublish_float(sliderHandler.getSingleDragNormalizedY());
+                    graspNode.setPublisher_float(sliderHandler.getSingleDragNormalizedY());
                 }
             }
         });
@@ -270,7 +271,7 @@ public class ScreenJoystickInterface extends RosActivity {
 
     private void updatePosition() {
 
-        float[] xy = positionListenerNode.getSubcribe_linear();
+        float[] xy = positionListenerNode.getSubcriber_linear();
         final float x=targetImage.getX() - 2.f*xy[0];
         final float y=targetImage.getY() - 2.f*xy[1];
 
@@ -284,9 +285,9 @@ public class ScreenJoystickInterface extends RosActivity {
             return;
         }
 
-        positionPointNode.getPublish_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - targetPixel[1]*MainActivity.WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
-        positionPointNode.getPublish_point()[1] = MainActivity.WORKSPACE_X_OFFSET - targetPixel[0]*MainActivity.WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
-        positionPointNode.getPublish_point()[2] = 0;
+        positionPointNode.getPublisher_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - targetPixel[1]*MainActivity.WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
+        positionPointNode.getPublisher_point()[1] = MainActivity.WORKSPACE_X_OFFSET - targetPixel[0]*MainActivity.WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
+        positionPointNode.getPublisher_point()[2] = 0;
 
         if(positionListenerNode.hasReceivedMsg())
             positionPointNode.publishNow();
@@ -304,10 +305,10 @@ public class ScreenJoystickInterface extends RosActivity {
 
     private void updateRotation() {
 
-        float[] xy = rotationListenerNode.getSubcribe_linear();
-        rotationPointNode.getPublish_point()[0] = xy[1];
-        rotationPointNode.getPublish_point()[1] = xy[0];
-        rotationPointNode.getPublish_point()[2] = 0;
+        float[] xy = rotationListenerNode.getSubcriber_linear();
+        rotationPointNode.getPublisher_point()[0] = xy[1];
+        rotationPointNode.getPublisher_point()[1] = xy[0];
+        rotationPointNode.getPublisher_point()[2] = 0;
 
         if(rotationListenerNode.hasReceivedMsg())
             rotationPointNode.publishNow();
@@ -326,22 +327,6 @@ public class ScreenJoystickInterface extends RosActivity {
     protected void init(NodeMainExecutor nodeMainExecutor) {
         nodeMain=(NodeMainExecutorService)nodeMainExecutor;
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
-        // Default ROS
-        nodeMainExecutor.execute(mVirtualJoystickViewPosition, nodeConfiguration.setNodeName(POSITION));
-        nodeMainExecutor.execute(mVirtualJoystickViewRotation, nodeConfiguration.setNodeName(ROTATION));
-        nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING+"sub"));
-
-        //Custom
-        nodeMainExecutor.execute(graspNode, nodeConfiguration.setNodeName(GRASP));
-        nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
-        nodeMainExecutor.execute(positionPointNode, nodeConfiguration.setNodeName(POSITION_ABS));
-        nodeMainExecutor.execute(rotationPointNode, nodeConfiguration.setNodeName(ROTATION_REL));
-        nodeMainExecutor.execute(emergencyNode, nodeConfiguration.setNodeName(EMERGENCY_STOP));
-        nodeMainExecutor.execute(vsNode, nodeConfiguration.setNodeName(ENABLE_VS));
-        nodeMainExecutor.execute(interfaceNumberNode, nodeConfiguration.setNodeName(INTERFACE_NUMBER));
-
-        nodeMainExecutor.execute(targetListenerNode, nodeConfiguration.setNodeName(TARGET+"_sub"));
-        nodeMainExecutor.execute(positionListenerNode, nodeConfiguration.setNodeName(POSITION+"_sub"));
-        nodeMainExecutor.execute(rotationListenerNode, nodeConfiguration.setNodeName(ROTATION+"_sub"));
+        nodeMainExecutor.execute(androidNode, nodeConfiguration.setNodeName(androidNode.getName()));
     }
 }

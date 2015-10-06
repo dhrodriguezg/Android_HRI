@@ -24,15 +24,18 @@ import org.ros.node.NodeMainExecutor;
 import java.net.URI;
 
 import sensor_msgs.CompressedImage;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.BooleanNode;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.Int32Node;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.PointNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.BooleanTopic;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.Int32Topic;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.PointTopic;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiTouchArea;
+import ualberta.cs.robotics.android_hri.touch_interaction.utils.AndroidNode;
 
 
 public class SetupActivity extends RosActivity {
 
 	private static final String TAG = "SetupActivity";
+    private static final String NODE_NAME="/android/"+TAG.toLowerCase();
+
     private static final String STREAMING= "/image_converter/output_video/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
@@ -78,17 +81,18 @@ public class SetupActivity extends RosActivity {
     private TextView statusSpread_OFF;
     private TextView statusGrasp_OFF;
 
-    private PointNode trackerPointNode;
-    private PointNode targetPointNode;
-    private Int32Node pos1State;
-    private Int32Node pos2State;
-    private Int32Node graspState;
-    private Int32Node spreadState;
-    private Int32Node interfaceNumberNode;
-    private BooleanNode setupONNode;
-    private BooleanNode setupOFFNode;
-    private BooleanNode emergencyNode;
-    private BooleanNode vsNode;
+    private AndroidNode androidNode;
+    private PointTopic trackerPointNode;
+    private PointTopic targetPointNode;
+    private Int32Topic pos1State;
+    private Int32Topic pos2State;
+    private Int32Topic graspState;
+    private Int32Topic spreadState;
+    private Int32Topic interfaceNumberNode;
+    private BooleanTopic setupONNode;
+    private BooleanTopic setupOFFNode;
+    private BooleanTopic emergencyNode;
+    private BooleanTopic vsNode;
 
     private boolean firstRun=true;
     private static final int MAX_TRACKERS=2;
@@ -134,44 +138,47 @@ public class SetupActivity extends RosActivity {
             imageStream.setTopicName(STREAMING);
         imageStream.setMessageType(STREAMING_MSG);
 
-        setupONNode = new BooleanNode();
+        setupONNode = new BooleanTopic();
         setupONNode.publishTo(SETUP_ON, false, 100);
 
-        setupOFFNode = new BooleanNode();
+        setupOFFNode = new BooleanTopic();
         setupOFFNode.publishTo(SETUP_OFF, false, 100);
 
-        pos1State = new Int32Node();
+        pos1State = new Int32Topic();
         pos1State.subscribeTo(POS1_STATE);
-        pos2State = new Int32Node();
+        pos2State = new Int32Topic();
         pos2State.subscribeTo(POS2_STATE);
-        graspState = new Int32Node();
+        graspState = new Int32Topic();
         graspState.subscribeTo(GRASP_STATE);
-        spreadState = new Int32Node();
+        spreadState = new Int32Topic();
         spreadState.subscribeTo(SPREAD_STATE);
 
-        trackerPointNode = new PointNode();
+        trackerPointNode = new PointTopic();
         trackerPointNode.publishTo(TRACKER_POINT, false, 10);
 
-        targetPointNode = new PointNode();
+        targetPointNode = new PointTopic();
         targetPointNode.publishTo(TARGET_POINT, false, 10);
 
-        interfaceNumberNode = new Int32Node();
+        interfaceNumberNode = new Int32Topic();
         interfaceNumberNode.publishTo(INTERFACE_NUMBER, true, 0);
-        interfaceNumberNode.setPublishFreq(100);
-        interfaceNumberNode.setPublish_int(-1);
+        interfaceNumberNode.setPublishingFreq(100);
+        interfaceNumberNode.setPublisher_int(-1);
 
-        emergencyNode = new BooleanNode();
+        emergencyNode = new BooleanTopic();
         emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
-        emergencyNode.setPublishFreq(100);
-        emergencyNode.setPublish_bool(true);
+        emergencyNode.setPublishingFreq(100);
+        emergencyNode.setPublisher_bool(true);
 
-        vsNode = new BooleanNode();
+        vsNode = new BooleanTopic();
         vsNode.publishTo(ENABLE_VS, false, 100);
-        vsNode.setPublish_bool(true);
+        vsNode.setPublisher_bool(true);
 
         imageStream.setMessageToBitmapCallable(new BitmapFromCompressedImage());
         imageStream.setScaleType(ImageView.ScaleType.MATRIX);
 
+        androidNode = new AndroidNode(NODE_NAME);
+        androidNode.addTopics(pos1State,pos2State,graspState,spreadState,trackerPointNode,targetPointNode,emergencyNode,vsNode,setupONNode,setupOFFNode,interfaceNumberNode);
+        androidNode.addNodeMain(imageStream);
 
         buttonON = (ToggleButton)findViewById(R.id.buttonON) ;
         buttonON.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -179,7 +186,7 @@ public class SetupActivity extends RosActivity {
             public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
                 if (isChecked) {
                     Toast.makeText(getApplicationContext(), "Going to Task position", Toast.LENGTH_LONG).show();
-                    setupONNode.setPublish_bool(true);
+                    setupONNode.setPublisher_bool(true);
                     setupONNode.publishNow();
                     buttonOFF.setEnabled(false);
                     statusPos1_ON.setBackgroundColor(DISABLED);
@@ -187,7 +194,7 @@ public class SetupActivity extends RosActivity {
                     statusGrasp_ON.setBackgroundColor(DISABLED);
                     statusSpread_ON.setBackgroundColor(DISABLED);
                 } else {
-                    setupONNode.setPublish_bool(false);
+                    setupONNode.setPublisher_bool(false);
                     setupONNode.publishNow();
                     buttonOFF.setEnabled(true);
                 }
@@ -200,7 +207,7 @@ public class SetupActivity extends RosActivity {
             public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
                 if (isChecked) {
                     Toast.makeText(getApplicationContext(), "Going to Initial position", Toast.LENGTH_LONG).show();
-                    setupOFFNode.setPublish_bool(true);
+                    setupOFFNode.setPublisher_bool(true);
                     setupOFFNode.publishNow();
                     buttonON.setEnabled(false);
                     statusPos1_OFF.setBackgroundColor(DISABLED);
@@ -208,7 +215,7 @@ public class SetupActivity extends RosActivity {
                     statusGrasp_OFF.setBackgroundColor(DISABLED);
                     statusSpread_OFF.setBackgroundColor(DISABLED);
                 } else {
-                    setupOFFNode.setPublish_bool(false);
+                    setupOFFNode.setPublisher_bool(false);
                     setupOFFNode.publishNow();
                     buttonON.setEnabled(true);
                 }
@@ -222,11 +229,11 @@ public class SetupActivity extends RosActivity {
                 if(isChecked){
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP ACTIVATED!", Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.RED);
-                    emergencyNode.setPublish_bool(false);
+                    emergencyNode.setPublisher_bool(false);
                 }else{
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP DEACTIVATED!", Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.TRANSPARENT);
-                    emergencyNode.setPublish_bool(true);
+                    emergencyNode.setPublisher_bool(true);
                 }
             }
         });
@@ -255,22 +262,22 @@ public class SetupActivity extends RosActivity {
     @Override
     public void onResume() {
         super.onResume();
-        emergencyNode.setPublish_bool(true);
-        vsNode.setPublish_bool(true);
+        emergencyNode.setPublisher_bool(true);
+        vsNode.setPublisher_bool(true);
         running=true;
     }
     
     @Override
     protected void onPause() {
     	super.onPause();
-        emergencyNode.setPublish_bool(false);
-        vsNode.setPublish_bool(false);
+        emergencyNode.setPublisher_bool(false);
+        vsNode.setPublisher_bool(false);
     }
     
     @Override
     public void onDestroy() {
-        emergencyNode.setPublish_bool(false);
-        vsNode.setPublish_bool(false);
+        emergencyNode.setPublisher_bool(false);
+        vsNode.setPublisher_bool(false);
         nodeMain.forceShutdown();
         running=false;
         super.onDestroy();
@@ -295,7 +302,7 @@ public class SetupActivity extends RosActivity {
                 if (buttonON.isChecked()) {
                     if (pos1State.hasReceivedMsg()) {
                         pos1State.setHasReceivedMsg(false);
-                        switch (pos1State.getSubcribe_int()) {
+                        switch (pos1State.getSubcriber_int()) {
                             case -1:
                                 statusPos1_ON.setBackgroundColor(DISABLED);
                                 break;
@@ -313,7 +320,7 @@ public class SetupActivity extends RosActivity {
 
                     if (pos2State.hasReceivedMsg()) {
                         pos2State.setHasReceivedMsg(false);
-                        switch (pos2State.getSubcribe_int()) {
+                        switch (pos2State.getSubcriber_int()) {
                             case -1:
                                 statusPos2_ON.setBackgroundColor(DISABLED);
                                 break;
@@ -331,7 +338,7 @@ public class SetupActivity extends RosActivity {
 
                     if (spreadState.hasReceivedMsg()) {
                         spreadState.setHasReceivedMsg(false);
-                        switch (spreadState.getSubcribe_int()) {
+                        switch (spreadState.getSubcriber_int()) {
                             case -1:
                                 statusSpread_ON.setBackgroundColor(DISABLED);
                                 break;
@@ -349,7 +356,7 @@ public class SetupActivity extends RosActivity {
 
                     if (graspState.hasReceivedMsg()) {
                         graspState.setHasReceivedMsg(false);
-                        switch (graspState.getSubcribe_int()) {
+                        switch (graspState.getSubcriber_int()) {
                             case -1:
                                 statusGrasp_ON.setBackgroundColor(ENABLED);
                                 break;
@@ -368,7 +375,7 @@ public class SetupActivity extends RosActivity {
                     //logic for OFF
                     if (pos1State.hasReceivedMsg()) {
                         pos1State.setHasReceivedMsg(false);
-                        switch (pos1State.getSubcribe_int()) {
+                        switch (pos1State.getSubcriber_int()) {
                             case -1:
                                 statusPos1_OFF.setBackgroundColor(DISABLED);
                                 break;
@@ -386,7 +393,7 @@ public class SetupActivity extends RosActivity {
 
                     if (pos2State.hasReceivedMsg()) {
                         pos2State.setHasReceivedMsg(false);
-                        switch (pos2State.getSubcribe_int()) {
+                        switch (pos2State.getSubcriber_int()) {
                             case -1:
                                 statusPos2_OFF.setBackgroundColor(DISABLED);
                                 break;
@@ -404,7 +411,7 @@ public class SetupActivity extends RosActivity {
 
                     if (spreadState.hasReceivedMsg()) {
                         spreadState.setHasReceivedMsg(false);
-                        switch (spreadState.getSubcribe_int()) {
+                        switch (spreadState.getSubcriber_int()) {
                             case -1:
                                 statusSpread_OFF.setBackgroundColor(ENABLED);
                                 break;
@@ -421,7 +428,7 @@ public class SetupActivity extends RosActivity {
 
                     if (graspState.hasReceivedMsg()) {
                         graspState.setHasReceivedMsg(false);
-                        switch (graspState.getSubcribe_int()) {
+                        switch (graspState.getSubcriber_int()) {
                             case -1:
                                 statusGrasp_OFF.setBackgroundColor(DISABLED);
                                 break;
@@ -534,19 +541,7 @@ public class SetupActivity extends RosActivity {
     protected void init(NodeMainExecutor nodeMainExecutor) {
         nodeMain=(NodeMainExecutorService)nodeMainExecutor;
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
-        nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING + "sub"));
-        nodeMainExecutor.execute(pos1State, nodeConfiguration.setNodeName(POS1_STATE + "sub"));
-        nodeMainExecutor.execute(pos2State, nodeConfiguration.setNodeName(POS2_STATE + "sub"));
-        nodeMainExecutor.execute(graspState, nodeConfiguration.setNodeName(GRASP_STATE + "sub"));
-        nodeMainExecutor.execute(spreadState, nodeConfiguration.setNodeName(SPREAD_STATE + "sub"));
-
-        nodeMainExecutor.execute(trackerPointNode, nodeConfiguration.setNodeName(TRACKER_POINT));
-        nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
-        nodeMainExecutor.execute(emergencyNode, nodeConfiguration.setNodeName(EMERGENCY_STOP));
-        nodeMainExecutor.execute(vsNode, nodeConfiguration.setNodeName(ENABLE_VS));
-        nodeMainExecutor.execute(setupONNode, nodeConfiguration.setNodeName(SETUP_ON));
-        nodeMainExecutor.execute(setupOFFNode, nodeConfiguration.setNodeName(SETUP_OFF));
-        nodeMainExecutor.execute(interfaceNumberNode, nodeConfiguration.setNodeName(INTERFACE_NUMBER));
+        nodeMainExecutor.execute(androidNode, nodeConfiguration.setNodeName(androidNode.getName()));
     }
 
 }

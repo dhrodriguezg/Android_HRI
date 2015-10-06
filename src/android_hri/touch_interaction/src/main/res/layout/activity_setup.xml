@@ -226,8 +226,8 @@
         <ToggleButton
             android:layout_width="70dp"
             android:layout_height="wrap_content"
-            android:textOn="Finish"
-            android:textOff="Finish"
+            android:textOn="@string/finish"
+            android:textOff="@string/finish"
             android:id="@+id/buttonOFF"
             android:layout_below="@+id/statusSpread_OFF"
             android:layout_alignParentLeft="true"

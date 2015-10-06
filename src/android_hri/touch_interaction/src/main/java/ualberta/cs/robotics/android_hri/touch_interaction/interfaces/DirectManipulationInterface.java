@@ -31,17 +31,20 @@ import java.net.URI;
 import sensor_msgs.CompressedImage;
 import ualberta.cs.robotics.android_hri.touch_interaction.MainActivity;
 import ualberta.cs.robotics.android_hri.touch_interaction.R;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.BooleanNode;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.Float32Node;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.Int32Node;
-import ualberta.cs.robotics.android_hri.touch_interaction.node.PointNode;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.BooleanTopic;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.Float32Topic;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.Int32Topic;
+import ualberta.cs.robotics.android_hri.touch_interaction.topic.PointTopic;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiTouchArea;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.gesture_detector.TwoFingerGestureDetector;
+import ualberta.cs.robotics.android_hri.touch_interaction.utils.AndroidNode;
 
 
 public class DirectManipulationInterface extends RosActivity implements SensorEventListener {
 	
 	private static final String TAG = "DirectManipulationInterface";
+    private static final String NODE_NAME="/android/"+TAG.toLowerCase();
+
     private static final String STREAMING= "/image_converter/output_video/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
@@ -68,13 +71,14 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
     private TextView rotateStatus;
     private TextView graspStatus;
 
-    private PointNode targetPointNode;
-    private PointNode positionNode;
-    private Float32Node graspNode;
-    private Int32Node interfaceNumberNode;
-    private PointNode rotationNode;
-    private BooleanNode emergencyNode;
-    private BooleanNode vsNode;
+    private AndroidNode androidNode;
+    private PointTopic targetPointNode;
+    private PointTopic positionNode;
+    private Float32Topic graspNode;
+    private Int32Topic interfaceNumberNode;
+    private PointTopic rotationNode;
+    private BooleanTopic emergencyNode;
+    private BooleanTopic vsNode;
 
     private String msg="";
     private boolean running = true;
@@ -122,37 +126,40 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
         //gestureHandler.enableDoubleTap();
         //gestureHandler.enableLongPress();
 
-        targetPointNode = new PointNode();
+        targetPointNode = new PointTopic();
         targetPointNode.publishTo(TARGET_POINT, false, 10);
 
-        positionNode = new PointNode();
+        positionNode = new PointTopic();
         positionNode.publishTo(POSITION, false, 10);
 
-        graspNode = new Float32Node();
+        graspNode = new Float32Topic();
         graspNode.publishTo(GRASP, false, 2);
-        graspNode.setPublishFreq(500);
+        graspNode.setPublishingFreq(500);
 
-        rotationNode = new PointNode();
+        rotationNode = new PointTopic();
         rotationNode.publishTo(ROTATION, false, 10);
 
-        interfaceNumberNode = new Int32Node();
+        interfaceNumberNode = new Int32Topic();
         interfaceNumberNode.publishTo(INTERFACE_NUMBER, true, 0);
-        interfaceNumberNode.setPublishFreq(100);
-        interfaceNumberNode.setPublish_int(3);
+        interfaceNumberNode.setPublishingFreq(100);
+        interfaceNumberNode.setPublisher_int(3);
 
-        emergencyNode = new BooleanNode();
+        emergencyNode = new BooleanTopic();
         emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
-        emergencyNode.setPublishFreq(100);
-        emergencyNode.setPublish_bool(true);
+        emergencyNode.setPublishingFreq(100);
+        emergencyNode.setPublisher_bool(true);
 
-        vsNode = new BooleanNode();
+        vsNode = new BooleanTopic();
         vsNode.publishTo(ENABLE_VS, true, 0);
-        vsNode.setPublish_bool(false);
+        vsNode.setPublisher_bool(false);
+
+        androidNode = new AndroidNode(NODE_NAME);
+        androidNode.addTopics(targetPointNode,positionNode,graspNode,rotationNode,emergencyNode,vsNode,interfaceNumberNode);
+        androidNode.addNodeMain(imageStream);
 
         senSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         senAccelerometer = senSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         senSensorManager.registerListener(this, senAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-
 
         ToggleButton emergencyStop = (ToggleButton)findViewById(R.id.emergencyButton) ;
         emergencyStop.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -161,11 +168,11 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
                 if (isChecked) {
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP ACTIVATED!", Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.RED);
-                    emergencyNode.setPublish_bool(false);
+                    emergencyNode.setPublisher_bool(false);
                 } else {
                     Toast.makeText(getApplicationContext(), "EMERGENCY STOP DEACTIVATED!", Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.TRANSPARENT);
-                    emergencyNode.setPublish_bool(true);
+                    emergencyNode.setPublisher_bool(true);
                 }
             }
         });
@@ -197,20 +204,20 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
     @Override
     public void onResume() {
         super.onResume();
-        emergencyNode.setPublish_bool(true);
+        emergencyNode.setPublisher_bool(true);
         running=true;
     }
     
     @Override
     protected void onPause() {
-        emergencyNode.setPublish_bool(false);
+        emergencyNode.setPublisher_bool(false);
     	super.onPause();
     }
     
     @Override
     public void onDestroy() {
-        emergencyNode.setPublish_bool(false);
-        vsNode.setPublish_bool(false);
+        emergencyNode.setPublisher_bool(false);
+        vsNode.setPublisher_bool(false);
         nodeMain.forceShutdown();
         running=false;
         super.onDestroy();
@@ -245,9 +252,9 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
                 gestureHandler.setLongClickX(0);
                 return;
             }
-            targetPointNode.getPublish_point()[0]=targetPixel[0];
-            targetPointNode.getPublish_point()[1]=targetPixel[1];
-            vsNode.setPublish_bool(false);
+            targetPointNode.getPublisher_point()[0]=targetPixel[0];
+            targetPointNode.getPublisher_point()[1]=targetPixel[1];
+            vsNode.setPublisher_bool(false);
 
             this.runOnUiThread(new Runnable() {
                 @Override
@@ -258,7 +265,7 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
                     positionImage.setAlpha(0.f);
                     positionImage.setX(0);
                     positionImage.setY(0);
-                    msg = String.format("Target (%d , %d) ",(int)targetPointNode.getPublish_point()[0],(int)targetPointNode.getPublish_point()[1]);
+                    msg = String.format("Target (%d , %d) ",(int)targetPointNode.getPublisher_point()[0],(int)targetPointNode.getPublisher_point()[1]);
                 }
             });
             gestureHandler.setLongClickX(0);
@@ -270,10 +277,10 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
 
     private void updateConfirmTarget() {
         if(gestureHandler.getDoubleTapX()>0) {
-            if(targetPointNode.getPublish_point()[0] > 1) {
+            if(targetPointNode.getPublisher_point()[0] > 1) {
                 targetPointNode.publishNow();
-                vsNode.setPublish_bool(true);
-                msg = String.format("Going to target (%d , %d) ",(int)targetPointNode.getPublish_point()[0],(int)targetPointNode.getPublish_point()[1]);
+                vsNode.setPublisher_bool(true);
+                msg = String.format("Going to target (%d , %d) ",(int)targetPointNode.getPublisher_point()[0],(int)targetPointNode.getPublisher_point()[1]);
             }else{
                 this.runOnUiThread(new Runnable() {
                     @Override
@@ -305,14 +312,11 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
                 return;
             }
 
-            positionNode.getPublish_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - positionPixel[1]*MainActivity.WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
-            positionNode.getPublish_point()[1] = MainActivity.WORKSPACE_X_OFFSET - positionPixel[0]*MainActivity.WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
-            positionNode.getPublish_point()[2] = 0;
+            positionNode.getPublisher_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - positionPixel[1]*MainActivity.WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
+            positionNode.getPublisher_point()[1] = MainActivity.WORKSPACE_X_OFFSET - positionPixel[0]*MainActivity.WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
+            positionNode.getPublisher_point()[2] = 0;
             positionNode.publishNow();
-            //targetPointNode.getPublish_point()[0]=positionPixel[0];
-            //targetPointNode.getPublish_point()[1]=positionPixel[1];
-            //targetPointNode.publishNow();
-            //vsNode.setPublish_bool(true);
+
             this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -323,7 +327,7 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
                     targetImage.setAlpha(0.f);
                     targetImage.setX(0);
                     targetImage.setY(0);
-                    msg = String.format("Moving to (%.4f , %.4f) ", positionNode.getPublish_point()[0], positionNode.getPublish_point()[1]);
+                    msg = String.format("Moving to (%.4f , %.4f) ", positionNode.getPublisher_point()[0], positionNode.getPublisher_point()[1]);
                     moveStatus.setBackgroundColor(Color.GREEN);
                     rotateStatus.setBackgroundColor(Color.TRANSPARENT);
                     graspStatus.setBackgroundColor(Color.TRANSPARENT);
@@ -341,11 +345,11 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
         }
         if(angle!=0){
             msg = String.format("Rotating Jaw += %.2f ",angle);
-            rotationNode.getPublish_point()[0]=0;
-            rotationNode.getPublish_point()[1]=angle;
+            rotationNode.getPublisher_point()[0]=0;
+            rotationNode.getPublisher_point()[1]=angle;
             gestureHandler.setDoubleDragX(0);
             rotationNode.publishNow();
-            vsNode.setPublish_bool(false);
+            vsNode.setPublisher_bool(false);
             this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -363,8 +367,8 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
 
     private void updateGrasping() {
         float grasp = MAX_GRASP*(TwoFingerGestureDetector.MAX_SCALE-gestureHandler.getScale())/(TwoFingerGestureDetector.MAX_SCALE-TwoFingerGestureDetector.MIN_SCALE);
-        if(grasp!=graspNode.getPublish_float()){
-            graspNode.setPublish_float(grasp);
+        if(grasp!=graspNode.getPublisher_float()){
+            graspNode.setPublisher_float(grasp);
             msg = String.format("Grasping = %.2f ",grasp);
             this.runOnUiThread(new Runnable() {
                 @Override
@@ -444,15 +448,7 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
     protected void init(NodeMainExecutor nodeMainExecutor) {
         nodeMain=(NodeMainExecutorService)nodeMainExecutor;
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(InetAddressFactory.newNonLoopback().getHostAddress(), getMasterUri());
-        nodeMainExecutor.execute(imageStream, nodeConfiguration.setNodeName(STREAMING+"sub"));
-
-        nodeMainExecutor.execute(targetPointNode, nodeConfiguration.setNodeName(TARGET_POINT));
-        nodeMainExecutor.execute(positionNode, nodeConfiguration.setNodeName(POSITION));
-        nodeMainExecutor.execute(graspNode, nodeConfiguration.setNodeName(GRASP));
-        nodeMainExecutor.execute(rotationNode, nodeConfiguration.setNodeName(ROTATION));
-        nodeMainExecutor.execute(emergencyNode, nodeConfiguration.setNodeName(EMERGENCY_STOP));
-        nodeMainExecutor.execute(vsNode, nodeConfiguration.setNodeName(ENABLE_VS));
-        nodeMainExecutor.execute(interfaceNumberNode, nodeConfiguration.setNodeName(INTERFACE_NUMBER));
+        nodeMainExecutor.execute(androidNode, nodeConfiguration.setNodeName(androidNode.getName()));
     }
 
 }

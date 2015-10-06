@@ -2,6 +2,8 @@
 <resources>
 
     <!-- GLOBAL TEXT -->
+    <string name="spanish">Español</string>
+    <string name="english">English</string>
     <string name="emergency_off">EMERGENCY STOP</string>
     <string name="emergency_on">STOPPING ROBOT</string>
 
@@ -29,6 +31,7 @@
     <string name="spread">Spread</string>
     <string name="grasp">Grasp</string>
     <string name="start">Start</string>
+    <string name="finish">Finish</string>
     <string name="enable">Enable</string>
     <string name="disable">Disable</string>
     <string name="confirm_point">Confirm Point</string>

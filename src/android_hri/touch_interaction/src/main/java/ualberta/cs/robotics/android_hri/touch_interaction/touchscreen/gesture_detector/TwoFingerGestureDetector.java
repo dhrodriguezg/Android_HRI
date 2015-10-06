@@ -214,11 +214,11 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
 
     /** Gesture interfaces **/
 
-    public static interface OnTwoFingerGestureListener {
-        public void OnDoubleDrag(float mX,float mY,float normalizedX,float normalizedY);
-        public void OnRotation(float mAngle);
-        public void OnScale(float mScale, float mScaleFocusX, float mScaleFocusY);
-        public void onTwoFingerGestureState(boolean detectingGesture);
+    public interface OnTwoFingerGestureListener {
+        void OnDoubleDrag(float mX,float mY,float normalizedX,float normalizedY);
+        void OnRotation(float mAngle);
+        void OnScale(float mScale, float mScaleFocusX, float mScaleFocusY);
+        void onTwoFingerGestureState(boolean detectingGesture);
     }
 
     /** Normalized values **/

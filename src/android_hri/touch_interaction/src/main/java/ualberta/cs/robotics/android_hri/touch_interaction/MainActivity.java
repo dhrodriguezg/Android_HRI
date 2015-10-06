@@ -122,8 +122,8 @@ public class MainActivity extends ActionBarActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         language = new MenuItem[2]; //for now...
-        language[0]= menu.add(1,1,Menu.NONE,"English");
-        language[1]= menu.add(1,2,Menu.NONE,"Espanol");
+        language[0]= menu.add(1,1,Menu.NONE,getString(R.string.english));
+        language[1]= menu.add(1,2,Menu.NONE,getString(R.string.spanish));
         return true;
     }
 

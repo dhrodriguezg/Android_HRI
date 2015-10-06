@@ -2,7 +2,6 @@ package ualberta.cs.robotics.android_hri.touch_interaction.touchscreen;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.os.Vibrator;
 import android.view.MotionEvent;
 import android.view.View;
@@ -60,17 +59,6 @@ public class TouchArea implements OneFingerGestureDetector.OnOneFingerGestureLis
         if(enableOneFingerGestures)
             mOneFingerGestureDetector.onTouchEvent(view, event);
     }
-
-
-    public void draw(final Bitmap bitmap){
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                view.setImageBitmap(bitmap);
-            }
-        });
-    }
-
 
     @Override
     public void onScrollDrag(float sX, float sY, float sdX, float sdY, float dX, float dY, float normalizedDX, float normalizedDY) {

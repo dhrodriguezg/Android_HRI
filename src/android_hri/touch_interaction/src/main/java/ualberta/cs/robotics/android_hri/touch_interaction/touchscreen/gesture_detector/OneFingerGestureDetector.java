@@ -66,7 +66,6 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
     }
 
     /** Low-level events **/
-
     public boolean onTouchEvent(View view, MotionEvent event){
         mView = view;
         checkGestureState(event);
@@ -185,13 +184,13 @@ public class OneFingerGestureDetector extends GestureDetector.SimpleOnGestureLis
 
     /** Gesture interfaces **/
 
-    public static interface OnOneFingerGestureListener {
-        public void onSingleTap(float stX,float stY, float normalizedSTX, float normalizedSTY);
-        public void onDoubleTap(float dtX, float dtY, float normalizedDTX, float normalizedDTY);
-        public void onScrollDrag(float sX, float sY, float sdX, float sdY, float dX, float dY, float normalizedDX, float normalizedDY);
-        public void onFling(float fX, float fY, float fvX, float fvY);
-        public void onLongPress(float lpX,float lpY,float normalizedLPX,float normalizedLPY);
-        public void onOneFingerGestureState(boolean detectingGesture);
+    public interface OnOneFingerGestureListener {
+        void onSingleTap(float stX,float stY, float normalizedSTX, float normalizedSTY);
+        void onDoubleTap(float dtX, float dtY, float normalizedDTX, float normalizedDTY);
+        void onScrollDrag(float sX, float sY, float sdX, float sdY, float dX, float dY, float normalizedDX, float normalizedDY);
+        void onFling(float fX, float fY, float fvX, float fvY);
+        void onLongPress(float lpX,float lpY,float normalizedLPX,float normalizedLPY);
+        void onOneFingerGestureState(boolean detectingGesture);
     }
 
     /** Normalized values **/
