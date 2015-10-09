@@ -12,9 +12,12 @@ import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.gesture_de
  */
 public class MultiTouchArea extends TouchArea implements TwoFingerGestureDetector.OnTwoFingerGestureListener {
 
+    private static final String TAG = "MultiTouchArea";
+
     private TwoFingerGestureDetector mTwoFingerGestureDetector;
     protected float angle = 0.f;
     protected float scale = 1.f;
+    protected float graspScale = 1.f;
     protected float scaleFocusX = 0.f;
     protected float scaleFocusY = 0.f;
     protected float doubleDragX = 0.f;

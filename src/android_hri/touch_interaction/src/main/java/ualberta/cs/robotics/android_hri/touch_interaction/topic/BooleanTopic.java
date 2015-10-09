@@ -15,6 +15,7 @@ import std_msgs.Bool;
 
 public class BooleanTopic extends AbstractTopic {
 
+    private static final String TAG = "BooleanTopic";
     private boolean publisher_bool;
     private boolean subcriber_bool;
     protected Publisher<Bool> publisher = null;

@@ -13,6 +13,7 @@ import std_msgs.Int32;
  */
 public class Int32Topic extends AbstractTopic {
 
+    private static final String TAG = "Int32Topic";
     private Publisher<Int32> publisher = null;
     private Subscriber<Int32> subscriber = null;
     private int publisher_int =0;

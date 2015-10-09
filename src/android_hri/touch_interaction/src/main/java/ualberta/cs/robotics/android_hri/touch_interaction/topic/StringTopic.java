@@ -11,6 +11,7 @@ import org.ros.node.topic.Subscriber;
  */
 public class StringTopic extends AbstractTopic {
 
+    private static final String TAG = "StringTopic";
     private Publisher<std_msgs.String> publisher = null;
     private Subscriber<std_msgs.String> subscriber = null;
     private String publisher_string;

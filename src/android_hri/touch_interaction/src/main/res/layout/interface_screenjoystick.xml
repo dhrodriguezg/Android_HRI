@@ -94,16 +94,14 @@
 
         </LinearLayout>
 
-        <org.ros.android.view.VirtualJoystickView
+        <ualberta.cs.robotics.android_hri.touch_interaction.utils.CustomVirtualJoystickView
             android:id="@+id/virtual_joystick_pos"
             android:layout_width="120dp"
             android:layout_height="120dp"
             android:layout_alignParentBottom="true"
-            android:layout_alignParentLeft="true" >
+            android:layout_alignParentLeft="true" />
 
-        </org.ros.android.view.VirtualJoystickView>
-
-        <org.ros.android.view.VirtualJoystickView
+        <ualberta.cs.robotics.android_hri.touch_interaction.utils.CustomVirtualJoystickView
             android:id="@+id/virtual_joystick_rot"
             android:layout_width="120dp"
             android:layout_height="120dp"

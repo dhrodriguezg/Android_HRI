@@ -8,6 +8,7 @@ import org.ros.node.NodeMain;
 import java.util.HashSet;
 import java.util.Set;
 
+import ualberta.cs.robotics.android_hri.touch_interaction.service.AbstractService;
 import ualberta.cs.robotics.android_hri.touch_interaction.topic.AbstractTopic;
 
 /**
@@ -15,14 +16,27 @@ import ualberta.cs.robotics.android_hri.touch_interaction.topic.AbstractTopic;
  */
 public class AndroidNode implements NodeMain {
 
+    private static final String TAG = "AndroidNode";
+
+    private Set<AbstractService> serviceSet = null;
     private Set<AbstractTopic> topicSet = null;
     private Set<NodeMain> nodeSet = null;
     private String nodeName = null;
 
     public AndroidNode(String nodeName){
         this.nodeName=nodeName;
+        serviceSet = new HashSet<>();
         topicSet = new HashSet<>();
         nodeSet = new HashSet<>();
+    }
+
+    public void addService(AbstractService service){
+        serviceSet.add(service);
+    }
+
+    public void addServices(AbstractService... services){
+        for(AbstractService service : services)
+            serviceSet.add(service);
     }
 
     public void addTopic(AbstractTopic topic){
@@ -50,6 +64,8 @@ public class AndroidNode implements NodeMain {
 
     @Override
     public void onStart(ConnectedNode connectedNode) {
+        for(AbstractService service: serviceSet)
+            service.onStart(connectedNode);
         for(AbstractTopic topic: topicSet)
             topic.onStart(connectedNode);
         for(NodeMain nodeMain: nodeSet)

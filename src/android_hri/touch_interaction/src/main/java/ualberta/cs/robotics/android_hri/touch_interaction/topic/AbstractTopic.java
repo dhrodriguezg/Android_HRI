@@ -7,27 +7,30 @@ import org.ros.node.ConnectedNode;
  */
 public abstract class AbstractTopic {
 
+    private static final String TAG = "AbstractTopic";
+    protected String subscriberTopic;
+    protected String publisherTopic;
+
     protected int counter = 0;
     protected boolean isSubscriber;
     protected boolean isPublisher;
 
-    protected String subscriberTopic;
-    protected String publisherTopic;
+    protected boolean hasReceivedMsg;
+    protected boolean hasPublishedMsg;
 
     protected boolean alwaysPublish;
     protected long publishFreq = 10;
     protected int maxPublishing = 0;
 
-    protected boolean hasReceivedMsg=false;
-    protected boolean hasPublishedMsg=false;
-
     public void subscribeTo(String topic){
         isSubscriber=true;
+        hasReceivedMsg=false;
         subscriberTopic =topic;
     }
 
     public void publishTo(String topic, boolean alwaysPublishing, int maxPublishings){
         isPublisher=true;
+        hasPublishedMsg=false;
         publisherTopic = topic;
         alwaysPublish=alwaysPublishing;
         maxPublishing=maxPublishings;

@@ -13,6 +13,7 @@ import sensor_msgs.Joy;
  */
 public class JoyTopic extends AbstractTopic {
 
+    private static final String TAG = "JoyTopic";
     private Publisher<Joy> publisher = null;
     private Subscriber<Joy> subscriber = null;
     private float[] publisher_axes =new float[]{0, 0, 0, 0, 0, 0};

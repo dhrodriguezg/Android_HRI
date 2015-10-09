@@ -13,6 +13,7 @@ import geometry_msgs.Twist;
  */
 public class TwistTopic extends AbstractTopic {
 
+    private static final String TAG = "TwistTopic";
     private Publisher<Twist> publisher = null;
     private Subscriber<Twist> subscriber = null;
     private float[] publisher_angular =new float[]{0, 0, 0,};

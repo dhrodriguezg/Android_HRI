@@ -24,6 +24,7 @@ import org.ros.node.NodeMainExecutor;
 import java.net.URI;
 
 import sensor_msgs.CompressedImage;
+import ualberta.cs.robotics.android_hri.touch_interaction.service.TestService;
 import ualberta.cs.robotics.android_hri.touch_interaction.topic.BooleanTopic;
 import ualberta.cs.robotics.android_hri.touch_interaction.topic.Int32Topic;
 import ualberta.cs.robotics.android_hri.touch_interaction.topic.PointTopic;
@@ -34,12 +35,12 @@ import ualberta.cs.robotics.android_hri.touch_interaction.utils.AndroidNode;
 public class SetupActivity extends RosActivity {
 
 	private static final String TAG = "SetupActivity";
-    private static final String NODE_NAME="/android/"+TAG.toLowerCase();
+    private static final String NODE_NAME="/android_"+TAG.toLowerCase();
 
+    /*
     private static final String STREAMING= "/image_converter/output_video/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
-    private static final String ENABLE_VS = "/android/enable_vs";
     private static final String TRACKER_POINT ="/android/tracker_point";
     private static final String TARGET_POINT="/android/target_point";
     private static final String INTERFACE_NUMBER="/android/interface_number";
@@ -49,6 +50,8 @@ public class SetupActivity extends RosActivity {
     private static final String POS2_STATE="/android/setup/pos2_state";
     private static final String GRASP_STATE="/android/setup/grasp_state";
     private static final String SPREAD_STATE="/android/setup/spread_state";
+    */
+
     private final int DISABLED = Color.RED;
     private final int ENABLED = Color.GREEN;
     private final int TRANSITION = Color.rgb(255,195,77); //orange
@@ -82,17 +85,19 @@ public class SetupActivity extends RosActivity {
     private TextView statusGrasp_OFF;
 
     private AndroidNode androidNode;
-    private PointTopic trackerPointNode;
-    private PointTopic targetPointNode;
-    private Int32Topic pos1State;
-    private Int32Topic pos2State;
-    private Int32Topic graspState;
-    private Int32Topic spreadState;
-    private Int32Topic interfaceNumberNode;
-    private BooleanTopic setupONNode;
-    private BooleanTopic setupOFFNode;
-    private BooleanTopic emergencyNode;
-    private BooleanTopic vsNode;
+    private BooleanTopic emergencyTopic;
+    private Int32Topic interfaceNumberTopic;
+    private BooleanTopic setupONTopic;
+    private BooleanTopic setupOFFTopic;
+    private Int32Topic pos1StateTopic;
+    private Int32Topic pos2StateTopic;
+    private Int32Topic graspStateTopic;
+    private Int32Topic spreadStateTopic;
+    private PointTopic trackerPointTopic;
+    private PointTopic targetPointTopic;
+    private TestService testService;
+
+
 
     private boolean firstRun=true;
     private static final int MAX_TRACKERS=2;
@@ -121,81 +126,68 @@ public class SetupActivity extends RosActivity {
         statusGrasp_OFF = (TextView) findViewById(R.id.statusGrasp_OFF);
 
         imageStream = (RosImageView<CompressedImage>) findViewById(R.id.streamCalibration);
-        if(debug){
-            /**
-             cd /opt/ros/indigo/share/openni2_launch/launch
-             roslaunch openni2.launch
-             rosrun image_view image_view image:=/camera/rgb/image_raw
+        imageStream.setTopicName(getString(R.string.topic_streaming));
+        imageStream.setMessageType(getString(R.string.topic_streaming_msg));
 
-             cd /home/dhrodriguezg/catkin_ws/launch_files
-             roslaunch usb_camera.launch
+        setupONTopic = new BooleanTopic();
+        setupONTopic.publishTo(getString(R.string.topic_setup_on), false, 100);
 
-             rostopic echo /android/joystickPos/cmd_vel
-            */
-            imageStream.setTopicName("/usb_cam/image_raw/compressed");
+        setupOFFTopic = new BooleanTopic();
+        setupOFFTopic.publishTo(getString(R.string.topic_setup_off), false, 100);
 
-        }else
-            imageStream.setTopicName(STREAMING);
-        imageStream.setMessageType(STREAMING_MSG);
+        pos1StateTopic = new Int32Topic();
+        pos1StateTopic.subscribeTo(getString(R.string.topic_setup_pos1state));
+        pos2StateTopic = new Int32Topic();
+        pos2StateTopic.subscribeTo(getString(R.string.topic_setup_pos2state));
+        graspStateTopic = new Int32Topic();
+        graspStateTopic.subscribeTo(getString(R.string.topic_setup_grasp));
+        spreadStateTopic = new Int32Topic();
+        spreadStateTopic.subscribeTo(getString(R.string.topic_setup_spread));
 
-        setupONNode = new BooleanTopic();
-        setupONNode.publishTo(SETUP_ON, false, 100);
+        trackerPointTopic = new PointTopic();
+        trackerPointTopic.publishTo(getString(R.string.topic_trackerpoint), false, 10);
 
-        setupOFFNode = new BooleanTopic();
-        setupOFFNode.publishTo(SETUP_OFF, false, 100);
+        targetPointTopic = new PointTopic();
+        targetPointTopic.publishTo(getString(R.string.topic_targetpoint), false, 10);
 
-        pos1State = new Int32Topic();
-        pos1State.subscribeTo(POS1_STATE);
-        pos2State = new Int32Topic();
-        pos2State.subscribeTo(POS2_STATE);
-        graspState = new Int32Topic();
-        graspState.subscribeTo(GRASP_STATE);
-        spreadState = new Int32Topic();
-        spreadState.subscribeTo(SPREAD_STATE);
+        interfaceNumberTopic = new Int32Topic();
+        interfaceNumberTopic.publishTo(getString(R.string.topic_interfacenumber), true, 0);
+        interfaceNumberTopic.setPublishingFreq(100);
+        interfaceNumberTopic.setPublisher_int(-1);
 
-        trackerPointNode = new PointTopic();
-        trackerPointNode.publishTo(TRACKER_POINT, false, 10);
+        emergencyTopic = new BooleanTopic();
+        emergencyTopic.publishTo(getString(R.string.topic_emergencystop), true, 0);
+        emergencyTopic.setPublishingFreq(100);
+        emergencyTopic.setPublisher_bool(true);
 
-        targetPointNode = new PointTopic();
-        targetPointNode.publishTo(TARGET_POINT, false, 10);
-
-        interfaceNumberNode = new Int32Topic();
-        interfaceNumberNode.publishTo(INTERFACE_NUMBER, true, 0);
-        interfaceNumberNode.setPublishingFreq(100);
-        interfaceNumberNode.setPublisher_int(-1);
-
-        emergencyNode = new BooleanTopic();
-        emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
-        emergencyNode.setPublishingFreq(100);
-        emergencyNode.setPublisher_bool(true);
-
-        vsNode = new BooleanTopic();
-        vsNode.publishTo(ENABLE_VS, false, 100);
-        vsNode.setPublisher_bool(true);
+        testService = new TestService();
+        testService.clientOf(getString(R.string.service_test));
+        testService.serverOf(getString(R.string.service_test));
 
         imageStream.setMessageToBitmapCallable(new BitmapFromCompressedImage());
         imageStream.setScaleType(ImageView.ScaleType.MATRIX);
 
         androidNode = new AndroidNode(NODE_NAME);
-        androidNode.addTopics(pos1State,pos2State,graspState,spreadState,trackerPointNode,targetPointNode,emergencyNode,vsNode,setupONNode,setupOFFNode,interfaceNumberNode);
+        androidNode.addTopics(pos1StateTopic, pos2StateTopic, graspStateTopic, spreadStateTopic, trackerPointTopic, targetPointTopic, emergencyTopic, setupONTopic, setupOFFTopic, interfaceNumberTopic);
         androidNode.addNodeMain(imageStream);
+        androidNode.addService(testService);
 
         buttonON = (ToggleButton)findViewById(R.id.buttonON) ;
         buttonON.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
                 if (isChecked) {
-                    Toast.makeText(getApplicationContext(), "Going to Task position", Toast.LENGTH_LONG).show();
-                    setupONNode.setPublisher_bool(true);
-                    setupONNode.publishNow();
+                    Toast.makeText(getApplicationContext(), getString(R.string.task_position_msg), Toast.LENGTH_LONG).show();
+                    setupONTopic.setPublisher_bool(true);
+                    setupONTopic.publishNow();
                     buttonOFF.setEnabled(false);
                     statusPos1_ON.setBackgroundColor(DISABLED);
                     statusPos2_ON.setBackgroundColor(DISABLED);
                     statusGrasp_ON.setBackgroundColor(DISABLED);
                     statusSpread_ON.setBackgroundColor(DISABLED);
                 } else {
-                    setupONNode.setPublisher_bool(false);
-                    setupONNode.publishNow();
+                    setupONTopic.setPublisher_bool(false);
+                    setupONTopic.publishNow();
                     buttonOFF.setEnabled(true);
                 }
             }
@@ -206,17 +198,17 @@ public class SetupActivity extends RosActivity {
             @Override
             public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
                 if (isChecked) {
-                    Toast.makeText(getApplicationContext(), "Going to Initial position", Toast.LENGTH_LONG).show();
-                    setupOFFNode.setPublisher_bool(true);
-                    setupOFFNode.publishNow();
+                    Toast.makeText(getApplicationContext(), getString(R.string.initial_position_msg), Toast.LENGTH_LONG).show();
+                    setupOFFTopic.setPublisher_bool(true);
+                    setupOFFTopic.publishNow();
                     buttonON.setEnabled(false);
                     statusPos1_OFF.setBackgroundColor(DISABLED);
                     statusPos2_OFF.setBackgroundColor(DISABLED);
                     statusGrasp_OFF.setBackgroundColor(DISABLED);
                     statusSpread_OFF.setBackgroundColor(DISABLED);
                 } else {
-                    setupOFFNode.setPublisher_bool(false);
-                    setupOFFNode.publishNow();
+                    setupOFFTopic.setPublisher_bool(false);
+                    setupOFFTopic.publishNow();
                     buttonON.setEnabled(true);
                 }
             }
@@ -227,13 +219,17 @@ public class SetupActivity extends RosActivity {
             @Override
             public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
                 if(isChecked){
-                    Toast.makeText(getApplicationContext(), "EMERGENCY STOP ACTIVATED!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), getString(R.string.emergency_on_msg), Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.RED);
-                    emergencyNode.setPublisher_bool(false);
+                    emergencyTopic.setPublisher_bool(false);
+
+                    testService.setA(5);
+                    testService.setB(3);
+                    testService.callService();
                 }else{
-                    Toast.makeText(getApplicationContext(), "EMERGENCY STOP DEACTIVATED!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), getString(R.string.emergency_off_msg), Toast.LENGTH_LONG).show();
                     imageStream.setBackgroundColor(Color.TRANSPARENT);
-                    emergencyNode.setPublisher_bool(true);
+                    emergencyTopic.setPublisher_bool(true);
                 }
             }
         });
@@ -262,22 +258,19 @@ public class SetupActivity extends RosActivity {
     @Override
     public void onResume() {
         super.onResume();
-        emergencyNode.setPublisher_bool(true);
-        vsNode.setPublisher_bool(true);
+        emergencyTopic.setPublisher_bool(true);
         running=true;
     }
     
     @Override
     protected void onPause() {
     	super.onPause();
-        emergencyNode.setPublisher_bool(false);
-        vsNode.setPublisher_bool(false);
+        emergencyTopic.setPublisher_bool(false);
     }
     
     @Override
     public void onDestroy() {
-        emergencyNode.setPublisher_bool(false);
-        vsNode.setPublisher_bool(false);
+        emergencyTopic.setPublisher_bool(false);
         nodeMain.forceShutdown();
         running=false;
         super.onDestroy();
@@ -300,9 +293,9 @@ public class SetupActivity extends RosActivity {
             public void run() {
 
                 if (buttonON.isChecked()) {
-                    if (pos1State.hasReceivedMsg()) {
-                        pos1State.setHasReceivedMsg(false);
-                        switch (pos1State.getSubcriber_int()) {
+                    if (pos1StateTopic.hasReceivedMsg()) {
+                        pos1StateTopic.setHasReceivedMsg(false);
+                        switch (pos1StateTopic.getSubcriber_int()) {
                             case -1:
                                 statusPos1_ON.setBackgroundColor(DISABLED);
                                 break;
@@ -318,9 +311,9 @@ public class SetupActivity extends RosActivity {
                         }
                     }
 
-                    if (pos2State.hasReceivedMsg()) {
-                        pos2State.setHasReceivedMsg(false);
-                        switch (pos2State.getSubcriber_int()) {
+                    if (pos2StateTopic.hasReceivedMsg()) {
+                        pos2StateTopic.setHasReceivedMsg(false);
+                        switch (pos2StateTopic.getSubcriber_int()) {
                             case -1:
                                 statusPos2_ON.setBackgroundColor(DISABLED);
                                 break;
@@ -336,9 +329,9 @@ public class SetupActivity extends RosActivity {
                         }
                     }
 
-                    if (spreadState.hasReceivedMsg()) {
-                        spreadState.setHasReceivedMsg(false);
-                        switch (spreadState.getSubcriber_int()) {
+                    if (spreadStateTopic.hasReceivedMsg()) {
+                        spreadStateTopic.setHasReceivedMsg(false);
+                        switch (spreadStateTopic.getSubcriber_int()) {
                             case -1:
                                 statusSpread_ON.setBackgroundColor(DISABLED);
                                 break;
@@ -354,9 +347,9 @@ public class SetupActivity extends RosActivity {
                         }
                     }
 
-                    if (graspState.hasReceivedMsg()) {
-                        graspState.setHasReceivedMsg(false);
-                        switch (graspState.getSubcriber_int()) {
+                    if (graspStateTopic.hasReceivedMsg()) {
+                        graspStateTopic.setHasReceivedMsg(false);
+                        switch (graspStateTopic.getSubcriber_int()) {
                             case -1:
                                 statusGrasp_ON.setBackgroundColor(ENABLED);
                                 break;
@@ -373,9 +366,9 @@ public class SetupActivity extends RosActivity {
 
                 } else if (buttonOFF.isChecked()) {
                     //logic for OFF
-                    if (pos1State.hasReceivedMsg()) {
-                        pos1State.setHasReceivedMsg(false);
-                        switch (pos1State.getSubcriber_int()) {
+                    if (pos1StateTopic.hasReceivedMsg()) {
+                        pos1StateTopic.setHasReceivedMsg(false);
+                        switch (pos1StateTopic.getSubcriber_int()) {
                             case -1:
                                 statusPos1_OFF.setBackgroundColor(DISABLED);
                                 break;
@@ -391,9 +384,9 @@ public class SetupActivity extends RosActivity {
                         }
                     }
 
-                    if (pos2State.hasReceivedMsg()) {
-                        pos2State.setHasReceivedMsg(false);
-                        switch (pos2State.getSubcriber_int()) {
+                    if (pos2StateTopic.hasReceivedMsg()) {
+                        pos2StateTopic.setHasReceivedMsg(false);
+                        switch (pos2StateTopic.getSubcriber_int()) {
                             case -1:
                                 statusPos2_OFF.setBackgroundColor(DISABLED);
                                 break;
@@ -409,9 +402,9 @@ public class SetupActivity extends RosActivity {
                         }
                     }
 
-                    if (spreadState.hasReceivedMsg()) {
-                        spreadState.setHasReceivedMsg(false);
-                        switch (spreadState.getSubcriber_int()) {
+                    if (spreadStateTopic.hasReceivedMsg()) {
+                        spreadStateTopic.setHasReceivedMsg(false);
+                        switch (spreadStateTopic.getSubcriber_int()) {
                             case -1:
                                 statusSpread_OFF.setBackgroundColor(ENABLED);
                                 break;
@@ -426,9 +419,9 @@ public class SetupActivity extends RosActivity {
                         }
                     }
 
-                    if (graspState.hasReceivedMsg()) {
-                        graspState.setHasReceivedMsg(false);
-                        switch (graspState.getSubcriber_int()) {
+                    if (graspStateTopic.hasReceivedMsg()) {
+                        graspStateTopic.setHasReceivedMsg(false);
+                        switch (graspStateTopic.getSubcriber_int()) {
                             case -1:
                                 statusGrasp_OFF.setBackgroundColor(DISABLED);
                                 break;

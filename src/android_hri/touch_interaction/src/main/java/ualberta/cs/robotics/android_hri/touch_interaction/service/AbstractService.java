@@ -1,31 +1,20 @@
 package ualberta.cs.robotics.android_hri.touch_interaction.service;
 
-import org.ros.exception.RemoteException;
-import org.ros.exception.RosRuntimeException;
-import org.ros.exception.ServiceNotFoundException;
 import org.ros.node.ConnectedNode;
-import org.ros.node.service.ServiceClient;
-import org.ros.node.service.ServiceResponseBuilder;
-import org.ros.node.service.ServiceResponseListener;
-import org.ros.node.topic.Publisher;
-
-import rosjava_test_msgs.AddTwoIntsRequest;
-import rosjava_test_msgs.AddTwoIntsResponse;
-import std_msgs.Bool;
 
 /**
  * Created by dhrodriguezg on 9/28/15.
  */
 public abstract class AbstractService {
 
-    protected boolean isServer;
-    protected boolean isClient;
-
+    private static final String TAG = "AbstractService";
     protected String serverTopic;
     protected String clientTopic;
 
-    protected boolean hasServerMsg =false;
-    protected boolean hasClientMsg =false;
+    protected boolean hasServerReceivedMsg = false;
+    protected boolean hasClientSentMsg = false;
+    protected boolean isServer;
+    protected boolean isClient;
 
     public void serverOf(String topic) {
         isServer = true;
@@ -45,23 +34,23 @@ public abstract class AbstractService {
     }
 
     public boolean hasReceivedMsg() {
-        return hasServerMsg;
+        return hasServerReceivedMsg;
     }
 
-    public void setHasServerMsg(boolean hasServerMsg) {
-        this.hasServerMsg = hasServerMsg;
+    public void setHasServerReceivedMsg(boolean hasServerReceivedMsg) {
+        this.hasServerReceivedMsg = hasServerReceivedMsg;
     }
 
     public boolean hasPublishedMsg() {
-        return hasClientMsg;
+        return hasClientSentMsg;
     }
 
-    public void setHasClientMsg(boolean hasClientMsg) {
-        this.hasClientMsg = hasClientMsg;
+    public void setHasClientSentMsg(boolean hasClientSentMsg) {
+        this.hasClientSentMsg = hasClientSentMsg;
     }
 
     protected abstract void setupClient(final ConnectedNode connectedNode);
-    protected abstract void publish();
+    public abstract void callService();
     protected abstract void setupServer(final ConnectedNode connectedNode);
 
 }

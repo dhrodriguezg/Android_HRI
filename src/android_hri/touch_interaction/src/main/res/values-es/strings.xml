@@ -3,7 +3,9 @@
 
     <!-- GLOBAL TEXT -->
     <string name="emergency_off">PARADA EMERGENCIA</string>
-    <string name="emergency_on">DETENIENDO EL ROBOTSTOPPING ROBOT</string>
+    <string name="emergency_on">DETENIENDO EL ROBOT</string>
+    <string name="emergency_on_msg">PARADA DE EMERGENCIA ACTIVADA!</string>
+    <string name="emergency_off_msg">PARADA DE EMERGENCIA DESACTIVADA!</string>
 
     <!-- MAIN TEXT -->
     <string name="app_name">Interface Android para WAM</string>
@@ -33,11 +35,16 @@
     <string name="enable">Habilitar</string>
     <string name="disable">Deshabilitar</string>
     <string name="confirm_point">Confirmar Punto</string>
+    <string name="task_position_msg">Llendo al lugar de la tarea</string>
+    <string name="initial_position_msg">Llendo a la posición inicial</string>
 
     <!-- DIRECTMANIPULATION TEXT -->
     <string name="rotating">Rotando</string>
     <string name="moving">Moviendo</string>
     <string name="grasping">Agarre</string>
+    <string name="move_msg">Moviendose a</string>
+    <string name="rotate_msg">Rotando</string>
+    <string name="grasp_msg">Agarre</string>
 
     <!-- SCREENJOYSTICK TEXT -->
     <string name="open_hand">Abrir</string>
@@ -48,6 +55,8 @@
     <string name="rotation_control">Rotación 1D</string>
     <string name="grasping_open">Soltar</string>
     <string name="grasping_close">Agarrar</string>
+    <string name="gamepad_on_msg">Gamepad ENCONTRADO!</string>
+    <string name="gamepad_off_msg">Gamepad NO encontrado! Saliendo...</string>
 
     <!-- LEAPMOTION TEXT -->
     <string name="status"> :Estado</string>

@@ -37,34 +37,29 @@ import ualberta.cs.robotics.android_hri.touch_interaction.topic.PointTopic;
 public class GamepadInterface extends RosActivity {
 
     private static final String TAG = "GamepadInterface";
-    private static final String NODE_NAME="/android/"+TAG.toLowerCase();
+    private static final String NODE_NAME="/android_"+TAG.toLowerCase();
 
+    /*
     private static final String STREAMING= "/camera/rgb/image_raw/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
     private static final String EMERGENCY_STOP = "/android/emergency_stop";
     private static final String INTERFACE_NUMBER="/android/interface_number";
-    private static final String ENABLE_VS = "/android/enable_vs";
     private static final String POSITION= "/android/position_abs";
     private static final String ROTATION= "/android/rotation_rel";
     private static final String GRASP="/android/grasping_rel";
-
-
-
+    */
     private NodeMainExecutorService nodeMain;
-
-    private RosImageView<CompressedImage> imageStream;
+    private RosImageView<CompressedImage> imageStreamNodeMain;
     private ImageView targetImage;
 
     private AndroidNode androidNode;
-    private BooleanTopic emergencyNode;
-    private BooleanTopic vsNode;
-    private PointTopic positionNode;
-    private PointTopic rotationNode;
-    private Float32Topic graspNode;
-    private Int32Topic interfaceNumberNode;
+    private BooleanTopic emergencyTopic;
+    private Int32Topic interfaceNumberTopic;
+    private PointTopic positionTopic;
+    private PointTopic rotationTopic;
+    private Float32Topic graspTopic;
 
     private Gamepad gamepad;
-
     private boolean running=true;
     private boolean debug=true;
 
@@ -81,7 +76,7 @@ public class GamepadInterface extends RosActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        imageStream = (RosImageView<CompressedImage>) findViewById(R.id.visualization);
+        imageStreamNodeMain = (RosImageView<CompressedImage>) findViewById(R.id.visualization);
 
         targetImage = (ImageView) findViewById(R.id.imageTarget);
         int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 105, getResources().getDisplayMetrics()); //convert pid to pixel
@@ -90,38 +85,56 @@ public class GamepadInterface extends RosActivity {
         params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
         params.rightMargin=px;
 
-        positionNode = new PointTopic();
-        positionNode.publishTo(POSITION, false, 10);
-        rotationNode = new PointTopic();
-        rotationNode.publishTo(ROTATION, false, 10);
+        positionTopic = new PointTopic();
+        positionTopic.publishTo(getString(R.string.topic_positionabs), false, 10);
+        rotationTopic = new PointTopic();
+        rotationTopic.publishTo(getString(R.string.topic_rotationrel), false, 10);
 
-        graspNode = new Float32Topic();
-        graspNode.setPublishingFreq(500);
-        graspNode.publishTo(GRASP, true, 0);
+        graspTopic = new Float32Topic();
+        graspTopic.setPublishingFreq(500);
+        graspTopic.publishTo(getString(R.string.topic_graspingrel), true, 0);
 
-        interfaceNumberNode = new Int32Topic();
-        interfaceNumberNode.publishTo(INTERFACE_NUMBER, true, 0);
-        interfaceNumberNode.setPublishingFreq(100);
-        interfaceNumberNode.setPublisher_int(4);
+        interfaceNumberTopic = new Int32Topic();
+        interfaceNumberTopic.publishTo(getString(R.string.topic_interfacenumber), true, 0);
+        interfaceNumberTopic.setPublishingFreq(100);
+        interfaceNumberTopic.setPublisher_int(4);
 
-        emergencyNode = new BooleanTopic();
-        emergencyNode.publishTo(EMERGENCY_STOP, true, 0);
-        emergencyNode.setPublishingFreq(100);
-        emergencyNode.setPublisher_bool(true);
-
-        vsNode = new BooleanTopic();
-        vsNode.publishTo(ENABLE_VS, true, 0);
-        vsNode.setPublisher_bool(false);
+        emergencyTopic = new BooleanTopic();
+        emergencyTopic.publishTo(getString(R.string.topic_emergencystop), true, 0);
+        emergencyTopic.setPublishingFreq(100);
+        emergencyTopic.setPublisher_bool(true);
 
         androidNode = new AndroidNode(NODE_NAME);
-        androidNode.addTopics(emergencyNode, vsNode, positionNode, rotationNode, graspNode, interfaceNumberNode);
-        androidNode.addNodeMain(imageStream);
+        androidNode.addTopics(emergencyTopic, positionTopic, rotationTopic, graspTopic, interfaceNumberTopic);
+        androidNode.addNodeMain(imageStreamNodeMain);
 
         gamepad = new Gamepad(this);
+
+        imageStreamNodeMain.setTopicName(getString(R.string.topic_streaming));
+        imageStreamNodeMain.setMessageType(getString(R.string.topic_streaming_msg));
+        imageStreamNodeMain.setMessageToBitmapCallable(new BitmapFromCompressedImage());
+        imageStreamNodeMain.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
+        ToggleButton emergencyStop = (ToggleButton)findViewById(R.id.emergencyButton) ;
+        emergencyStop.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
+                if (isChecked) {
+                    Toast.makeText(getApplicationContext(), getString(R.string.emergency_on_msg), Toast.LENGTH_LONG).show();
+                    imageStreamNodeMain.setBackgroundColor(Color.RED);
+                    emergencyTopic.setPublisher_bool(false);
+                } else {
+                    Toast.makeText(getApplicationContext(), getString(R.string.emergency_off_msg), Toast.LENGTH_LONG).show();
+                    imageStreamNodeMain.setBackgroundColor(Color.TRANSPARENT);
+                    emergencyTopic.setPublisher_bool(true);
+                }
+            }
+        });
+
         if(gamepad.isAttached()){
-            Toast.makeText(getApplicationContext(), "Gamepad found!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), getString(R.string.gamepad_on_msg), Toast.LENGTH_SHORT).show();
         }else{
-            Toast.makeText(getApplicationContext(), "Gamepad not found! Leaving this activity now...", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), getString(R.string.gamepad_off_msg), Toast.LENGTH_LONG).show();
             Thread exitActivity = new Thread(){
                 public void run(){
                     try {
@@ -135,36 +148,15 @@ public class GamepadInterface extends RosActivity {
             exitActivity.start();
         }
 
-        if(debug)
-            imageStream.setTopicName("/usb_cam/image_raw/compressed");
-        else
-            imageStream.setTopicName(STREAMING);
-        imageStream.setMessageType(STREAMING_MSG);
-        imageStream.setMessageToBitmapCallable(new BitmapFromCompressedImage());
-        imageStream.setScaleType(ImageView.ScaleType.FIT_CENTER);
-
-        ToggleButton emergencyStop = (ToggleButton)findViewById(R.id.emergencyButton) ;
-        emergencyStop.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
-                if (isChecked) {
-                    Toast.makeText(getApplicationContext(), "EMERGENCY STOP ACTIVATED!", Toast.LENGTH_LONG).show();
-                    imageStream.setBackgroundColor(Color.RED);
-                    emergencyNode.setPublisher_bool(false);
-                } else {
-                    Toast.makeText(getApplicationContext(), "EMERGENCY STOP DEACTIVATED!", Toast.LENGTH_LONG).show();
-                    imageStream.setBackgroundColor(Color.TRANSPARENT);
-                    emergencyNode.setPublisher_bool(true);
-                }
-            }
-        });
-
         Thread threadGamepad = new Thread(){
             public void run(){
                 while(running){
                     try {
                         Thread.sleep(10);
                         sendGamepadValues();
+                        updateGrasp();
+                        updatePosition();
+                        updateRotation();
                     } catch (InterruptedException e) {
                         e.getStackTrace();
                     }
@@ -177,22 +169,19 @@ public class GamepadInterface extends RosActivity {
     @Override
     public void onResume() {
         super.onResume();
-        emergencyNode.setPublisher_bool(true);
-        vsNode.setPublisher_bool(false);
+        emergencyTopic.setPublisher_bool(true);
         running=true;
     }
 
     @Override
     protected void onPause() {
-        emergencyNode.setPublisher_bool(false);
-        vsNode.setPublisher_bool(false);
+        emergencyTopic.setPublisher_bool(false);
         super.onPause();
     }
 
     @Override
     public void onDestroy() {
-        emergencyNode.setPublisher_bool(false);
-        vsNode.setPublisher_bool(false);
+        emergencyTopic.setPublisher_bool(false);
         nodeMain.forceShutdown();
         running=false;
         super.onDestroy();
@@ -210,7 +199,15 @@ public class GamepadInterface extends RosActivity {
         return gamepad.dispatchKeyEvent(keyEvent);
     }
 
-    private void sendGamepadValues(){
+    private void updateGrasp(){
+        float graspP=gamepad.getAxisValue(MotionEvent.AXIS_RTRIGGER);
+        float graspN=-gamepad.getAxisValue(MotionEvent.AXIS_LTRIGGER);
+        if(gamepad.isAttached()){
+            graspTopic.setPublisher_float(graspP + graspN);
+        }
+    }
+
+    private void updatePosition(){
         float posX=-gamepad.getAxisValue(MotionEvent.AXIS_X);
         float posY=-gamepad.getAxisValue(MotionEvent.AXIS_Y);
         if(Math.abs(posX) > 0.1 || Math.abs(posY) > 0.1){
@@ -221,13 +218,13 @@ public class GamepadInterface extends RosActivity {
             float[] targetPixel = new float[2];
 
             Matrix streamMatrix = new Matrix();
-            imageStream.getImageMatrix().invert(streamMatrix);
+            imageStreamNodeMain.getImageMatrix().invert(streamMatrix);
             streamMatrix.mapPoints(targetPixel, targetPoint);
             if(validTarget(targetPixel[0],targetPixel[1])){
-                positionNode.getPublisher_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - targetPixel[1]*MainActivity.WORKSPACE_HEIGHT/(float)imageStream.getDrawable().getIntrinsicHeight();
-                positionNode.getPublisher_point()[1] = MainActivity.WORKSPACE_X_OFFSET - targetPixel[0]*MainActivity.WORKSPACE_WIDTH/(float)imageStream.getDrawable().getIntrinsicWidth();
-                positionNode.getPublisher_point()[2] = 0;
-                positionNode.publishNow();
+                positionTopic.getPublisher_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - targetPixel[1]*MainActivity.WORKSPACE_HEIGHT/(float) imageStreamNodeMain.getDrawable().getIntrinsicHeight();
+                positionTopic.getPublisher_point()[1] = MainActivity.WORKSPACE_X_OFFSET - targetPixel[0]*MainActivity.WORKSPACE_WIDTH/(float) imageStreamNodeMain.getDrawable().getIntrinsicWidth();
+                positionTopic.getPublisher_point()[2] = 0;
+                positionTopic.publishNow();
 
                 this.runOnUiThread(new Runnable() {
                     @Override
@@ -240,27 +237,27 @@ public class GamepadInterface extends RosActivity {
             }
 
         }
+    }
 
+    private void updateRotation(){
         float rotX=-gamepad.getAxisValue(MotionEvent.AXIS_Z);
         float rotY=-gamepad.getAxisValue(MotionEvent.AXIS_RZ);
         if(Math.abs(rotX) > 0.1 || Math.abs(rotY) > 0.1){
             //send rotations
-            rotationNode.getPublisher_point()[0]=rotY;
-            rotationNode.getPublisher_point()[1]=rotX;
-            rotationNode.publishNow();
+            rotationTopic.getPublisher_point()[0]=rotY;
+            rotationTopic.getPublisher_point()[1]=rotX;
+            rotationTopic.publishNow();
         }
+    }
 
-        float graspP=gamepad.getAxisValue(MotionEvent.AXIS_RTRIGGER);
-        float graspN=-gamepad.getAxisValue(MotionEvent.AXIS_LTRIGGER);
-        if(gamepad.isAttached()){
-            graspNode.setPublisher_float(graspP + graspN);
-        }
+    private void sendGamepadValues(){
+
     }
 
     private boolean validTarget(float x, float y) {
         if (x < 0 || y < 0)
             return false;
-        if (x > imageStream.getDrawable().getIntrinsicWidth() ||  y > imageStream.getDrawable().getIntrinsicHeight())
+        if (x > imageStreamNodeMain.getDrawable().getIntrinsicWidth() ||  y > imageStreamNodeMain.getDrawable().getIntrinsicHeight())
             return false;
         return true;
     }

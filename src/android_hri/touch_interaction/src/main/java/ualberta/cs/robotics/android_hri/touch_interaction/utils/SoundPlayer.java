@@ -4,6 +4,8 @@ import android.content.Context;
 import android.media.MediaPlayer;
 
 public class SoundPlayer {
+
+	private static final String TAG = "SoundPlayer";
 	
 	private MediaPlayer mediaControllerOffline = null;
 	private MediaPlayer mediaControllerOnline = null;

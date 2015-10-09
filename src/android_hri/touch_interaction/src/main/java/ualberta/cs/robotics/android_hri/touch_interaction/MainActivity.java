@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.SubMenu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -23,6 +22,7 @@ import ualberta.cs.robotics.android_hri.touch_interaction.interfaces.LeapMotionI
 
 public class MainActivity extends ActionBarActivity {
 
+    private static final String TAG = "MainActivity";
     public static String ROS_MASTER = "";
 
     public static final float WORKSPACE_X_OFFSET = 0.2306f;
@@ -129,9 +129,6 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int gid = item.getGroupId();
         int iid = item.getItemId();
 
@@ -219,10 +216,6 @@ public class MainActivity extends ActionBarActivity {
         }
 
         return exit;
-    }
-
-    private void updateLanguage(){
-
     }
 
 }

@@ -14,6 +14,8 @@ import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.gesture_de
  */
 public class TouchArea implements OneFingerGestureDetector.OnOneFingerGestureListener{
 
+    private static final String TAG = "TouchArea";
+
     protected OneFingerGestureDetector mOneFingerGestureDetector;
     protected Activity activity;
     protected ImageView view;

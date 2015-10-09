@@ -13,6 +13,7 @@ import geometry_msgs.Point;
  */
 public class PointTopic extends AbstractTopic {
 
+    private static final String TAG = "PointTopic";
     private Publisher<Point> publisher = null;
     private Subscriber<Point> subscriber = null;
     private float[] publisher_point = new float[]{0, 0, 0};

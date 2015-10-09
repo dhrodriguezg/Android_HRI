@@ -13,6 +13,7 @@ import std_msgs.Float32;
  */
 public class Float32Topic extends AbstractTopic {
 
+    private static final String TAG = "Float32Topic";
     private Publisher<Float32> publisher = null;
     private Subscriber<Float32> subscriber = null;
     private float publisher_float =0;

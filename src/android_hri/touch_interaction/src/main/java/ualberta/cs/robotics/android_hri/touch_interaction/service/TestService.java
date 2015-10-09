@@ -19,22 +19,32 @@ import rosjava_test_msgs.AddTwoIntsResponse;
 
 public class TestService extends AbstractService {
 
-    private long a;
-    private long b;
-    private long sum;
-    protected AddTwoIntsRequest request = null;
+    private static final String TAG = "TestService";
+
     protected ServiceClient<AddTwoIntsRequest, AddTwoIntsResponse> serviceClient = null;
     protected ServiceServer<AddTwoIntsRequest, AddTwoIntsResponse> serviceServer = null;
+    protected AddTwoIntsRequest request = null;
+    private long sum;
+    private long a;
+    private long b;
 
-    protected void setupClient(final ConnectedNode connectedNode) {
+    protected void setupClient(ConnectedNode connectedNode) {
+        //The service must have been created before setting the client up.
         try {
+            Thread.sleep(10); //If the service was created in Android, give ROS Android a few ms to finish creating it.
             serviceClient = connectedNode.newServiceClient(clientTopic, AddTwoInts._TYPE);
         } catch (ServiceNotFoundException e) {
-            throw new RosRuntimeException(e);
+            serviceClient=null;
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            serviceClient=null;
+            e.printStackTrace();
         }
     }
 
-    protected void publish() {
+    public void callService() {
+        if (serviceClient==null)
+            return;
         request = serviceClient.newMessage();
         request.setA(a);
         request.setB(b);
@@ -42,9 +52,11 @@ public class TestService extends AbstractService {
             @Override
             public void onSuccess(AddTwoIntsResponse response) {
                 sum=response.getSum();
+                hasClientSentMsg = true;
             }
             @Override
             public void onFailure(RemoteException e) {
+                hasClientSentMsg = false;
                 throw new RosRuntimeException(e);
             }
         });
@@ -55,6 +67,7 @@ public class TestService extends AbstractService {
             @Override
             public void build(AddTwoIntsRequest request, AddTwoIntsResponse response) {
                 response.setSum(request.getA() + request.getB());
+                hasServerReceivedMsg = true;
             }
         });
     }

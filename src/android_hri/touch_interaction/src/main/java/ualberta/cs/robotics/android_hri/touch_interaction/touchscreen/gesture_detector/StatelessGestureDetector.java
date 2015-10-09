@@ -9,11 +9,11 @@ import android.view.View;
 /**
  * Created by Diego Rodriguez on 25/07/2015.
  */
-public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+public class StatelessGestureDetector extends ScaleGestureDetector.SimpleOnScaleGestureListener {
 
-    private static final String TAG = "TwoFingerGesture";
+    private static final String TAG = "StatelessGesture";
 
-    private OnTwoFingerGestureListener mListener;
+
     private ScaleGestureDetector mGestureDetector;
     private Activity mActivity;
     private View mView;
@@ -54,10 +54,9 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     private boolean scaling;
 
 
-    public TwoFingerGestureDetector(Activity activity, OnTwoFingerGestureListener listener){
+    public StatelessGestureDetector(Activity activity){
         mGestureDetector = new ScaleGestureDetector(activity, this);
         mActivity = activity;
-        mListener = listener;
         ptrID1 = INVALID_POINTER_ID;
         ptrID2 = INVALID_POINTER_ID;
     }
@@ -91,7 +90,6 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
                 if (distance > MAX_DRAGGING_DISTANCE*MAX_RESOLUTION)
                     dragging=false;
 
-                mListener.onTwoFingerGestureState(detectingGesture);
                 Log.d(TAG, String.format("Detecting [ %b ]", detectingGesture));
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -114,7 +112,6 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
                         if(Math.hypot(mX-nX,mY-nY) > DRAGGING_THREASHOLD){
                             rotating=false;
                             scaling=false;
-                            mListener.OnDoubleDrag(mX, mY, normalizedX, normalizedY);
                             Log.d(TAG, String.format("Drag [ %.4f , %.4f ]", mX,mY));
                         }
                     }
@@ -124,7 +121,6 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
                         if(Math.abs(mAngle) > ROTATING_THREASHOLD){
                             scaling=false;
                             dragging=false;
-                            mListener.OnRotation(mAngle);
                             Log.d(TAG, String.format("Angle [ %.4f ]", mAngle));
                         }
                     }
@@ -136,7 +132,6 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
                 scaling=enableScaling;
                 rotating=enableRotating;
                 dragging=enableDragging;
-                mListener.onTwoFingerGestureState(detectingGesture);
                 Log.d(TAG, String.format("Detecting [ %b ]", detectingGesture));
                 break;
             case MotionEvent.ACTION_POINTER_UP:
@@ -145,7 +140,6 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
                 scaling=enableScaling;
                 rotating=enableRotating;
                 dragging=enableDragging;
-                mListener.onTwoFingerGestureState(detectingGesture);
                 Log.d(TAG, String.format("Detecting [ %b ]", detectingGesture));
                 break;
             case MotionEvent.ACTION_CANCEL:
@@ -155,7 +149,6 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
                 dragging=enableDragging;
                 ptrID1 = INVALID_POINTER_ID;
                 ptrID2 = INVALID_POINTER_ID;
-                mListener.onTwoFingerGestureState(detectingGesture);
                 Log.d(TAG, String.format("Detecting [ %b ]", detectingGesture));
                 break;
         }
@@ -182,7 +175,6 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
             mScaleFocusY=detector.getFocusY();
             mScale *= detector.getScaleFactor();
             mScale = Math.max(MIN_SCALE, Math.min(mScale, MAX_SCALE));
-            mListener.OnScale(mScale,mScaleFocusX,mScaleFocusY);
             Log.d(TAG, String.format("Scale [ %.4f %.4f %.4f]", mScale,mScaleFocusX,mScaleFocusY));
         }
         return true;
@@ -202,19 +194,9 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
                 }
                 mScaleFocusX=detector.getFocusX();
                 mScaleFocusY=detector.getFocusY();
-                mListener.OnScale(mScale,mScaleFocusX,mScaleFocusY);
                 Log.d(TAG, String.format("Scale [ %.4f %.4f %.4f]", mScale,mScaleFocusX,mScaleFocusY));
             }
         }
-    }
-
-    /** Gesture interfaces **/
-
-    public interface OnTwoFingerGestureListener {
-        void OnDoubleDrag(float mX,float mY,float normalizedX,float normalizedY);
-        void OnRotation(float mAngle);
-        void OnScale(float mScale, float mScaleFocusX, float mScaleFocusY);
-        void onTwoFingerGestureState(boolean detectingGesture);
     }
 
     /** Normalized values **/
@@ -240,80 +222,6 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
         if (angle < -180.f) angle += 360.0f;
         if (angle > 180.f) angle -= 360.0f;
         return angle;
-    }
-
-    /** Getters and Setters **/
-
-    public float getmScale() {
-        return mScale;
-    }
-
-    public void setmScale(float mScale) {
-        this.mScale = mScale;
-    }
-
-    public float getmAngle() {
-        return mAngle;
-    }
-
-    public void setmAngle(float mAngle) {
-        this.mAngle = mAngle;
-    }
-
-    public float getmX() {
-        return mX;
-    }
-
-    public void setmX(float mX) {
-        this.mX = mX;
-    }
-
-    public float getmY() {
-        return mY;
-    }
-
-    public void setmY(float mY) {
-        this.mY = mY;
-    }
-
-    public float getNormalizedX() {
-        return normalizedX;
-    }
-
-    public void setNormalizedX(float normalizedX) {
-        this.normalizedX = normalizedX;
-    }
-
-    public float getNormalizedY() {
-        return normalizedY;
-    }
-
-    public void setNormalizedY(float normalizedY) {
-        this.normalizedY = normalizedY;
-    }
-
-    public void disableScaling(){
-        enableScaling=false;
-    }
-
-    public void disableRotating(){
-        enableRotating=false;
-    }
-
-    public void disableDragging(){
-        enableDragging=false;
-    }
-
-    public void enableScaling(){
-        enableScaling=true;
-    }
-
-    public void enableRotating(){
-        enableRotating=true;
-    }
-
-    public void enableDragging(){
-        enableDragging=true;
     }
 
 }
