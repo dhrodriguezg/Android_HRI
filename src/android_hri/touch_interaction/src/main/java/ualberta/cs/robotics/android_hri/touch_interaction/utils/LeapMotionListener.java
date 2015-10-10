@@ -1,6 +1,7 @@
 package ualberta.cs.robotics.android_hri.touch_interaction.utils;
 
 import android.app.Activity;
+import android.os.Environment;
 import android.util.Log;
 
 import com.leapmotion.leap.Controller;
@@ -10,6 +11,11 @@ import com.leapmotion.leap.Frame;
 import com.leapmotion.leap.Hand;
 import com.leapmotion.leap.Listener;
 import com.leapmotion.leap.Vector;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import ualberta.cs.robotics.android_hri.touch_interaction.R;
 
@@ -28,7 +34,10 @@ public class LeapMotionListener extends Listener {
 
     private LeapMotionFrameListener mListener;
     private Activity mActivity;
-
+    private LowPassFilter[] leftHandFilter;
+    private LowPassFilter[] rightHandFilter;
+    private LowPassFilter rotationFilter;
+    private LowPassFilter graspFilter;
     private boolean rightHanded;
 
     private String hands, fingers, rightHand, leftHand, actionHand, taskHand;
@@ -37,43 +46,46 @@ public class LeapMotionListener extends Listener {
     private String initialized, connected, disconnected, exited;
     private String task, taskNaN, task5, task6;
 
-    //private String actionhandright;
+    StringBuffer palmPos = new StringBuffer();
+
     public LeapMotionListener(Activity activity, LeapMotionFrameListener listener) {
         mActivity = activity;
         mListener = listener;
         rightHanded = true;
-
-        initialized="Initialized";
-        connected="Connected";
-        disconnected="Disconnected";
-        exited="Exited";
-
-        hands="Hands";
-        fingers="fingers";
-        rightHand="Right";
-        leftHand="Left";
-        actionHand="Action Hand";
-        taskHand="Task Hand";
-
-        selectTask="Select Task";
-        moveTask="Move Task";
-        rotateTask="Rotate Task";
-        graspTask="GraspInv Task";
-        distances="Distances (I,M,R,P,T)";
-
-        palm="Palm: ";
-        wrist="Wrist:  ";
-        index="Index:  ";
-        middle="Middle: ";
-        ring="Ring:   ";
-        pinky="Pinky:  ";
-        thumb="Thumb:  ";
-
-        task="Task";
-        taskNaN="Task: -1 (not valid)";
-        task5="Task: 5 (open hand, no task)";
-        task6="Task: 6 (confirm)";
-
+        graspFilter = new LowPassFilter();
+        rotationFilter = new LowPassFilter();
+        leftHandFilter = new LowPassFilter[7];
+        rightHandFilter = new LowPassFilter[7];
+        for(int n = 0; n < leftHandFilter.length; n++){
+            leftHandFilter[n]= new LowPassFilter();
+            rightHandFilter[n]= new LowPassFilter();
+        }
+        initialized=activity.getString(R.string.initialized);
+        connected=activity.getString(R.string.connected);
+        disconnected=activity.getString(R.string.disconnected);
+        exited=activity.getString(R.string.exited);
+        hands=activity.getString(R.string.hands);
+        fingers=activity.getString(R.string.fingers);
+        rightHand=activity.getString(R.string.rightHand);
+        leftHand=activity.getString(R.string.leftHand);
+        actionHand=activity.getString(R.string.actionHand);
+        taskHand=activity.getString(R.string.taskHand);
+        selectTask=activity.getString(R.string.selectTask);
+        moveTask=activity.getString(R.string.moveTask);
+        rotateTask=activity.getString(R.string.rotateTask);
+        graspTask=activity.getString(R.string.graspTask);
+        distances=activity.getString(R.string.distances);
+        palm=activity.getString(R.string.palm);
+        wrist=activity.getString(R.string.wrist);
+        index=activity.getString(R.string.index);
+        middle=activity.getString(R.string.middle);
+        ring=activity.getString(R.string.ring);
+        pinky=activity.getString(R.string.pinky);
+        thumb=activity.getString(R.string.thumb);
+        task=activity.getString(R.string.task);
+        taskNaN=activity.getString(R.string.taskNaN);
+        task5=activity.getString(R.string.task5);
+        task6=activity.getString(R.string.task6);
     }
 
     public void onInit(Controller controller) {
@@ -106,21 +118,21 @@ public class LeapMotionListener extends Listener {
                     return;
                 if(rightHanded){
                     if(hand.isRight()){
-                        msg.append("\n   "+taskHand + "(" + leftHand + ")");
+                        msg.append("\n   "+actionHand + "(" + rightHand + ")");
                         rightHand(hand, msg);
                         isRight = true;
                     }else if(hand.isLeft()){
-                        msg.append("\n   "+actionHand + "(" + rightHand + ")");
+                        msg.append("\n   "+taskHand + "(" + leftHand + ")");
                         leftHand(hand, msg);
                         isLeft = true;
                     }
                 }else{
                     if(hand.isRight()){
-                        msg.append("\n   "+taskHand + "(" + rightHand + ")");
+                        msg.append("\n   "+actionHand + "(" + leftHand + ")");
                         leftHand(hand, msg);
                         isLeft = true;
                     } else if(hand.isLeft()){
-                        msg.append("\n   "+actionHand + "(" + leftHand + ")");
+                        msg.append("\n   "+taskHand + "(" + rightHand + ")");
                         rightHand(hand, msg);
                         isRight = true;
                     }
@@ -142,6 +154,10 @@ public class LeapMotionListener extends Listener {
         Vector[] rightPositions = extractPositions(hand,msg);
         if (rightPositions==null)
             return;
+
+        for(int n = 0; n < rightHandFilter.length; n++)
+            rightHandFilter[n].applyFilter1(rightPositions[n]);
+
         /*float radius = hand.sphereRadius();
         if (radius > MAX_GRAP)
             radius = MAX_GRAP;
@@ -152,7 +168,9 @@ public class LeapMotionListener extends Listener {
         handNormal.setX(dir2Radians(handNormal.getX()));
         handNormal.setY(dir2Radians(handNormal.getY()));
         handNormal.setZ(dir2Radians(handNormal.getZ()));
-        float grasp = calculateGrasping(rightPositions);
+        rotationFilter.applyFilter1(handNormal);
+
+        float grasp = graspFilter.applyFilter1(calculateGrasping(rightPositions));
 
         msg.append(String.format("\n      %s: (%.2f, %.2f, %.2f)", selectTask, rightPositions[1].getX(), rightPositions[1].getY(), rightPositions[1].getZ()));
         msg.append(String.format("\n      %s: (%.2f, %.2f, %.2f)", moveTask, rightPositions[6].getX(), rightPositions[6].getY(), rightPositions[6].getZ()));
@@ -171,6 +189,9 @@ public class LeapMotionListener extends Listener {
         Vector[] leftPositions = extractPositions(hand, msg);
         if (leftPositions==null)
             return;
+
+        for(int n = 0; n < leftHandFilter.length; n++)
+            leftHandFilter[n].applyFilter1(leftPositions[n]);
 
         mListener.onMoveLeftHand(leftPositions);
 
@@ -221,15 +242,16 @@ public class LeapMotionListener extends Listener {
             msg.append("\n      "+taskNaN);
             mListener.onTask(-1); //not valid gesture
         }else{
-            msg.append("\n      "+task6);
+            msg.append("\n      " + task6);
             mListener.onTask(6); //confirm
+            //saveFile(palmPos.toString());
         }
     }
 
     private float calculateGrasping(Vector[] fingerPosition){
         // It's calculated with the mean of the distance between the fingers and the thumb.
         double indexLenght=Math.hypot( fingerPosition[5].getX()-fingerPosition[1].getX() , fingerPosition[5].getY()-fingerPosition[1].getY() );
-        indexLenght = Math.hypot( indexLenght , fingerPosition[5].getZ()-fingerPosition[1].getZ() );
+        indexLenght = Math.hypot(indexLenght, fingerPosition[5].getZ() - fingerPosition[1].getZ());
 
         double middleLenght=Math.hypot( fingerPosition[5].getX()-fingerPosition[2].getX() , fingerPosition[5].getY()-fingerPosition[2].getY() );
         middleLenght = Math.hypot( middleLenght , fingerPosition[5].getZ()-fingerPosition[2].getZ() );
@@ -258,6 +280,9 @@ public class LeapMotionListener extends Listener {
 
         msg.append("\n      "+palm);
         positions[0] = applyPositionLimits( new Vector(hand.palmPosition()), msg); //palm -> 0;
+
+        palmPos.append(positions[0].getX()+","+positions[0].getY()+","+positions[0].getZ()+"\n");
+
         FingerList fingers = hand.fingers();
         for (Finger finger : fingers) {
             numFingers++;
@@ -332,4 +357,22 @@ public class LeapMotionListener extends Listener {
         public void onMoveLeftHand(Vector[] positions);
         public void onMoveRightHand(Vector[] positions);
     }
+
+    private void saveFile(String text){
+
+        File dir = new File (Environment.getExternalStorageDirectory().getAbsolutePath() + "/rosAndroid/");
+        dir.mkdirs();
+        File file = new File(dir, "handPos.csv");
+        try {
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(text.getBytes());
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }
