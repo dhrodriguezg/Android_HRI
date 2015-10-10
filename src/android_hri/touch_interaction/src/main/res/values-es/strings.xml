@@ -68,4 +68,33 @@
     <string name="left_handed">Soy zurdo</string>
     <string name="right_handed">Soy diestro</string>
 
+    <string name="tracking_activated">Rastreo activado</string>
+    <string name="tracking_deactivated">Rastreo desactivado</string>
+    <string name="initialized">Initializado</string>
+    <string name="connected">Conectado</string>
+    <string name="disconnected">Desconectado</string>
+    <string name="exited">Terminado</string>
+    <string name="hands">Manos</string>
+    <string name="fingers">dedos</string>
+    <string name="rightHand">Derecha</string>
+    <string name="leftHand">Izquierda</string>
+    <string name="actionHand">Mano de Acción</string>
+    <string name="taskHand">Mano de Tarea</string>
+    <string name="selectTask">Tarea: Seleccionar</string>
+    <string name="moveTask">Tarea: Mover</string>
+    <string name="rotateTask">Tarea: Rotar</string>
+    <string name="graspTask">Tarea: AgarreInv</string>
+    <string name="distances">Distancias (I,C,A,M,P)</string>
+    <string name="palm">Palm</string>
+    <string name="wrist">Muñeca:  </string>
+    <string name="index">Indice:  </string>
+    <string name="middle">Corazón:</string>
+    <string name="ring">Anular:   </string>
+    <string name="pinky">Meñique: </string>
+    <string name="thumb">Pulgar:  </string>
+    <string name="task">Tarea</string>
+    <string name="taskNaN">Tarea: -1 (No válido)</string>
+    <string name="task5">Tarea: 5 (Mano abierta)</string>
+    <string name="task6">Tarea: 6 (Confirmar)</string>
+
 </resources>

@@ -71,6 +71,32 @@
     <string name="right_handed">Right-Handed</string>
     <string name="tracking_activated">Tracking activated</string>
     <string name="tracking_deactivated">Tracking deactivated</string>
+    <string name="initialized">Initialized</string>
+    <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="exited">Exited</string>
+    <string name="hands">Hands</string>
+    <string name="fingers">fingers</string>
+    <string name="rightHand">Right</string>
+    <string name="leftHand">Left</string>
+    <string name="actionHand">Action Hand</string>
+    <string name="taskHand">Task Hand</string>
+    <string name="selectTask">Select Task</string>
+    <string name="moveTask">Move Task</string>
+    <string name="rotateTask">Rotate Task</string>
+    <string name="graspTask">GraspInv Task</string>
+    <string name="distances">Distances (I,M,R,P,T)</string>
+    <string name="palm">Palm</string>
+    <string name="wrist">Wrist:  </string>
+    <string name="index">Index:  </string>
+    <string name="middle">Middle: </string>
+    <string name="ring">Ring:   </string>
+    <string name="pinky">Pinky:  </string>
+    <string name="thumb">Thumb:  </string>
+    <string name="task">Task</string>
+    <string name="taskNaN">Task: -1 (not valid)</string>
+    <string name="task5">Task: 5 (open hand, no task)</string>
+    <string name="task6">Task: 6 (confirm)</string>
 
     <!-- GLOBAL VALUES -->
     <string name="workspace_xoffset">0.2306</string>
