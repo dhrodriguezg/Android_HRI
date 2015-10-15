@@ -67,7 +67,6 @@
     <string name="show_log">Ver Log</string>
     <string name="left_handed">Soy zurdo</string>
     <string name="right_handed">Soy diestro</string>
-
     <string name="tracking_activated">Rastreo activado</string>
     <string name="tracking_deactivated">Rastreo desactivado</string>
     <string name="initialized">Initializado</string>
@@ -85,7 +84,7 @@
     <string name="rotateTask">Tarea: Rotar</string>
     <string name="graspTask">Tarea: AgarreInv</string>
     <string name="distances">Distancias (I,C,A,M,P)</string>
-    <string name="palm">Palm</string>
+    <string name="palm">Palma</string>
     <string name="wrist">Muñeca:  </string>
     <string name="index">Indice:  </string>
     <string name="middle">Corazón:</string>

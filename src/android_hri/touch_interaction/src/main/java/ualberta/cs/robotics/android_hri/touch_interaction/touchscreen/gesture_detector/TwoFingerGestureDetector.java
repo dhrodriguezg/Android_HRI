@@ -22,11 +22,14 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     private static final int DRAGGING_THREASHOLD = 20;
     private static final int ROTATING_THREASHOLD = 10;
     private static final int FAST_SCALING_THREASHOLD = 200;
-    public static float MAX_DRAGGING_DISTANCE=0.2f;
+    public static final float MAX_DRAGGING_DISTANCE=0.2f;
     public static float MAX_RESOLUTION=0;
 
-    public static final float MIN_SCALE = 10f;
-    public static final float MAX_SCALE = 50f;
+    public static final float MIN_SCALE = .2f;
+    public static final float MAX_SCALE = 5.f;
+    public static final float MIN_GRASP = 10f;
+    public static final float MAX_GRASP = 50f;
+
     private boolean detectingGesture =false;
     private float fX, fY, sX, sY;
     private int ptrID1, ptrID2;
@@ -41,7 +44,7 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
 
     private float initScale = mScale;
     private float endScale = mScale;
-    private float testScale = mScale;
+    private float grasp = mScale;
     private long initTime=0;
     private long endTime=0;
 
@@ -167,7 +170,6 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
         if(scaling) {
             initTime = detector.getEventTime();
             initScale = mScale;
-            testScale = 10f;
             rotating=false;
             dragging=false;
         }
@@ -177,12 +179,14 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     @Override
     public boolean onScale(ScaleGestureDetector detector){
         if(scaling) {
-            testScale *= detector.getScaleFactor();
             mScaleFocusX=detector.getFocusX();
             mScaleFocusY=detector.getFocusY();
+            grasp *= detector.getScaleFactor();
             mScale *= detector.getScaleFactor();
+            grasp = Math.max(MIN_GRASP, Math.min(grasp, MAX_GRASP));
             mScale = Math.max(MIN_SCALE, Math.min(mScale, MAX_SCALE));
-            mListener.OnScale(mScale,mScaleFocusX,mScaleFocusY);
+            mListener.OnScale1(mScale, mScaleFocusX, mScaleFocusY);
+            mListener.OnScale2(grasp);
             Log.d(TAG, String.format("Scale [ %.4f %.4f %.4f]", mScale,mScaleFocusX,mScaleFocusY));
         }
         return true;
@@ -196,13 +200,16 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
             if( endTime-initTime < FAST_SCALING_THREASHOLD){
                 //Fast Pinch
                 if(endScale > initScale){
-                    mScale =MAX_SCALE;
+                    mScale = MAX_SCALE;
+                    grasp = MAX_GRASP;
                 }else if(endScale < initScale ){
-                    mScale =MIN_SCALE;
+                    mScale = MIN_SCALE;
+                    grasp = MIN_GRASP;
                 }
                 mScaleFocusX=detector.getFocusX();
                 mScaleFocusY=detector.getFocusY();
-                mListener.OnScale(mScale,mScaleFocusX,mScaleFocusY);
+                mListener.OnScale1(mScale,mScaleFocusX,mScaleFocusY);
+                mListener.OnScale2(grasp);
                 Log.d(TAG, String.format("Scale [ %.4f %.4f %.4f]", mScale,mScaleFocusX,mScaleFocusY));
             }
         }
@@ -213,7 +220,8 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
     public interface OnTwoFingerGestureListener {
         void OnDoubleDrag(float mX,float mY,float normalizedX,float normalizedY);
         void OnRotation(float mAngle);
-        void OnScale(float mScale, float mScaleFocusX, float mScaleFocusY);
+        void OnScale1(float mScale, float mScaleFocusX, float mScaleFocusY);
+        void OnScale2(float grasp);
         void onTwoFingerGestureState(boolean detectingGesture);
     }
 
@@ -240,56 +248,6 @@ public class TwoFingerGestureDetector extends ScaleGestureDetector.SimpleOnScale
         if (angle < -180.f) angle += 360.0f;
         if (angle > 180.f) angle -= 360.0f;
         return angle;
-    }
-
-    /** Getters and Setters **/
-
-    public float getmScale() {
-        return mScale;
-    }
-
-    public void setmScale(float mScale) {
-        this.mScale = mScale;
-    }
-
-    public float getmAngle() {
-        return mAngle;
-    }
-
-    public void setmAngle(float mAngle) {
-        this.mAngle = mAngle;
-    }
-
-    public float getmX() {
-        return mX;
-    }
-
-    public void setmX(float mX) {
-        this.mX = mX;
-    }
-
-    public float getmY() {
-        return mY;
-    }
-
-    public void setmY(float mY) {
-        this.mY = mY;
-    }
-
-    public float getNormalizedX() {
-        return normalizedX;
-    }
-
-    public void setNormalizedX(float normalizedX) {
-        this.normalizedX = normalizedX;
-    }
-
-    public float getNormalizedY() {
-        return normalizedY;
-    }
-
-    public void setNormalizedY(float normalizedY) {
-        this.normalizedY = normalizedY;
     }
 
     public void disableScaling(){

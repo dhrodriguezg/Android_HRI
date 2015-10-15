@@ -9,53 +9,35 @@ import android.view.View;
 /**
  * Created by Diego Rodriguez on 25/07/2015.
  */
-public class StatelessGestureDetector extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+public class StatelessGestureDetector{
 
     private static final String TAG = "StatelessGesture";
 
-
-    private ScaleGestureDetector mGestureDetector;
     private Activity mActivity;
     private View mView;
 
     private static final int INVALID_POINTER_ID = -1;
-    private static final int DRAGGING_THREASHOLD = 20;
-    private static final int ROTATING_THREASHOLD = 10;
-    private static final int FAST_SCALING_THREASHOLD = 200;
-    public static float MAX_DRAGGING_DISTANCE=0.2f;
-    public static float MAX_RESOLUTION=0;
+    private static final float MAX_GRASP = 2.f;
+    private static final float MIN_GRASP = .1f;
+    private static float MAX_DISTANCE=500;
+    private static float MIN_DISTANCE=20;
 
-    public static final float MIN_SCALE = 10f;
-    public static final float MAX_SCALE = 50f;
     private boolean detectingGesture =false;
+
     private float fX, fY, sX, sY;
     private int ptrID1, ptrID2;
-
-    private float mAngle;
     private float mX, mY;
-    private float normalizedX;
-    private float normalizedY;
-    private float mScale = 1.f;
-    private float mScaleFocusX = 0.f;
-    private float mScaleFocusY = 0.f;
+    private float initDistance;
+    private float initAngle;
+    private float initPosX;
+    private float initPosY;
 
-    private float initScale = mScale;
-    private float endScale = mScale;
-    private float testScale = mScale;
-    private long initTime=0;
-    private long endTime=0;
-
-    private boolean enableRotating=false;
-    private boolean enableDragging=false;
-    private boolean enableScaling=false;
-
-    private boolean rotating;
-    private boolean dragging;
-    private boolean scaling;
-
+    private float currDistance;
+    private float currAngle;
+    private float currPosX;
+    private float currPosY;
 
     public StatelessGestureDetector(Activity activity){
-        mGestureDetector = new ScaleGestureDetector(activity, this);
         mActivity = activity;
         ptrID1 = INVALID_POINTER_ID;
         ptrID2 = INVALID_POINTER_ID;
@@ -66,159 +48,88 @@ public class StatelessGestureDetector extends ScaleGestureDetector.SimpleOnScale
     public boolean onTouchEvent(View view, MotionEvent event){
         mView = view;
         calculateGestures(view,event);
-        return mGestureDetector.onTouchEvent(event);
+        return true;
     }
 
-    private boolean calculateGestures(View view, MotionEvent event) {
+    private void calculateGestures(View view, MotionEvent event) {
 
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 ptrID1 = event.getPointerId(event.getActionIndex());
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
-                scaling=enableScaling;
-                rotating=enableRotating;
-                dragging=enableDragging;
                 detectingGesture = true;
+                if(ptrID2 != INVALID_POINTER_ID)
+                    return;
                 ptrID2 = event.getPointerId(event.getActionIndex());
                 sX = event.getX(event.findPointerIndex(ptrID1));
                 sY = event.getY(event.findPointerIndex(ptrID1));
                 fX = event.getX(event.findPointerIndex(ptrID2));
                 fY = event.getY(event.findPointerIndex(ptrID2));
 
-                double distance = Math.sqrt(Math.pow(sX - fX,2) + Math.pow(sY - fY, 2));
-                if (distance > MAX_DRAGGING_DISTANCE*MAX_RESOLUTION)
-                    dragging=false;
+                initPosX = (sX+fX)/2f;
+                initPosY = (sY+fY)/2f;
+                initDistance = (float) Math.sqrt(Math.pow(sX - fX, 2) + Math.pow(sY - fY, 2));
+                initAngle = getAngle(fX, fY, sX, sY);
 
-                Log.d(TAG, String.format("Detecting [ %b ]", detectingGesture));
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (ptrID1 != INVALID_POINTER_ID && ptrID2 != INVALID_POINTER_ID) {
                     detectingGesture = true;
-                    float nfX, nfY, nsX, nsY, nX, nY;
+
+                    float nfX, nfY, nsX, nsY;
                     nsX = event.getX(event.findPointerIndex(ptrID1));
                     nsY = event.getY(event.findPointerIndex(ptrID1));
                     nfX = event.getX(event.findPointerIndex(ptrID2));
                     nfY = event.getY(event.findPointerIndex(ptrID2));
 
-                    if(dragging){
-                        mX=(nsX+nfX)/2; mY=(nsY+nfY)/2;
+                    //if(dragging){
+                    currPosX=(nsX+nfX)/2f; currPosY=(nsY+nfY)/2f;
+                    Log.d(TAG, String.format("Drag [ %.4f , %.4f ]", currPosX,currPosY));
 
-                        float[] normalizedXY = normalizedValues(mX,mY,mView);
-                        normalizedX = normalizedXY[0];
-                        normalizedY = normalizedXY[1];
+                    //if(rotating){
+                    //currAngle = getAngleBetweenLines(fX, fY, sX, sY, nfX, nfY, nsX, nsY);
+                    currAngle = getAngle(nfX, nfY, nsX, nsY);
+                    Log.d(TAG, String.format("Angle [ %.4f ]", currAngle));
 
-                        nX=(sX+fX)/2; nY=(sY+fY)/2;
-                        if(Math.hypot(mX-nX,mY-nY) > DRAGGING_THREASHOLD){
-                            rotating=false;
-                            scaling=false;
-                            Log.d(TAG, String.format("Drag [ %.4f , %.4f ]", mX,mY));
-                        }
-                    }
+                    //if(scale)
+                    currDistance = (float) Math.sqrt(Math.pow(sX - fX, 2) + Math.pow(sY - fY, 2));
+                    float normalizedDistance = (MAX_DISTANCE-currDistance)/(MAX_DISTANCE-MIN_DISTANCE);
+                    normalizedDistance = Math.max(0,Math.min(normalizedDistance,1));
 
-                    if(rotating){
-                        mAngle = angleBetweenLines(fX, fY, sX, sY, nfX, nfY, nsX, nsY);
-                        if(Math.abs(mAngle) > ROTATING_THREASHOLD){
-                            scaling=false;
-                            dragging=false;
-                            Log.d(TAG, String.format("Angle [ %.4f ]", mAngle));
-                        }
-                    }
+                    float grasp = (1-normalizedDistance)*(MAX_GRASP-MIN_GRASP)+MIN_GRASP;
+                    Log.d(TAG, String.format("Grasp [ %.4f ]", currAngle));
                 }
                 break;
             case MotionEvent.ACTION_UP:
                 ptrID1 = INVALID_POINTER_ID;
                 detectingGesture = false;
-                scaling=enableScaling;
-                rotating=enableRotating;
-                dragging=enableDragging;
-                Log.d(TAG, String.format("Detecting [ %b ]", detectingGesture));
                 break;
             case MotionEvent.ACTION_POINTER_UP:
                 ptrID2 = INVALID_POINTER_ID;
                 detectingGesture = false;
-                scaling=enableScaling;
-                rotating=enableRotating;
-                dragging=enableDragging;
-                Log.d(TAG, String.format("Detecting [ %b ]", detectingGesture));
                 break;
             case MotionEvent.ACTION_CANCEL:
-                detectingGesture = false;
-                scaling=enableScaling;
-                rotating=enableRotating;
-                dragging=enableDragging;
                 ptrID1 = INVALID_POINTER_ID;
                 ptrID2 = INVALID_POINTER_ID;
-                Log.d(TAG, String.format("Detecting [ %b ]", detectingGesture));
+                detectingGesture = false;
                 break;
         }
-        return true;
+
     }
 
-    @Override
-    public boolean onScaleBegin(ScaleGestureDetector detector){
-        if(scaling) {
-            initTime = detector.getEventTime();
-            initScale = mScale;
-            testScale = 10f;
-            rotating=false;
-            dragging=false;
-        }
-        return true;
-    }
-
-    @Override
-    public boolean onScale(ScaleGestureDetector detector){
-        if(scaling) {
-            testScale *= detector.getScaleFactor();
-            mScaleFocusX=detector.getFocusX();
-            mScaleFocusY=detector.getFocusY();
-            mScale *= detector.getScaleFactor();
-            mScale = Math.max(MIN_SCALE, Math.min(mScale, MAX_SCALE));
-            Log.d(TAG, String.format("Scale [ %.4f %.4f %.4f]", mScale,mScaleFocusX,mScaleFocusY));
-        }
-        return true;
-    }
-
-    @Override
-    public void onScaleEnd(ScaleGestureDetector detector){
-        if(scaling) {
-            endTime=detector.getEventTime();
-            endScale = mScale;
-            if( endTime-initTime < FAST_SCALING_THREASHOLD){
-                //Fast Pinch
-                if(endScale > initScale){
-                    mScale =MAX_SCALE;
-                }else if(endScale < initScale ){
-                    mScale =MIN_SCALE;
-                }
-                mScaleFocusX=detector.getFocusX();
-                mScaleFocusY=detector.getFocusY();
-                Log.d(TAG, String.format("Scale [ %.4f %.4f %.4f]", mScale,mScaleFocusX,mScaleFocusY));
-            }
-        }
-    }
-
-    /** Normalized values **/
-
-    private float[] normalizedValues(float mX, float mY, View view){
-        float[] touch = new float[]{mX,mY}; //relative to the view. Right,Down increase
-        float[] viewCenter = new float[]{view.getWidth() / 2, view.getHeight() / 2};
-        float[] touchVector = new float[] {touch[0] - viewCenter[0], touch[1] - viewCenter[1]};
-        touchVector[0]/=  viewCenter[0];
-        touchVector[1]/= -viewCenter[1];
-        if(touchVector[0] > 1 || touchVector[0] < -1 || touchVector[1] > 1 || touchVector[1] < -1){
-            touchVector[0] = 0;
-            touchVector[1] = 0;
-        }
-        return touchVector;
-    }
-
-    private float angleBetweenLines (float fX, float fY, float sX, float sY, float nfX, float nfY, float nsX, float nsY) {
+    private float getAngleBetweenLines (float fX, float fY, float sX, float sY, float nfX, float nfY, float nsX, float nsY) {
         float angle1 = (float) Math.atan2((fY - sY), (fX - sX));
         float angle2 = (float) Math.atan2((nfY - nsY), (nfX - nsX));
 
         float angle = ((float) Math.toDegrees(angle1 - angle2)) % 360;
+        if (angle < -180.f) angle += 360.0f;
+        if (angle > 180.f) angle -= 360.0f;
+        return angle;
+    }
+
+    private float getAngle (float fX, float fY, float sX, float sY) {
+        float angle = ((float) Math.toDegrees(Math.atan2((fY - sY), (fX - sX))) ) % 360f;
         if (angle < -180.f) angle += 360.0f;
         if (angle > 180.f) angle -= 360.0f;
         return angle;

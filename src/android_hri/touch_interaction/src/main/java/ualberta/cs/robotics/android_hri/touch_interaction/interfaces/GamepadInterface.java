@@ -79,11 +79,6 @@ public class GamepadInterface extends RosActivity {
         imageStreamNodeMain = (RosImageView<CompressedImage>) findViewById(R.id.visualization);
 
         targetImage = (ImageView) findViewById(R.id.imageTarget);
-        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 105, getResources().getDisplayMetrics()); //convert pid to pixel
-        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
-        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-        params.rightMargin=px;
 
         positionTopic = new PointTopic();
         positionTopic.publishTo(getString(R.string.topic_positionabs), false, 10);
@@ -170,6 +165,14 @@ public class GamepadInterface extends RosActivity {
     public void onResume() {
         super.onResume();
         emergencyTopic.setPublisher_bool(true);
+        /*** The following code was created because sometimes the target image is not well positioned when the app is launched ***/
+        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
+        int py = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics()); //convert pid to pixel
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
+        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        params.rightMargin=px;
+        params.bottomMargin=py;
         running=true;
     }
 

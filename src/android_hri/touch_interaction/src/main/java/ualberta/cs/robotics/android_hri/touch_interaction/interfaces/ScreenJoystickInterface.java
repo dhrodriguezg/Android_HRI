@@ -125,14 +125,6 @@ public class ScreenJoystickInterface extends RosActivity {
         sliderImage = (ImageView) findViewById(R.id.imageSlider_p);
         targetImage = (ImageView) findViewById(R.id.imageTarget);
 
-        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
-        int py = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics()); //convert pid to pixel
-        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
-        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-        params.rightMargin=px;
-        params.bottomMargin=py;
-
         sliderHandler = new TouchArea(this, sliderTouch);
         sliderHandler.enableScroll();
 
@@ -183,6 +175,14 @@ public class ScreenJoystickInterface extends RosActivity {
         super.onResume();
         emergencyTopic.setPublisher_bool(true);
         sliderImage.setTranslationY(sliderHandler.getHeight() / 2 - sliderImage.getHeight() / 2);
+        /*** The following code was created because sometimes the target image is not well positioned when the app is launched ***/
+        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
+        int py = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics()); //convert pid to pixel
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
+        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        params.rightMargin=px;
+        params.bottomMargin=py;
         running=true;
     }
 

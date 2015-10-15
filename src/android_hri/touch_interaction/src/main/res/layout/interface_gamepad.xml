@@ -18,7 +18,8 @@
         android:id="@+id/imageTarget"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
-        android:layout_marginRight="120dp" />
+        android:layout_marginRight="120dp"
+        android:layout_marginBottom="6dp" />
 
     <ImageView
         android:id="@+id/virtual_joystick_pos"

@@ -66,10 +66,15 @@ public class MultiTouchArea extends TouchArea implements TwoFingerGestureDetecto
     }
 
     @Override
-    public void OnScale(float mScale, float mScaleFocusX, float mScaleFocusY) {
+    public void OnScale1(float mScale, float mScaleFocusX, float mScaleFocusY) {
         scale=mScale;
         scaleFocusX=mScaleFocusX;
         scaleFocusY=mScaleFocusY;
+    }
+
+    @Override
+    public void OnScale2(float grasp) {
+        graspScale=grasp;
     }
 
     @Override
@@ -77,7 +82,13 @@ public class MultiTouchArea extends TouchArea implements TwoFingerGestureDetecto
         detectingTwoFingerGesture =detectingGesture;
     }
 
+    public float getGraspScale() {
+        return graspScale;
+    }
 
+    public void setGraspScale(float graspScale) {
+        this.graspScale = graspScale;
+    }
 
     public float getAngle() {
         return angle;
