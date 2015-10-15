@@ -9,11 +9,14 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -35,6 +38,7 @@ import ualberta.cs.robotics.android_hri.touch_interaction.topic.BooleanTopic;
 import ualberta.cs.robotics.android_hri.touch_interaction.topic.Float32Topic;
 import ualberta.cs.robotics.android_hri.touch_interaction.topic.Int32Topic;
 import ualberta.cs.robotics.android_hri.touch_interaction.topic.PointTopic;
+import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiGestureArea;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiTouchArea;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.gesture_detector.TwoFingerGestureDetector;
 import ualberta.cs.robotics.android_hri.touch_interaction.utils.AndroidNode;
@@ -44,6 +48,7 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
 	
 	private static final String TAG = "DirectManipulationInterface";
     private static final String NODE_NAME="/android_"+TAG.toLowerCase();
+    private static final float MAX_PIXEL_MOVEMENT = 1;
 /*
     private static final String STREAMING= "/image_converter/output_video/compressed";
     private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
@@ -55,9 +60,7 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
 */
     private NodeMainExecutorService nodeMain;
 
-    private static final float MAX_GRASP = 2.0f;
-
-    private MultiTouchArea gestureHandler = null;
+    private MultiGestureArea statelessGestureHandler = null;
 
     private RosImageView<CompressedImage> imageStreamNodeMain;
     private ImageView targetImage;
@@ -75,9 +78,7 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
     private PointTopic rotationTopic;
     private Float32Topic graspTopic;
 
-
-
-    private String msg="";
+    private StringBuffer msg;
     private String moveMsg="";
     private String rotateMsg="";
     private String graspMsg="";
@@ -86,6 +87,7 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
 
     private SensorManager senSensorManager;
     private Sensor senAccelerometer;
+    private float[] lastPosition;
 
     public DirectManipulationInterface() {
         super(TAG, TAG, URI.create(MainActivity.ROS_MASTER));
@@ -111,21 +113,12 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
         graspStatus = (TextView) findViewById(R.id.graspStatus);
 
         imageStreamNodeMain = (RosImageView<CompressedImage>) findViewById(R.id.imageViewCenter);
+        statelessGestureHandler = new MultiGestureArea(this, imageStreamNodeMain);
 
         imageStreamNodeMain.setTopicName(getString(R.string.topic_streaming));
         imageStreamNodeMain.setMessageType(getString(R.string.topic_streaming_msg));
         imageStreamNodeMain.setMessageToBitmapCallable(new BitmapFromCompressedImage());
         imageStreamNodeMain.setScaleType(ImageView.ScaleType.FIT_CENTER);
-
-        gestureHandler = new MultiTouchArea(this, imageStreamNodeMain);
-        gestureHandler.enableScaling();
-        //gestureHandler.enableDragging();
-        gestureHandler.enableScroll(); //single dragging
-        gestureHandler.enableRotating();
-        gestureHandler.enableOneFingerGestures();
-        //Disabled Select target gestures
-        //gestureHandler.enableDoubleTap();
-        //gestureHandler.enableLongPress();
 
         positionTopic = new PointTopic();
         positionTopic.publishTo(getString(R.string.topic_positionabs), false, 10);
@@ -171,18 +164,17 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
             }
         });
 
-        updateGrasping();
-        msg="";
+        msg = new StringBuffer();
         Thread threadGestures = new Thread(){
             public void run(){
                 while(running){
                     try {
+                        Thread.sleep(10);
                         TwoFingerGestureDetector.MAX_RESOLUTION= imageStreamNodeMain.getWidth();
                         updatePosition();
-                        updateGrasping();
                         updateRotation();
+                        updateGrasping();
                         updateText();
-                        Thread.sleep(10);
                     } catch (InterruptedException e) {
                         e.getStackTrace();
                     }
@@ -191,12 +183,33 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
         };
         threadGestures.start();
 
+        Thread threadInit = new Thread(){
+            public void run(){
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                lastPosition = new float[]{targetImage.getX()+targetImage.getWidth()/2, targetImage.getY()+targetImage.getHeight()/2};
+                statelessGestureHandler.syncPos(lastPosition[0], lastPosition[1]);
+            }
+        };
+        threadInit.start();
+
     }
 
     @Override
     public void onResume() {
         super.onResume();
         emergencyTopic.setPublisher_bool(true);
+        /*** The following code was created because sometimes the target image is not well positioned when the app is launched ***/
+        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
+        int py = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics()); //convert pid to pixel
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
+        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        params.rightMargin=px;
+        params.bottomMargin=py;
         running=true;
     }
     
@@ -225,100 +238,85 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
     }
 
     private void updatePosition() {
-        if(gestureHandler.getSingleDragX()>0){
+        if(!statelessGestureHandler.isDetectingGesture())
+            return;
+        float[] positionPoint = new float[]{statelessGestureHandler.getPosX(), statelessGestureHandler.getPosY()};
+        float[] positionPixel = new float[2];
+        smoothMovement(positionPoint);
 
-            final float x=gestureHandler.getSingleDragX() - positionImage.getWidth()/2;
-            final float y=gestureHandler.getSingleDragY() - positionImage.getHeight()/2;
+        Matrix streamMatrix = new Matrix();
+        imageStreamNodeMain.getImageMatrix().invert(streamMatrix);
+        streamMatrix.mapPoints(positionPixel, positionPoint);
 
-            float[] positionPoint = new float[]{gestureHandler.getSingleDragX(), gestureHandler.getSingleDragY()};
-            float[] positionPixel = new float[2];
-
-            Matrix streamMatrix = new Matrix();
-            imageStreamNodeMain.getImageMatrix().invert(streamMatrix);
-            streamMatrix.mapPoints(positionPixel, positionPoint);
-
-            if(!validTarget(positionPixel[0],positionPixel[1])){
-                gestureHandler.setSingleDragX(0);
-                return;
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                positionImage.setX(statelessGestureHandler.getPosX() - positionImage.getWidth() / 2);
+                positionImage.setY(statelessGestureHandler.getPosY() - positionImage.getHeight() / 2);
             }
+        });
 
-            positionTopic.getPublisher_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - positionPixel[1]*MainActivity.WORKSPACE_HEIGHT/(float) imageStreamNodeMain.getDrawable().getIntrinsicHeight();
-            positionTopic.getPublisher_point()[1] = MainActivity.WORKSPACE_X_OFFSET - positionPixel[0]*MainActivity.WORKSPACE_WIDTH/(float) imageStreamNodeMain.getDrawable().getIntrinsicWidth();
-            positionTopic.getPublisher_point()[2] = 0;
-            positionTopic.publishNow();
+        if(!validTarget(positionPixel[0],positionPixel[1]))
+            return;
 
-            this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    positionImage.setX(x);
-                    positionImage.setY(y);
-                    positionImage.setAlpha(0.4f);
+        lastPosition=positionPoint;
+        statelessGestureHandler.syncPos(lastPosition[0], lastPosition[1]);
 
-                    targetImage.setAlpha(0.f);
-                    targetImage.setX(0);
-                    targetImage.setY(0);
+        positionTopic.getPublisher_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - positionPixel[1]*MainActivity.WORKSPACE_HEIGHT/(float) imageStreamNodeMain.getDrawable().getIntrinsicHeight();
+        positionTopic.getPublisher_point()[1] = MainActivity.WORKSPACE_X_OFFSET - positionPixel[0]*MainActivity.WORKSPACE_WIDTH/(float) imageStreamNodeMain.getDrawable().getIntrinsicWidth();
+        positionTopic.getPublisher_point()[2] = 0;
+        positionTopic.publishNow();
+        msg.append(String.format(moveMsg + " | ", positionTopic.getPublisher_point()[0], positionTopic.getPublisher_point()[1]));
 
-                    msg = String.format(moveMsg, positionTopic.getPublisher_point()[0], positionTopic.getPublisher_point()[1]);
-                    moveStatus.setBackgroundColor(Color.GREEN);
-                    rotateStatus.setBackgroundColor(Color.TRANSPARENT);
-                    graspStatus.setBackgroundColor(Color.TRANSPARENT);
-                }
-            });
-            gestureHandler.setSingleDragX(0);
-            gestureHandler.setLongClickX(0);
-        }
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                targetImage.setX(lastPosition[0] - targetImage.getWidth() / 2);
+                targetImage.setY(lastPosition[1] - targetImage.getHeight() / 2);
+            }
+        });
+    }
+
+    private void smoothMovement(float[] currPos){
+        float dx = currPos[0]-lastPosition[0];
+        float dy = currPos[1]-lastPosition[1];
+        if(dx < -MAX_PIXEL_MOVEMENT)
+            dx = -MAX_PIXEL_MOVEMENT;
+        else if(dx > MAX_PIXEL_MOVEMENT)
+            dx = MAX_PIXEL_MOVEMENT;
+        if(dy < -MAX_PIXEL_MOVEMENT)
+            dy = -MAX_PIXEL_MOVEMENT;
+        else if(dy > MAX_PIXEL_MOVEMENT)
+            dy = MAX_PIXEL_MOVEMENT;
+        currPos[0]=lastPosition[0]+dx;
+        currPos[1]=lastPosition[1]+dy;
     }
 
     private void updateRotation() {
-        final float angle = 0.5f*gestureHandler.getAngle()*3.1416f/180f;
-        if(!gestureHandler.isDetectingTwoFingerGesture()){
-            gestureHandler.setAngle(0);
-        }
-        if(angle!=0){
-            msg = String.format(rotateMsg,angle);
-            rotationTopic.getPublisher_point()[0]=0;
-            rotationTopic.getPublisher_point()[1]=angle;
-            gestureHandler.setDoubleDragX(0);
-            rotationTopic.publishNow();
-            this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    positionImage.setAlpha(0.0f);
-                    targetImage.setAlpha(0.0f);
-
-                    moveStatus.setBackgroundColor(Color.TRANSPARENT);
-                    rotateStatus.setBackgroundColor(Color.GREEN);
-                    graspStatus.setBackgroundColor(Color.TRANSPARENT);
-                }
-            });
-        }
-
+        if(!statelessGestureHandler.isDetectingGesture())
+            return;
+        float angle = 0.5f*statelessGestureHandler.getRotation()*3.1416f/180f;
+        msg.append(String.format(rotateMsg + " | ",angle));
+        rotationTopic.getPublisher_point()[0]=0;
+        rotationTopic.getPublisher_point()[1]=angle;
+        rotationTopic.publishNow();
     }
 
     private void updateGrasping() {
-        float grasp = MAX_GRASP*(TwoFingerGestureDetector.MAX_SCALE-gestureHandler.getScale())/(TwoFingerGestureDetector.MAX_SCALE-TwoFingerGestureDetector.MIN_SCALE);
-        if(grasp!= graspTopic.getPublisher_float()){
-            graspTopic.setPublisher_float(grasp);
-            msg = String.format(graspMsg,grasp);
-            this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    positionImage.setAlpha(0.0f);
-                    targetImage.setAlpha(0.0f);
-                    moveStatus.setBackgroundColor(Color.TRANSPARENT);
-                    rotateStatus.setBackgroundColor(Color.TRANSPARENT);
-                    graspStatus.setBackgroundColor(Color.GREEN);
-                }
-            });
-        }
+        float grasp = statelessGestureHandler.getGrasp();
+        graspTopic.setPublisher_float(grasp);
+        msg.append(String.format(graspMsg, grasp));
         graspTopic.publishNow();
     }
 
     private void updateText() {
+        final String message = msg.toString();
+        msg.delete(0,msg.length());
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                msgText.setText(msg);
+                if(message.length()!=0)
+                    msgText.setText(message);
             }
         });
     }
