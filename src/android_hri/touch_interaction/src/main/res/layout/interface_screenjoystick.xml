@@ -2,7 +2,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:ignore="ContentDescription"
-    tools:context=".ControllerActivity"
+    tools:context="ualberta.cs.robotics.android_hri.touch_interaction"
     android:orientation="horizontal">
 
     <org.ros.android.view.RosImageView
@@ -145,6 +145,41 @@
             android:layout_centerHorizontal="true"
             android:checked="false"
             android:textStyle="bold" />
+
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:id="@+id/imageHandClose"
+            android:src="@drawable/hand_close"
+            android:alpha="0.8"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignLeft="@+id/virtual_joystick_rot"
+            android:layout_marginLeft="25dp"
+            android:layout_marginRight="25dp"/>
+
+        <ualberta.cs.robotics.android_hri.touch_interaction.utils.ScrollerView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/scrollerView"
+            android:alpha="0.8"
+            android:layout_above="@+id/imageHandOpen"
+            android:layout_alignLeft="@+id/imageHandClose"
+            android:layout_below="@+id/imageHandClose"
+            android:layout_alignRight="@+id/imageHandClose" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:id="@+id/imageHandOpen"
+            android:src="@drawable/hand_open"
+            android:alpha="0.8"
+            android:layout_alignBottom="@+id/linearLayout"
+            android:layout_alignParentRight="true"
+            android:layout_alignLeft="@+id/virtual_joystick_rot"
+            android:layout_marginLeft="25dp"
+            android:layout_marginRight="25dp" />
 
     </RelativeLayout>
 

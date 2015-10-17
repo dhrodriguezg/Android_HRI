@@ -4,13 +4,17 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -37,6 +41,7 @@ import ualberta.cs.robotics.android_hri.touch_interaction.topic.PointTopic;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.TouchArea;
 import ualberta.cs.robotics.android_hri.touch_interaction.utils.AndroidNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.utils.CustomVirtualJoystickView;
+import ualberta.cs.robotics.android_hri.touch_interaction.utils.ScrollerView;
 
 public class ScreenJoystickInterface extends RosActivity {
 
@@ -70,6 +75,10 @@ public class ScreenJoystickInterface extends RosActivity {
     private ImageView sliderImage;
 
     private ImageView targetImage;
+    private ImageView openHand;
+    private ImageView closeHand;
+
+    private ScrollerView graspHandler = null;
     private boolean running=true;
     private boolean debug=true;
 
@@ -86,12 +95,28 @@ public class ScreenJoystickInterface extends RosActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        openHand = (ImageView) findViewById(R.id.imageHandOpen);
+        closeHand = (ImageView) findViewById(R.id.imageHandClose);
+
         joystickPositionNodeMain = (CustomVirtualJoystickView) findViewById(R.id.virtual_joystick_pos);
         joystickRotationNodeMain = (CustomVirtualJoystickView) findViewById(R.id.virtual_joystick_rot);
         joystickPositionNodeMain.setHolonomic(true);
         joystickRotationNodeMain.setHolonomic(true);
 
         imageStreamNodeMain = (RosImageView<CompressedImage>) findViewById(R.id.visualization);
+
+        graspHandler = (ScrollerView) findViewById(R.id.scrollerView);
+        graspHandler.setMinValue(0.f);
+        graspHandler.setMaxValue(2.f);
+/*
+
+        LinearLayout ly = (LinearLayout) findViewById(R.id.subScroll);
+        for(int m=0;m<20;m++){
+            TextView tv = new TextView(getApplicationContext());
+            tv.setText("" + m);
+            ly.addView(tv);
+        }*/
+
 
         graspTopic = new Float32Topic();
         graspTopic.setPublishingFreq(500);
@@ -201,12 +226,19 @@ public class ScreenJoystickInterface extends RosActivity {
     }
 
     private void updateGrasp() {
-        if(sliderHandler.getSingleDragY() == 0  && graspTopic.getPublisher_float() == 0)
-            return;
+
+        //if(sliderHandler.getSingleDragY() == 0  && graspTopic.getPublisher_float() == 0)
+         //   return;
 
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                float grasp = graspHandler.computeSelection();
+                // 0 to 2
+                closeHand.setBackgroundColor(Color.argb((int)(255*(2-grasp)/2),255,0,0));//TODO
+                openHand.setBackgroundColor(Color.argb((int)(255*grasp/2),0,255,0));
+
+
                 if (sliderHandler.isDetectingOneFingerGesture() && sliderHandler.getSingleDragY() > 0) {
                     sliderImage.setTranslationY(sliderHandler.getSingleDragY() - sliderImage.getHeight() / 2);
                     graspTopic.setPublisher_float(sliderHandler.getSingleDragNormalizedY());
