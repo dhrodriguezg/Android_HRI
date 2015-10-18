@@ -95,14 +95,14 @@
 
         </LinearLayout>
 
-        <ualberta.cs.robotics.android_hri.touch_interaction.utils.CustomVirtualJoystickView
+        <ualberta.cs.robotics.android_hri.touch_interaction.widget.CustomVirtualJoystickView
             android:id="@+id/virtual_joystick_pos"
             android:layout_width="120dp"
             android:layout_height="120dp"
             android:layout_alignParentBottom="true"
             android:layout_alignParentLeft="true" />
 
-        <ualberta.cs.robotics.android_hri.touch_interaction.utils.CustomVirtualJoystickView
+        <ualberta.cs.robotics.android_hri.touch_interaction.widget.CustomVirtualJoystickView
             android:id="@+id/virtual_joystick_rot"
             android:layout_width="120dp"
             android:layout_height="120dp"
@@ -146,7 +146,6 @@
             android:checked="false"
             android:textStyle="bold" />
 
-
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="30dp"
@@ -159,7 +158,7 @@
             android:layout_marginLeft="25dp"
             android:layout_marginRight="25dp"/>
 
-        <ualberta.cs.robotics.android_hri.touch_interaction.utils.ScrollerView
+        <ualberta.cs.robotics.android_hri.touch_interaction.widget.ScrollerView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/scrollerView"

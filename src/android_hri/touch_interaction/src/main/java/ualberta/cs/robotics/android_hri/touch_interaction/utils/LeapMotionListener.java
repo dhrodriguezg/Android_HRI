@@ -327,7 +327,7 @@ public class LeapMotionListener extends Listener {
         else if(position.getZ() < MIN_POS_Z)
             position.setZ(MIN_POS_Z);
 
-        Vector result = new Vector( (1 + position.getX() / MAX_POS_X)/2f, position.getY() / MAX_POS_Y, (1 + position.getZ() / MAX_POS_Z)/2); //values from 0 to 1
+        Vector result = new Vector( (1 + position.getX() / MAX_POS_X)/2f, position.getY() / MAX_POS_Y, (1 + position.getZ() / MAX_POS_Z)/2f); //values from 0 to 1
         msg.append(String.format("(%.4f, %.4f, %.4f) ", result.getX(), result.getY(), result.getZ()));
         return result;
     }

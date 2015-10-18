@@ -1,9 +1,11 @@
-package ualberta.cs.robotics.android_hri.touch_interaction.utils;
+package ualberta.cs.robotics.android_hri.touch_interaction.widget;
 
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -21,31 +23,27 @@ import ualberta.cs.robotics.android_hri.touch_interaction.R;
  */
 public class ScrollerView extends RelativeLayout{
 
+    private Context context;
     private RelativeLayout mainLayout;
     private ScrollView scrollView;
     private LinearLayout viewContainer;
     private Vector<TextView> vectorText;
     private TextView activeView;
-    private final int MAX_VISIBLE_ITEMS=5;//odd number
-    private final int MAX_ITEMS=10;
-    private final float MAX_FONT_SIZE = 20;
-    private final float MIN_FONT_SIZE = 8;
-    private boolean firstRun;
+    private boolean updateView;
     private int BACKGROUND = Color.LTGRAY;
-    private int SELECTED = Color.RED;
+    private int BORDER = Color.argb(191,0,0,0);
     private boolean revertDirection;
-
-    //gray 193x2
-    //black 0x3 191
-    //blue 0 162 255
-
-    private float minValue;
-    private float maxValue;
-
 
     private ImageView top;
     private ImageView bottom;
     private ImageView selection;
+
+    private float topValue = 0;
+    private float bottomValue = 0;
+    private int maxVisibleItems = 5;//odd number
+    private int maxTotalItems = 10;
+    private float fontSize = 14;
+    private int initialPosition;
 
     public ScrollerView(Context context) {
         super(context);
@@ -65,7 +63,8 @@ public class ScrollerView extends RelativeLayout{
     private void initScroller(Context context) {
 
         /** Init Layouts**/
-        firstRun = true;
+        this.context=context;
+        updateView = true;
         revertDirection=false;
         mainLayout = this;
         scrollView = new ScrollView(context);
@@ -88,7 +87,7 @@ public class ScrollerView extends RelativeLayout{
 
         FrameLayout.LayoutParams containerParams = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT);
         viewContainer.setLayoutParams(containerParams);
-        viewContainer.setBackgroundColor(Color.DKGRAY);
+        viewContainer.setBackgroundColor(BORDER);
         viewContainer.setPadding(10, 0, 10, 0);
 
         RelativeLayout.LayoutParams selectionParams = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
@@ -113,8 +112,10 @@ public class ScrollerView extends RelativeLayout{
         top.setScaleType(ImageView.ScaleType.FIT_XY);
 
         /** Populate container**/
+        populateContainer();
+        /*
         vectorText= new Vector<>();
-        for(int n=0;n<MAX_ITEMS + MAX_VISIBLE_ITEMS-1;n++){
+        for(int n=0;n< maxTotalItems + maxVisibleItems -1;n++){
             TextView tv = new TextView(context);
             tv.setBackgroundColor(BACKGROUND);
             tv.setGravity(Gravity.CENTER);
@@ -122,72 +123,140 @@ public class ScrollerView extends RelativeLayout{
             vectorText.add(tv);
             viewContainer.addView(tv);
         }
-        activeView=vectorText.elementAt(MAX_VISIBLE_ITEMS/2);
+        activeView=vectorText.elementAt(maxVisibleItems /2);*/
     }
 
-    public void reverseDirection(){
-        firstRun=false;
-        revertDirection=!revertDirection;
+    private void populateContainer(){
+        vectorText= new Vector<>();
+        viewContainer.removeAllViews();
+        for(int n=0;n< maxTotalItems + maxVisibleItems -1;n++){
+            TextView tv = new TextView(context);
+            tv.setBackgroundColor(BACKGROUND);
+            tv.setGravity(Gravity.CENTER);
+            tv.setText("" + n);
+            vectorText.add(tv);
+            viewContainer.addView(tv);
+        }
+        activeView=vectorText.elementAt(maxVisibleItems /2);
     }
 
-    public void resizeContainer(){
-        int height = scrollView.getHeight()/MAX_VISIBLE_ITEMS;
+    private void resizeContainer(){
+        populateContainer();
+        int height = scrollView.getHeight()/ maxVisibleItems;
         top.getLayoutParams().height=height*3/2;
         bottom.getLayoutParams().height=height*3/2;
         selection.getLayoutParams().height=height;
 
         for(int i = 0; i < vectorText.size(); i++){
-            TextView tv;
-            if(revertDirection)
-                tv = vectorText.elementAt(vectorText.size()-i-1);
-            else
-                tv = vectorText.elementAt(i);
-
+            TextView tv = vectorText.elementAt(i);
             tv.setHeight(height);
-            float value = (maxValue-minValue)*(float)(i-MAX_VISIBLE_ITEMS/2)/(float)(MAX_ITEMS-1) + minValue;
-            if(i-1 < MAX_VISIBLE_ITEMS/2)
-                value=minValue;
-            if(i > vectorText.size()-MAX_VISIBLE_ITEMS/2-1)
-                value=maxValue;
+
+            float value = (bottomValue - topValue)*(float)(i- maxVisibleItems /2)/(float)(maxTotalItems -1) + topValue;
+            if(i-1 < maxVisibleItems /2)
+                value= topValue;
+            if(i > vectorText.size()- maxVisibleItems /2-1)
+                value= bottomValue;
 
             tv.setText(String.format("%.2f", value));
-            tv.setTextSize(14);
-            //float fontSize=(MAX_FONT_SIZE-MIN_FONT_SIZE)*value/(maxValue-minValue)+MIN_FONT_SIZE;
-            //tv.setTextSize(fontSize);
+            tv.setTextSize(fontSize);
         }
-        firstRun=false;
+        scrollView.post(new Runnable() {
+            @Override
+            public void run() {
+                scrollView.scrollTo(0, (int)vectorText.elementAt(initialPosition - 1).getY());
+            }
+        });
+        updateView = false;
     }
 
     public float computeSelection(){
-        if(firstRun)
+        if(updateView)
             resizeContainer();
 
-        activeView.setBackgroundColor(BACKGROUND);
-        int index = scrollView.getScrollY()/(viewContainer.getHeight()/vectorText.size());
-        activeView=vectorText.elementAt(index+MAX_VISIBLE_ITEMS/2);
-        activeView.setBackgroundColor(BACKGROUND);
-        /*activeView.setTextSize(MAX_FONT_SIZE);
-        for(int n=0; n<MAX_VISIBLE_ITEMS/2; n++){
-            vectorText.elementAt(index+n).setTextSize((MAX_FONT_SIZE-MIN_FONT_SIZE)*(float)n/((float)MAX_VISIBLE_ITEMS/2) + MIN_FONT_SIZE);
-            vectorText.elementAt(index+MAX_VISIBLE_ITEMS-1-n).setTextSize((MAX_FONT_SIZE-MIN_FONT_SIZE)*(float)n/((float)MAX_VISIBLE_ITEMS/2) + MIN_FONT_SIZE);
-        }*/
-        return Float.parseFloat(activeView.getText().toString());
+        int index = Math.round((float)scrollView.getScrollY()/((float)activeView.getHeight()));
+        activeView.setTypeface(null, Typeface.NORMAL);
+        activeView=vectorText.elementAt(index + maxVisibleItems /2);
+        activeView.setTextSize(fontSize);
+        activeView.setTypeface(null, Typeface.BOLD);
 
+        float cy = scrollView.getScrollY()+activeView.getHeight()*maxVisibleItems/2;
+        for(int n=1; n < 1+maxVisibleItems/2; n++){
+            TextView belowText = vectorText.elementAt(index+maxVisibleItems/2 + n );
+            TextView aboveText = vectorText.elementAt(index+maxVisibleItems/2 - n );
+            belowText.setTextSize(fontSize-Math.abs(belowText.getY()-cy)/(float)belowText.getHeight());
+            aboveText.setTextSize(fontSize-0.5f*Math.abs(aboveText.getY()-cy)/(float)aboveText.getHeight());
+        }
+
+        float max=Math.max(topValue,bottomValue);
+        float min = Math.min(topValue,bottomValue);
+        float normalizedScroll=(float)scrollView.getScrollY()/(float)(viewContainer.getBottom()-scrollView.getHeight());
+        float selection=(bottomValue - topValue)*normalizedScroll + topValue;
+        //float selection=Float.parseFloat(activeView.getText().toString());
+        if(selection>max)
+            selection=max;
+        if(selection<min)
+            selection=min;
+        return selection;
     }
 
-    public float getMinValue() {
-        return minValue;
+    public void beginOnTop(){
+        initialPosition=1;
     }
 
-    public void setMinValue(float minValue) {
-        this.minValue = minValue;
+    public void beginOnBottom(){
+        initialPosition=maxTotalItems;
     }
 
-    public float getMaxValue() {
-        return maxValue;
+    public void beginOnMiddle(){
+        initialPosition=maxTotalItems/2;
     }
 
-    public void setMaxValue(float maxValue) {
-        this.maxValue = maxValue;
+    public void beginOnItem(int index){
+        initialPosition=index;
+    }
+
+    public float getTopValue() {
+        return topValue;
+    }
+
+    public void setTopValue(float topValue) {
+        updateView = true;
+        this.topValue = topValue;
+    }
+
+    public float getBottomValue() {
+        return bottomValue;
+    }
+
+    public void setBottomValue(float bottomValue) {
+        updateView = true;
+        this.bottomValue = bottomValue;
+    }
+
+    public int getMaxVisibleItems() {
+        return maxVisibleItems;
+    }
+
+    public void setMaxVisibleItems(int maxVisibleItems) {
+        updateView = true;
+        this.maxVisibleItems = maxVisibleItems%2 == 0 ? maxVisibleItems-1 : maxVisibleItems;
+    }
+
+    public int getMaxTotalItems() {
+        return maxTotalItems;
+    }
+
+    public void setMaxTotalItems(int maxTotalItems) {
+        updateView = true;
+        this.maxTotalItems = maxTotalItems;
+    }
+
+    public float getFontSize() {
+        return fontSize;
+    }
+
+    public void setFontSize(float fontSize) {
+        updateView = true;
+        this.fontSize = fontSize;
     }
 }

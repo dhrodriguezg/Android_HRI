@@ -24,7 +24,7 @@
  * the License.
  */
 
-package ualberta.cs.robotics.android_hri.touch_interaction.utils;
+package ualberta.cs.robotics.android_hri.touch_interaction.widget;
 
 import android.content.Context;
 import android.graphics.Point;

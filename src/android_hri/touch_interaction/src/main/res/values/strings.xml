@@ -8,12 +8,13 @@
     <string name="emergency_on">STOPPING ROBOT</string>
     <string name="emergency_on_msg">EMERGENCY STOP ACTIVATED!</string>
     <string name="emergency_off_msg">EMERGENCY STOP DEACTIVATED!</string>
+    <string name="max_target_speed">0.4</string>
 
     <!-- MAIN TEXT -->
     <string name="app_name">WAM Android Interface</string>
     <string name="ros_master_ip">ROS Master Address:</string>
     <string name="ros_master_port">ROS Master Port:</string>
-    <string name="default_master_ip">192.168.1.121</string>
+    <string name="default_master_ip">192.168.1.106</string>
     <string name="default_master_port">11311</string>
     <string name="setup">Setup</string>
     <string name="interface_screenjoystick_name">Screen Joysticks</string>

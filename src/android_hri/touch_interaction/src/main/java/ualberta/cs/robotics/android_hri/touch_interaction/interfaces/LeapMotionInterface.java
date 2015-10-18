@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.WindowManager;
 import android.widget.CheckBox;
@@ -43,17 +44,6 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
 	private static final String TAG = "LeapMotionInterface";
     private static final String NODE_NAME="/android_"+TAG.toLowerCase();
 
-    /*
-    private static final String STREAMING= "/image_converter/output_video/compressed";
-    private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
-    private static final String EMERGENCY_STOP = "/android/emergency_stop";
-    private static final String INTERFACE_NUMBER="/android/interface_number";
-    private static final String STRING_LOG = "/android/log";
-    private static final String POSITION="/android/position_abs";
-    private static final String ROTATION= "/android/rotation_abs";
-    private static final String GRASP="/android/grasping_abs";
-    */
-
     private final int DISABLED = Color.RED;
     private final int ENABLED = Color.GREEN;
     private final int TRANSITION = Color.rgb(255,195,77); //orange
@@ -63,17 +53,11 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
     private boolean isConfirm=false;
     private boolean isEnable=true;
 
-    private int lastTask = -1;
-    private int currentTask = -1;
-
     private NodeMainExecutorService nodeMain;
     private Controller mController;
     private LeapMotionListener mLeapMotionListener;
 
     private ToggleButton emergencyStop;
-
-    private static final float MAX_GRASP = 2.0f;
-
     private RosImageView<CompressedImage> imageStreamNodeMain;
     private TextView msgText;
     private TextView statusText;
@@ -108,11 +92,11 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
     private ImageView rightPinky;
     private ImageView rightThumb;
 
-    private String msg="";
     private String status_ok="";
     private String status_fail="";
-    private boolean running = true;
     private boolean debug = true;
+    private float[] lastPosition;
+    private float maxTargetSpeed;
 
     public LeapMotionInterface() {
         super(TAG, TAG, URI.create(MainActivity.ROS_MASTER));
@@ -130,6 +114,7 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
         status_ok=getString(R.string.status_ok);
         status_fail=getString(R.string.status_fail);
 
+        maxTargetSpeed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, Float.parseFloat(getString(R.string.max_target_speed)), getResources().getDisplayMetrics());
         msgText = (TextView) findViewById(R.id.msgTextView);
 
         targetMove = (ImageView) findViewById(R.id.imageTarget);
@@ -225,13 +210,24 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
                 mLeapMotionListener.setRightHanded(isChecked);
             }
         });
+
+        Thread threadInit = new Thread(){
+            public void run(){
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                lastPosition = new float[]{targetMove.getX()+targetMove.getWidth()/2, targetMove.getY()+targetMove.getHeight()/2};
+            }
+        };
+        threadInit.start();
     }
 
     @Override
     public void onResume() {
         super.onResume();
         emergencyTopic.setPublisher_bool(true);
-        running=true;
     }
     
     @Override
@@ -245,7 +241,6 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
     public void onDestroy() {
         emergencyTopic.setPublisher_bool(false);
         nodeMain.forceShutdown();
-        running=false;
         super.onDestroy();
     }
 
@@ -275,10 +270,30 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
             return;
     }
 
+    private void smoothMovement(float[] currPos){
+        float dx = currPos[0]-lastPosition[0];
+        float dy = currPos[1]-lastPosition[1];
+        float max = Math.max(Math.abs(dx), Math.abs(dy));
+
+        if(max > maxTargetSpeed){
+            dx=maxTargetSpeed*dx/max;
+            dy=maxTargetSpeed*dy/max;
+        }
+
+        currPos[0]=lastPosition[0]+dx;
+        currPos[1]=lastPosition[1]+dy;
+    }
+
     @Override
     public void onMove(float x, float y, float z) {
         if(!isConfirm)
             return;
+
+        float[] smoothedPos = new float[]{x*(float)imageStreamNodeMain.getWidth(),z*(float)imageStreamNodeMain.getHeight()};
+        smoothMovement(smoothedPos);
+        lastPosition=smoothedPos;
+        x=smoothedPos[0]/(float)imageStreamNodeMain.getWidth();
+        z=smoothedPos[1]/(float)imageStreamNodeMain.getHeight();
 
         positionTopic.getPublisher_point()[0] = MainActivity.WORKSPACE_Y_OFFSET - z*MainActivity.WORKSPACE_HEIGHT;
         positionTopic.getPublisher_point()[1] = MainActivity.WORKSPACE_X_OFFSET - x*MainActivity.WORKSPACE_WIDTH;
@@ -342,7 +357,6 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
                         if (confirmCounter > MAX_TASK_COUNTER) {
                             confirmCounter = 0;
                             isConfirm = !isConfirm;
-                            lastTask = task;
                             if (isConfirm) {
                                 trackingText.setBackgroundColor(ENABLED);
                                 Toast.makeText(getApplicationContext(), getString(R.string.tracking_activated), Toast.LENGTH_LONG).show();

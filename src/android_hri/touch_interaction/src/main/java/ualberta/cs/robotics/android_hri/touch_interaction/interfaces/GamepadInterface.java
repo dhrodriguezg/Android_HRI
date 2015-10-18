@@ -39,15 +39,6 @@ public class GamepadInterface extends RosActivity {
     private static final String TAG = "GamepadInterface";
     private static final String NODE_NAME="/android_"+TAG.toLowerCase();
 
-    /*
-    private static final String STREAMING= "/camera/rgb/image_raw/compressed";
-    private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
-    private static final String EMERGENCY_STOP = "/android/emergency_stop";
-    private static final String INTERFACE_NUMBER="/android/interface_number";
-    private static final String POSITION= "/android/position_abs";
-    private static final String ROTATION= "/android/rotation_rel";
-    private static final String GRASP="/android/grasping_rel";
-    */
     private NodeMainExecutorService nodeMain;
     private RosImageView<CompressedImage> imageStreamNodeMain;
     private ImageView targetImage;
@@ -61,6 +52,7 @@ public class GamepadInterface extends RosActivity {
 
     private Gamepad gamepad;
     private boolean running=true;
+    private float maxTargetSpeed;
     private boolean debug=true;
 
     public GamepadInterface() {
@@ -78,6 +70,7 @@ public class GamepadInterface extends RosActivity {
 
         imageStreamNodeMain = (RosImageView<CompressedImage>) findViewById(R.id.visualization);
 
+        maxTargetSpeed=TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, Float.parseFloat(getString(R.string.max_target_speed)), getResources().getDisplayMetrics());
         targetImage = (ImageView) findViewById(R.id.imageTarget);
 
         positionTopic = new PointTopic();
@@ -211,8 +204,8 @@ public class GamepadInterface extends RosActivity {
     }
 
     private void updatePosition(){
-        float posX=-gamepad.getAxisValue(MotionEvent.AXIS_X);
-        float posY=-gamepad.getAxisValue(MotionEvent.AXIS_Y);
+        float posX=-maxTargetSpeed*gamepad.getAxisValue(MotionEvent.AXIS_X);
+        float posY=-maxTargetSpeed*gamepad.getAxisValue(MotionEvent.AXIS_Y);
         if(Math.abs(posX) > 0.1 || Math.abs(posY) > 0.1){
             //send positions
             final float x=targetImage.getX() - 2.f*posX;

@@ -48,18 +48,8 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
 	
 	private static final String TAG = "DirectManipulationInterface";
     private static final String NODE_NAME="/android_"+TAG.toLowerCase();
-    private static final float MAX_PIXEL_MOVEMENT = 1;
-/*
-    private static final String STREAMING= "/image_converter/output_video/compressed";
-    private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
-    private static final String EMERGENCY_STOP = "/android/emergency_stop";
-    private static final String INTERFACE_NUMBER="/android/interface_number";
-    private static final String POSITION="/android/position_abs";
-    private static final String ROTATION= "/android/rotation_rel";
-    private static final String GRASP="/android/grasping_abs";
-*/
-    private NodeMainExecutorService nodeMain;
 
+    private NodeMainExecutorService nodeMain;
     private MultiGestureArea statelessGestureHandler = null;
 
     private RosImageView<CompressedImage> imageStreamNodeMain;
@@ -88,6 +78,7 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
     private SensorManager senSensorManager;
     private Sensor senAccelerometer;
     private float[] lastPosition;
+    private float maxTargetSpeed;
 
     public DirectManipulationInterface() {
         super(TAG, TAG, URI.create(MainActivity.ROS_MASTER));
@@ -102,6 +93,7 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.interface_directmanipulation);
 
+        maxTargetSpeed =TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, Float.parseFloat(getString(R.string.max_target_speed)), getResources().getDisplayMetrics());
         moveMsg=getString(R.string.move_msg) + " (%.4f , %.4f)";
         rotateMsg=getString(R.string.rotate_msg) + " += %.2f";
         graspMsg=getString(R.string.grasp_msg) + " = %.2f";
@@ -191,7 +183,7 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
                     e.printStackTrace();
                 }
                 lastPosition = new float[]{targetImage.getX()+targetImage.getWidth()/2, targetImage.getY()+targetImage.getHeight()/2};
-                statelessGestureHandler.syncPos(lastPosition[0], lastPosition[1]);
+                statelessGestureHandler.syncPos(lastPosition[0], lastPosition[1]); //This way the tracker begins at the target position
             }
         };
         threadInit.start();
@@ -237,6 +229,20 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
         return super.onOptionsItemSelected(item);
     }
 
+    private void smoothMovement(float[] currPos){
+        float dx = currPos[0]-lastPosition[0];
+        float dy = currPos[1]-lastPosition[1];
+        float max = Math.max(Math.abs(dx), Math.abs(dy));
+
+        if(max > maxTargetSpeed){
+            dx=maxTargetSpeed*dx/max;
+            dy=maxTargetSpeed*dy/max;
+        }
+
+        currPos[0]=lastPosition[0]+dx;
+        currPos[1]=lastPosition[1]+dy;
+    }
+
     private void updatePosition() {
         if(!statelessGestureHandler.isDetectingGesture())
             return;
@@ -275,21 +281,6 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
                 targetImage.setY(lastPosition[1] - targetImage.getHeight() / 2);
             }
         });
-    }
-
-    private void smoothMovement(float[] currPos){
-        float dx = currPos[0]-lastPosition[0];
-        float dy = currPos[1]-lastPosition[1];
-        if(dx < -MAX_PIXEL_MOVEMENT)
-            dx = -MAX_PIXEL_MOVEMENT;
-        else if(dx > MAX_PIXEL_MOVEMENT)
-            dx = MAX_PIXEL_MOVEMENT;
-        if(dy < -MAX_PIXEL_MOVEMENT)
-            dy = -MAX_PIXEL_MOVEMENT;
-        else if(dy > MAX_PIXEL_MOVEMENT)
-            dy = MAX_PIXEL_MOVEMENT;
-        currPos[0]=lastPosition[0]+dx;
-        currPos[1]=lastPosition[1]+dy;
     }
 
     private void updateRotation() {
