@@ -9,7 +9,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,7 +38,6 @@ import ualberta.cs.robotics.android_hri.touch_interaction.topic.Float32Topic;
 import ualberta.cs.robotics.android_hri.touch_interaction.topic.Int32Topic;
 import ualberta.cs.robotics.android_hri.touch_interaction.topic.PointTopic;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiGestureArea;
-import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiTouchArea;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.gesture_detector.TwoFingerGestureDetector;
 import ualberta.cs.robotics.android_hri.touch_interaction.utils.AndroidNode;
 
@@ -57,10 +55,6 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
     private ImageView positionImage;
     private TextView msgText;
 
-    private TextView moveStatus;
-    private TextView rotateStatus;
-    private TextView graspStatus;
-
     private AndroidNode androidNode;
     private BooleanTopic emergencyTopic;
     private Int32Topic interfaceNumberTopic;
@@ -73,7 +67,6 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
     private String rotateMsg="";
     private String graspMsg="";
     private boolean running = true;
-    private boolean debug = true;
 
     private SensorManager senSensorManager;
     private Sensor senAccelerometer;
@@ -100,9 +93,6 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
         targetImage = (ImageView) findViewById(R.id.targetView);
         positionImage = (ImageView) findViewById(R.id.positionView);
         msgText = (TextView) findViewById(R.id.msgTextView);
-        moveStatus = (TextView) findViewById(R.id.moveStatus);
-        rotateStatus = (TextView) findViewById(R.id.rotateStatus);
-        graspStatus = (TextView) findViewById(R.id.graspStatus);
 
         imageStreamNodeMain = (RosImageView<CompressedImage>) findViewById(R.id.imageViewCenter);
         statelessGestureHandler = new MultiGestureArea(this, imageStreamNodeMain);
@@ -328,7 +318,7 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
             float y = event.values[1];
             float z = event.values[2];
 
-            z=y-1; //for testing with shield TODO
+            z=y-1; //for testing with shield
             y=x-1;
 
             if(Math.abs(y)>ROLL_THREASHOLD){

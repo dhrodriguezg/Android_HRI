@@ -32,7 +32,6 @@ import ualberta.cs.robotics.android_hri.touch_interaction.topic.BooleanTopic;
 import ualberta.cs.robotics.android_hri.touch_interaction.topic.Float32Topic;
 import ualberta.cs.robotics.android_hri.touch_interaction.topic.Int32Topic;
 import ualberta.cs.robotics.android_hri.touch_interaction.topic.PointTopic;
-import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.TouchArea;
 import ualberta.cs.robotics.android_hri.touch_interaction.utils.AndroidNode;
 import ualberta.cs.robotics.android_hri.touch_interaction.widget.CustomVirtualJoystickView;
 import ualberta.cs.robotics.android_hri.touch_interaction.widget.ScrollerView;
@@ -54,10 +53,6 @@ public class ScreenJoystickInterface extends RosActivity {
     private PointTopic rotationTopic;
     private Float32Topic graspTopic;
 
-    private TouchArea sliderHandler = null;
-    private ImageView sliderTouch;
-    private ImageView sliderImage;
-
     private ImageView targetImage;
     private ImageView openHand;
     private ImageView closeHand;
@@ -65,7 +60,6 @@ public class ScreenJoystickInterface extends RosActivity {
     private ScrollerView graspHandler = null;
     private boolean running=true;
     private float maxTargetSpeed;
-    private boolean debug=true;
 
     public ScreenJoystickInterface() {
         super(TAG, TAG, URI.create(MainActivity.ROS_MASTER));;
@@ -127,14 +121,8 @@ public class ScreenJoystickInterface extends RosActivity {
         //joystickRotationNodeMain.setTopicName(JOYROT_TOPIC);
         //androidNode.addNodeMains(joystickPositionNodeMain,joystickRotationNodeMain);
 
-        sliderTouch = (ImageView) findViewById(R.id.sliderControl);
-        sliderImage = (ImageView) findViewById(R.id.imageSlider_p);
         targetImage = (ImageView) findViewById(R.id.imageTarget);
 
-        sliderHandler = new TouchArea(this, sliderTouch);
-        sliderHandler.enableScroll();
-
-        sliderImage.setTranslationY(sliderHandler.getHeight() / 2 - sliderImage.getHeight() / 2);
         graspTopic.setPublisher_float(0.01f); //it's just to init the thread below
 
         imageStreamNodeMain.setTopicName(getString(R.string.topic_streaming));
@@ -180,7 +168,6 @@ public class ScreenJoystickInterface extends RosActivity {
     public void onResume() {
         super.onResume();
         emergencyTopic.setPublisher_bool(true);
-        sliderImage.setTranslationY(sliderHandler.getHeight() / 2 - sliderImage.getHeight() / 2);
         /*** The following code was created because sometimes the target image is not well positioned when the app is launched ***/
         int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
         int py = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics()); //convert pid to pixel
@@ -208,24 +195,14 @@ public class ScreenJoystickInterface extends RosActivity {
 
     private void updateGrasp() {
 
-        //if(sliderHandler.getSingleDragY() == 0  && graspTopic.getPublisher_float() == 0)
-         //   return;
-
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 float grasp = graspHandler.computeSelection();
-                closeHand.setBackgroundColor(Color.argb((int)(255*(grasp)/2),255,0,0));//TODO
-                openHand.setBackgroundColor(Color.argb((int)(255*(2-grasp)/2),0,255,0));
+                graspTopic.setPublisher_float(grasp);
+                closeHand.setBackgroundColor(Color.argb((int) (255 * (grasp) / 2), 255, 0, 0));
+                openHand.setBackgroundColor(Color.argb((int) (255 * (2 - grasp) / 2), 0, 255, 0));
 
-                if (sliderHandler.isDetectingOneFingerGesture() && sliderHandler.getSingleDragY() > 0) {
-                    sliderImage.setTranslationY(sliderHandler.getSingleDragY() - sliderImage.getHeight() / 2);
-                    graspTopic.setPublisher_float(sliderHandler.getSingleDragNormalizedY());
-                } else {
-                    sliderHandler.resetValuesOnRelease();
-                    sliderImage.setTranslationY(sliderHandler.getHeight() / 2 - sliderImage.getHeight() / 2);
-                    graspTopic.setPublisher_float(sliderHandler.getSingleDragNormalizedY());
-                }
             }
         });
     }

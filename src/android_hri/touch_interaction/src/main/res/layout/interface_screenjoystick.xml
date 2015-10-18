@@ -25,75 +25,20 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
-            android:orientation="horizontal"
+        <ualberta.cs.robotics.android_hri.touch_interaction.widget.VerticalSliderView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/linearLayout"
+            android:id="@+id/sliderView"
             android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
             android:layout_above="@+id/virtual_joystick_pos"
             android:layout_alignRight="@+id/virtual_joystick_pos"
-            android:gravity="center_vertical|center_horizontal">
-
-            <RelativeLayout
-                android:layout_width="60dp"
-                android:layout_height="match_parent"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="13dp"
-                android:id="@+id/relativeLayout">
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/slider_b"
-                    android:id="@+id/imageSlider_b"
-                    android:layout_alignParentTop="true"
-                    android:layout_alignParentRight="true"
-                    android:layout_alignParentLeft="true" />
-                <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/slider_p"
-                    android:id="@+id/imageSlider_p"
-                    android:layout_alignParentTop="true"
-                    android:layout_alignParentLeft="true" />
-
-                <ImageView
-                    android:id="@+id/sliderControl"
-                    android:layout_height="match_parent"
-                    android:layout_width="match_parent"
-                    android:src="@drawable/empty"
-                    android:layout_alignParentLeft="true"
-                    android:layout_alignParentTop="true"/>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="30dp"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:text="@string/open_hand"
-                    android:id="@+id/graspingOpenTextView"
-                    android:gravity="center_vertical|center_horizontal"
-                    android:textColor="#ff32a9ff"
-                    android:layout_alignParentTop="true"
-                    android:layout_alignParentLeft="true" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="30dp"
-                    android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:text="@string/close_hand"
-                    android:id="@+id/graspingCloseTextView"
-                    android:gravity="center_vertical|center_horizontal"
-                    android:textColor="#ff32a9ff"
-                    android:layout_alignParentBottom="true"
-                    android:layout_alignParentLeft="true" />
-
-            </RelativeLayout>
-
-
-
-        </LinearLayout>
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginRight="30dp"
+            android:layout_marginLeft="30dp"
+            android:visibility="gone" />
 
         <ualberta.cs.robotics.android_hri.touch_interaction.widget.CustomVirtualJoystickView
             android:id="@+id/virtual_joystick_pos"
@@ -115,7 +60,7 @@
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:text="@string/rotation_control"
             android:id="@+id/rotationTextView"
-            android:layout_below="@+id/linearLayout"
+            android:layout_alignTop="@+id/virtual_joystick_rot"
             android:layout_alignLeft="@+id/virtual_joystick_rot"
             android:layout_alignParentRight="true"
             android:gravity="center_vertical|center_horizontal"
@@ -174,7 +119,7 @@
             android:id="@+id/imageHandOpen"
             android:src="@drawable/hand_open"
             android:alpha="0.8"
-            android:layout_alignBottom="@+id/linearLayout"
+            android:layout_above="@+id/virtual_joystick_rot"
             android:layout_alignParentRight="true"
             android:layout_alignLeft="@+id/virtual_joystick_rot"
             android:layout_marginLeft="25dp"

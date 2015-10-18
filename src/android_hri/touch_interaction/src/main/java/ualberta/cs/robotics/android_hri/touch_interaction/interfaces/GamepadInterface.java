@@ -53,7 +53,6 @@ public class GamepadInterface extends RosActivity {
     private Gamepad gamepad;
     private boolean running=true;
     private float maxTargetSpeed;
-    private boolean debug=true;
 
     public GamepadInterface() {
         super(TAG, TAG, URI.create(MainActivity.ROS_MASTER));;

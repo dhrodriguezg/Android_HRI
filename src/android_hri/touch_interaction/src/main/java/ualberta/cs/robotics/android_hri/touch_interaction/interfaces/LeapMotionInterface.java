@@ -94,7 +94,6 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
 
     private String status_ok="";
     private String status_fail="";
-    private boolean debug = true;
     private float[] lastPosition;
     private float maxTargetSpeed;
 

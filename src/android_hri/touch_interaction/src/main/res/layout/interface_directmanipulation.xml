@@ -50,46 +50,9 @@
         android:textOff="@string/emergency_off"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:id="@+id/emergencyButton"
-        android:checked="false"
-        android:textStyle="bold"
         android:layout_alignParentBottom="true"
-        android:layout_toRightOf="@+id/targetView" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/rotateStatus"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="@string/rotating"
-        android:textColor="#ff000000"
-        android:layout_centerVertical="true"
-        android:layout_alignParentLeft="true"
-        android:layout_marginLeft="5dp"
-        android:visibility="gone" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/moveStatus"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="@string/moving"
-        android:textColor="#ff000000"
-        android:layout_above="@+id/rotateStatus"
-        android:layout_alignLeft="@+id/rotateStatus"
-        android:layout_marginBottom="20dp"
-        android:visibility="gone" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/graspStatus"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="@string/grasping"
-        android:textColor="#ff000000"
-        android:layout_below="@+id/rotateStatus"
-        android:layout_alignLeft="@+id/rotateStatus"
-        android:layout_marginTop="20dp"
-        android:visibility="gone" />
-
+        android:layout_centerHorizontal="true"
+        android:checked="false"
+        android:textStyle="bold" />
 
 </RelativeLayout>
