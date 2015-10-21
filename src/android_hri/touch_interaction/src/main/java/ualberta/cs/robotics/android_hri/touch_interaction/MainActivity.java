@@ -25,10 +25,10 @@ public class MainActivity extends ActionBarActivity {
     private static final String TAG = "MainActivity";
     public static String ROS_MASTER = "";
 
-    public static final float WORKSPACE_X_OFFSET = 0.2306f;
-    public static final float WORKSPACE_WIDTH = 0.4889f;
-    public static final float WORKSPACE_Y_OFFSET = 0.9100f;
-    public static final float WORKSPACE_HEIGHT = 0.3546f;
+    public static float WORKSPACE_X_OFFSET = 0.2306f;
+    public static float WORKSPACE_WIDTH = 0.4889f;
+    public static float WORKSPACE_Y_OFFSET = 0.9100f;
+    public static float WORKSPACE_HEIGHT = 0.3546f;
 
     private EditText rosIP;
     private EditText rosPort;
@@ -52,6 +52,10 @@ public class MainActivity extends ActionBarActivity {
         interface_2 = (ImageView) findViewById(R.id.imageViewPreviewDragging);
         interface_3 = (ImageView) findViewById(R.id.imageViewPreviewGamepad);
         interface_4 = (ImageView) findViewById(R.id.imageViewPreviewLeapMotion);
+        WORKSPACE_X_OFFSET=Float.parseFloat(getString(R.string.workspace_xoffset));
+        WORKSPACE_WIDTH=Float.parseFloat(getString(R.string.workspace_width));
+        WORKSPACE_Y_OFFSET=Float.parseFloat(getString(R.string.workspace_yoffset));
+        WORKSPACE_HEIGHT=Float.parseFloat(getString(R.string.workspace_height));
 
         Button calibrationButton = (Button) findViewById(R.id.calibrationButton);
         calibrationButton.setOnClickListener(new View.OnClickListener() {

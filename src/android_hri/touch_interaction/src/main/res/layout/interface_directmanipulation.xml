@@ -9,17 +9,16 @@
         android:id="@+id/imageViewCenter"
         android:layout_height="match_parent"
         android:layout_width="match_parent"
-        android:src="@drawable/loading" />
+        android:src="@drawable/loading_wide" />
 
     <ImageView
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:src="@drawable/target"
         android:id="@+id/positionView"
-        android:layout_alignParentBottom="true"
+        android:layout_centerVertical="true"
         android:layout_alignParentRight="true"
         android:layout_marginRight="120dp"
-        android:layout_marginBottom="6dp"
         android:alpha="0.3" />
 
     <ImageView
@@ -27,11 +26,9 @@
         android:layout_height="50dp"
         android:src="@drawable/target_cool"
         android:id="@+id/targetView"
-        android:layout_alignParentBottom="true"
+        android:layout_centerVertical="true"
         android:layout_alignParentRight="true"
-        android:layout_marginRight="120dp"
-        android:layout_marginBottom="6dp"
-        android:alpha="1.0"/>
+        android:layout_marginRight="120dp" />
 
     <TextView
         android:layout_width="match_parent"

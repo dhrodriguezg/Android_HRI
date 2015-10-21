@@ -159,12 +159,8 @@ public class GamepadInterface extends RosActivity {
         emergencyTopic.setPublisher_bool(true);
         /*** The following code was created because sometimes the target image is not well positioned when the app is launched ***/
         int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
-        int py = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics()); //convert pid to pixel
         RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
-        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
         params.rightMargin=px;
-        params.bottomMargin=py;
         running=true;
     }
 
@@ -237,10 +233,14 @@ public class GamepadInterface extends RosActivity {
     private void updateRotation(){
         float rotX=-gamepad.getAxisValue(MotionEvent.AXIS_Z);
         float rotY=-gamepad.getAxisValue(MotionEvent.AXIS_RZ);
+
         if(Math.abs(rotX) > 0.1 || Math.abs(rotY) > 0.1){
             //send rotations
-            rotationTopic.getPublisher_point()[0]=rotY;
-            rotationTopic.getPublisher_point()[1]=rotX;
+            rotationTopic.getPublisher_point()[0]=0f;
+            if(Math.abs(rotX)>Math.abs(rotY))
+                rotationTopic.getPublisher_point()[1]=rotX;
+            else
+                rotationTopic.getPublisher_point()[1]=-rotY;
             rotationTopic.publishNow();
         }
     }

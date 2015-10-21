@@ -32,11 +32,13 @@
     <string name="grasp">Agarre</string>
     <string name="start">Inicio</string>
     <string name="finish">Fin</string>
+    <string name="quick">IR</string>
     <string name="enable">Habilitar</string>
     <string name="disable">Deshabilitar</string>
     <string name="confirm_point">Confirmar Punto</string>
     <string name="task_position_msg">Llendo al lugar de la tarea</string>
     <string name="initial_position_msg">Llendo a la posición inicial</string>
+    <string name="quick_position_msg">Rápida posición inicial</string>
 
     <!-- DIRECTMANIPULATION TEXT -->
     <string name="rotating">Rotando</string>

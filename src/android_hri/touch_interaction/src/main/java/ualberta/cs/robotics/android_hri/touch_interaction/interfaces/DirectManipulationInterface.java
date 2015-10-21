@@ -110,7 +110,7 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
         graspTopic.setPublishingFreq(500);
 
         rotationTopic = new PointTopic();
-        rotationTopic.publishTo(getString(R.string.topic_rotationrel), false, 10);
+        rotationTopic.publishTo(getString(R.string.topic_rotationabs), false, 10);
 
         interfaceNumberTopic = new Int32Topic();
         interfaceNumberTopic.publishTo(getString(R.string.topic_interfacenumber), true, 0);
@@ -186,12 +186,8 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
         emergencyTopic.setPublisher_bool(true);
         /*** The following code was created because sometimes the target image is not well positioned when the app is launched ***/
         int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
-        int py = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics()); //convert pid to pixel
         RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
-        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
         params.rightMargin=px;
-        params.bottomMargin=py;
         running=true;
     }
     

@@ -10,6 +10,7 @@ import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -47,11 +48,12 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
     private final int DISABLED = Color.RED;
     private final int ENABLED = Color.GREEN;
     private final int TRANSITION = Color.rgb(255,195,77); //orange
-    private final int MAX_TASK_COUNTER = 90;
+    private final int MAX_TASK_COUNTER = 30;
 
     private int confirmCounter;
     private boolean isConfirm=false;
     private boolean isEnable=true;
+    private boolean isReset=true;
 
     private NodeMainExecutorService nodeMain;
     private Controller mController;
@@ -74,7 +76,8 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
     private Switch rightHanded;
     private CheckBox showLog;
     private CheckBox showHands;
-    private ImageView targetMove;
+    private ImageView targetImage;
+    private ImageView positionImage;
 
     //left hand
     private ImageView leftHand;
@@ -113,10 +116,11 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
         status_ok=getString(R.string.status_ok);
         status_fail=getString(R.string.status_fail);
 
-        maxTargetSpeed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, Float.parseFloat(getString(R.string.max_target_speed)), getResources().getDisplayMetrics());
+        maxTargetSpeed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, Float.parseFloat(getString(R.string.max_target_speed)), getResources().getDisplayMetrics())*2.1f;
         msgText = (TextView) findViewById(R.id.msgTextView);
 
-        targetMove = (ImageView) findViewById(R.id.imageTarget);
+        targetImage = (ImageView) findViewById(R.id.imageTarget);
+        positionImage = (ImageView) findViewById(R.id.positionView);
         leftHand = (ImageView) findViewById(R.id.leftHand);
         leftIndex = (ImageView) findViewById(R.id.leftIndexFinger);
         leftMiddle = (ImageView) findViewById(R.id.leftMiddleFinger);
@@ -217,7 +221,8 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                lastPosition = new float[]{targetMove.getX()+targetMove.getWidth()/2, targetMove.getY()+targetMove.getHeight()/2};
+                isReset=true;
+                lastPosition = new float[]{targetImage.getX()+ targetImage.getWidth()/2, targetImage.getY()+ targetImage.getHeight()/2};
             }
         };
         threadInit.start();
@@ -226,6 +231,9 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
     @Override
     public void onResume() {
         super.onResume();
+        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
+        params.rightMargin=px;
         emergencyTopic.setPublisher_bool(true);
     }
     
@@ -288,6 +296,17 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
         if(!isConfirm)
             return;
 
+        float[] wristPoint = calculatePoint(imageStreamNodeMain.getDrawable().getIntrinsicWidth()*x, imageStreamNodeMain.getDrawable().getIntrinsicHeight()*z);
+        final float wristx = wristPoint[0] - positionImage.getWidth()/2;
+        final float wristy = wristPoint[1] - positionImage.getHeight()/2;
+        this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                positionImage.setX(wristx);
+                positionImage.setY(wristy);
+            }
+        });
+
         float[] smoothedPos = new float[]{x*(float)imageStreamNodeMain.getWidth(),z*(float)imageStreamNodeMain.getHeight()};
         smoothMovement(smoothedPos);
         lastPosition=smoothedPos;
@@ -298,15 +317,14 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
         positionTopic.getPublisher_point()[1] = MainActivity.WORKSPACE_X_OFFSET - x*MainActivity.WORKSPACE_WIDTH;
         positionTopic.publishNow();
 
-        float[] point = calculatePoint(imageStreamNodeMain.getDrawable().getIntrinsicWidth()*x, imageStreamNodeMain.getDrawable().getIntrinsicHeight()*z);
-        final float xm = point[0] - targetMove.getWidth()/2;
-        final float ym = point[1] - targetMove.getHeight()/2;
+        float[] smoothedPoint = calculatePoint(imageStreamNodeMain.getDrawable().getIntrinsicWidth()*x, imageStreamNodeMain.getDrawable().getIntrinsicHeight()*z);
+        final float smoothedx = smoothedPoint[0] - targetImage.getWidth()/2;
+        final float smoothedy = smoothedPoint[1] - targetImage.getHeight()/2;
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                targetMove.setX(xm);
-                targetMove.setY(ym);
-                targetMove.setAlpha(0.4f);
+                targetImage.setX(smoothedx);
+                targetImage.setY(smoothedy);
             }
         });
     }
@@ -338,22 +356,20 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
             public void run() {
                 switch (task) {
                     case -1: // nonvalid gesture (reset): unused
-                        break;
                     case 0: // all fingers closed (reset): unused
-                        break;
-
-                    case 1: //move: unused
-                        break;
-                    case 2: //rotate: unused
-                        break;
-                    case 3: //grasp: unused
-                        break;
-                    case 4: //AAAAAALLLLL: unused
-                        break;
+                    case 1: //move selected: unused
+                    case 2: //rotate selected: unused
+                    case 3: //grasp selected: unused
+                    case 4: //ALL selected: unused
                     case 5: // all fingers opened (no task): unused
+                        confirmCounter = 0;
+                        isReset = true;
                         break;
                     case 6: //confirm
+                        if(!isReset)
+                            return;
                         if (confirmCounter > MAX_TASK_COUNTER) {
+                            isReset=false;
                             confirmCounter = 0;
                             isConfirm = !isConfirm;
                             if (isConfirm) {

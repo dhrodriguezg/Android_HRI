@@ -32,7 +32,7 @@ public class ScrollerView extends RelativeLayout{
     private boolean updateView;
     private int BACKGROUND = Color.LTGRAY;
     private int BORDER = Color.argb(191,0,0,0);
-    private boolean revertDirection;
+    private boolean percentage;
 
     private ImageView top;
     private ImageView bottom;
@@ -65,7 +65,7 @@ public class ScrollerView extends RelativeLayout{
         /** Init Layouts**/
         this.context=context;
         updateView = true;
-        revertDirection=false;
+        percentage = false;
         mainLayout = this;
         scrollView = new ScrollView(context);
         viewContainer = new LinearLayout(context);
@@ -111,19 +111,7 @@ public class ScrollerView extends RelativeLayout{
         top.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.scroller_top));
         top.setScaleType(ImageView.ScaleType.FIT_XY);
 
-        /** Populate container**/
         populateContainer();
-        /*
-        vectorText= new Vector<>();
-        for(int n=0;n< maxTotalItems + maxVisibleItems -1;n++){
-            TextView tv = new TextView(context);
-            tv.setBackgroundColor(BACKGROUND);
-            tv.setGravity(Gravity.CENTER);
-            tv.setText("" + n);
-            vectorText.add(tv);
-            viewContainer.addView(tv);
-        }
-        activeView=vectorText.elementAt(maxVisibleItems /2);*/
     }
 
     private void populateContainer(){
@@ -151,19 +139,37 @@ public class ScrollerView extends RelativeLayout{
             TextView tv = vectorText.elementAt(i);
             tv.setHeight(height);
 
-            float value = (bottomValue - topValue)*(float)(i- maxVisibleItems /2)/(float)(maxTotalItems -1) + topValue;
+            float value;
+            float bottomValue;
+            float topValue;
+            if(percentage){
+                if(this.topValue > this.bottomValue){
+                    topValue = 1.f;
+                    bottomValue = 0.f;
+                }else{
+                    topValue = 0.f;
+                    bottomValue = 1.f;
+                }
+            }else{
+                bottomValue = this.bottomValue;
+                topValue = this.topValue;
+            }
+            value = (bottomValue - topValue) * (float) (i - maxVisibleItems / 2) / (float) (maxTotalItems -1) + topValue;
             if(i-1 < maxVisibleItems /2)
                 value= topValue;
             if(i > vectorText.size()- maxVisibleItems /2-1)
-                value= bottomValue;
+                value = bottomValue;
 
-            tv.setText(String.format("%.2f", value));
+            if(percentage)
+                tv.setText(String.format("%.1f", 100.f*value)+"%");
+            else
+                tv.setText(String.format("%.2f", value));
             tv.setTextSize(fontSize);
         }
         scrollView.post(new Runnable() {
             @Override
             public void run() {
-                scrollView.scrollTo(0, (int)vectorText.elementAt(initialPosition - 1).getY());
+                scrollView.scrollTo(0, (int) vectorText.elementAt(initialPosition - 1).getY());
             }
         });
         updateView = false;
@@ -197,6 +203,14 @@ public class ScrollerView extends RelativeLayout{
         if(selection<min)
             selection=min;
         return selection;
+    }
+
+    public void showPercentage(){
+        percentage = true;
+    }
+
+    public void showVales(){
+        percentage = false;
     }
 
     public void beginOnTop(){

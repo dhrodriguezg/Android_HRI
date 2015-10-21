@@ -88,14 +88,15 @@ public class ScreenJoystickInterface extends RosActivity {
         graspHandler = (ScrollerView) findViewById(R.id.scrollerView);
         graspHandler.setTopValue(0.f);
         graspHandler.setBottomValue(2.f);
-        graspHandler.setFontSize(16);
+        graspHandler.setFontSize(13);
         graspHandler.setMaxTotalItems(8);
         graspHandler.setMaxVisibleItems(7);
         graspHandler.beginOnBottom();
+        graspHandler.showPercentage();
 
         graspTopic = new Float32Topic();
         graspTopic.setPublishingFreq(500);
-        graspTopic.publishTo(getString(R.string.topic_graspingrel), true, 0);
+        graspTopic.publishTo(getString(R.string.topic_graspingabs), true, 0);
 
         positionTopic =  new PointTopic();
         positionTopic.publishTo(getString(R.string.topic_positionabs), false, 50);
@@ -170,12 +171,8 @@ public class ScreenJoystickInterface extends RosActivity {
         emergencyTopic.setPublisher_bool(true);
         /*** The following code was created because sometimes the target image is not well positioned when the app is launched ***/
         int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
-        int py = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics()); //convert pid to pixel
         RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
-        params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
-        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
         params.rightMargin=px;
-        params.bottomMargin=py;
         running=true;
     }
 
@@ -245,8 +242,11 @@ public class ScreenJoystickInterface extends RosActivity {
         float rotY=joystickRotationNodeMain.getAxisX();
         if(Math.abs(rotX) > 0.1 || Math.abs(rotY) > 0.1){
             //send rotations
-            rotationTopic.getPublisher_point()[0]=rotY;
-            rotationTopic.getPublisher_point()[1]=rotX;
+            rotationTopic.getPublisher_point()[0]=0;
+            if(Math.abs(rotX)>Math.abs(rotY))
+                rotationTopic.getPublisher_point()[1]=rotX;
+            else
+                rotationTopic.getPublisher_point()[1]=-rotY;
             rotationTopic.publishNow();
         }
     }

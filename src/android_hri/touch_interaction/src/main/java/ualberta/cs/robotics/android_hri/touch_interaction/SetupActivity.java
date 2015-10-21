@@ -84,11 +84,14 @@ public class SetupActivity extends RosActivity {
     private TextView statusSpread_OFF;
     private TextView statusGrasp_OFF;
 
+    private ToggleButton buttonQuick;
+
     private AndroidNode androidNode;
     private BooleanTopic emergencyTopic;
     private Int32Topic interfaceNumberTopic;
     private BooleanTopic setupONTopic;
     private BooleanTopic setupOFFTopic;
+    private BooleanTopic setupQuickTopic;
     private Int32Topic pos1StateTopic;
     private Int32Topic pos2StateTopic;
     private Int32Topic graspStateTopic;
@@ -135,6 +138,9 @@ public class SetupActivity extends RosActivity {
         setupOFFTopic = new BooleanTopic();
         setupOFFTopic.publishTo(getString(R.string.topic_setup_off), false, 100);
 
+        setupQuickTopic = new BooleanTopic();
+        setupQuickTopic.publishTo(getString(R.string.topic_setup_quick), false, 100);
+
         pos1StateTopic = new Int32Topic();
         pos1StateTopic.subscribeTo(getString(R.string.topic_setup_pos1state));
         pos2StateTopic = new Int32Topic();
@@ -168,7 +174,7 @@ public class SetupActivity extends RosActivity {
         imageStream.setScaleType(ImageView.ScaleType.MATRIX);
 
         androidNode = new AndroidNode(NODE_NAME);
-        androidNode.addTopics(pos1StateTopic, pos2StateTopic, graspStateTopic, spreadStateTopic, trackerPointTopic, targetPointTopic, emergencyTopic, setupONTopic, setupOFFTopic, interfaceNumberTopic);
+        androidNode.addTopics(pos1StateTopic, pos2StateTopic, graspStateTopic, spreadStateTopic, trackerPointTopic, targetPointTopic, emergencyTopic, setupONTopic, setupOFFTopic, setupQuickTopic, interfaceNumberTopic);
         androidNode.addNodeMain(imageStream);
         androidNode.addService(testService);
 
@@ -210,6 +216,25 @@ public class SetupActivity extends RosActivity {
                     setupOFFTopic.setPublisher_bool(false);
                     setupOFFTopic.publishNow();
                     buttonON.setEnabled(true);
+                }
+            }
+        });
+
+        buttonQuick = (ToggleButton)findViewById(R.id.buttonQuick);
+        buttonQuick.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
+                if (isChecked) {
+                    Toast.makeText(getApplicationContext(), getString(R.string.quick_position_msg), Toast.LENGTH_LONG).show();
+                    setupQuickTopic.setPublisher_bool(true);
+                    setupQuickTopic.publishNow();
+                    buttonON.setEnabled(false);
+                    buttonOFF.setEnabled(false);
+                } else {
+                    setupQuickTopic.setPublisher_bool(false);
+                    setupQuickTopic.publishNow();
+                    buttonON.setEnabled(true);
+                    buttonOFF.setEnabled(true);
                 }
             }
         });
