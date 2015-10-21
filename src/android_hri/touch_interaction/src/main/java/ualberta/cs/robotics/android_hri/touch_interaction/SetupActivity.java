@@ -6,6 +6,7 @@ import android.graphics.Matrix;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -37,21 +38,6 @@ public class SetupActivity extends RosActivity {
 	private static final String TAG = "SetupActivity";
     private static final String NODE_NAME="/android_"+TAG.toLowerCase();
 
-    /*
-    private static final String STREAMING= "/image_converter/output_video/compressed";
-    private static final String STREAMING_MSG = "sensor_msgs/CompressedImage";
-    private static final String EMERGENCY_STOP = "/android/emergency_stop";
-    private static final String TRACKER_POINT ="/android/tracker_point";
-    private static final String TARGET_POINT="/android/target_point";
-    private static final String INTERFACE_NUMBER="/android/interface_number";
-    private static final String SETUP_ON="/android/setup/on";
-    private static final String SETUP_OFF="/android/setup/off";
-    private static final String POS1_STATE="/android/setup/pos1_state";
-    private static final String POS2_STATE="/android/setup/pos2_state";
-    private static final String GRASP_STATE="/android/setup/grasp_state";
-    private static final String SPREAD_STATE="/android/setup/spread_state";
-    */
-
     private final int DISABLED = Color.RED;
     private final int ENABLED = Color.GREEN;
     private final int TRANSITION = Color.rgb(255,195,77); //orange
@@ -61,7 +47,7 @@ public class SetupActivity extends RosActivity {
     private static final boolean debug = true;
     private MultiTouchArea dragHandler = null;
 
-    private RosImageView<CompressedImage> imageStream;
+    private RosImageView<CompressedImage> imageStreamNodeMain;
     private boolean running = true;
     private boolean updateCenter=false;
 
@@ -100,8 +86,6 @@ public class SetupActivity extends RosActivity {
     private PointTopic targetPointTopic;
     private TestService testService;
 
-
-
     private boolean firstRun=true;
     private static final int MAX_TRACKERS=2;
     private int trackerNumber=0;
@@ -128,9 +112,16 @@ public class SetupActivity extends RosActivity {
         statusSpread_OFF = (TextView) findViewById(R.id.statusSpread_OFF);
         statusGrasp_OFF = (TextView) findViewById(R.id.statusGrasp_OFF);
 
-        imageStream = (RosImageView<CompressedImage>) findViewById(R.id.streamCalibration);
-        imageStream.setTopicName(getString(R.string.topic_streaming));
-        imageStream.setMessageType(getString(R.string.topic_streaming_msg));
+        imageStreamNodeMain = (RosImageView<CompressedImage>) findViewById(R.id.streamingView);
+        imageStreamNodeMain.setTopicName(getString(R.string.topic_streaming));
+        imageStreamNodeMain.setMessageType(getString(R.string.topic_streaming_msg));
+        imageStreamNodeMain.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                imageStreamNodeMain.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                onPostLayout();
+            }
+        });
 
         setupONTopic = new BooleanTopic();
         setupONTopic.publishTo(getString(R.string.topic_setup_on), false, 100);
@@ -170,12 +161,12 @@ public class SetupActivity extends RosActivity {
         testService.clientOf(getString(R.string.service_test));
         testService.serverOf(getString(R.string.service_test));
 
-        imageStream.setMessageToBitmapCallable(new BitmapFromCompressedImage());
-        imageStream.setScaleType(ImageView.ScaleType.MATRIX);
+        imageStreamNodeMain.setMessageToBitmapCallable(new BitmapFromCompressedImage());
+        imageStreamNodeMain.setScaleType(ImageView.ScaleType.MATRIX);
 
         androidNode = new AndroidNode(NODE_NAME);
         androidNode.addTopics(pos1StateTopic, pos2StateTopic, graspStateTopic, spreadStateTopic, trackerPointTopic, targetPointTopic, emergencyTopic, setupONTopic, setupOFFTopic, setupQuickTopic, interfaceNumberTopic);
-        androidNode.addNodeMain(imageStream);
+        androidNode.addNodeMain(imageStreamNodeMain);
         androidNode.addService(testService);
 
         buttonON = (ToggleButton)findViewById(R.id.buttonON) ;
@@ -245,7 +236,7 @@ public class SetupActivity extends RosActivity {
             public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
                 if(isChecked){
                     Toast.makeText(getApplicationContext(), getString(R.string.emergency_on_msg), Toast.LENGTH_LONG).show();
-                    imageStream.setBackgroundColor(Color.RED);
+                    imageStreamNodeMain.setBackgroundColor(Color.RED);
                     emergencyTopic.setPublisher_bool(false);
 
                     testService.setA(5);
@@ -253,13 +244,13 @@ public class SetupActivity extends RosActivity {
                     testService.callService();
                 }else{
                     Toast.makeText(getApplicationContext(), getString(R.string.emergency_off_msg), Toast.LENGTH_LONG).show();
-                    imageStream.setBackgroundColor(Color.TRANSPARENT);
+                    imageStreamNodeMain.setBackgroundColor(Color.TRANSPARENT);
                     emergencyTopic.setPublisher_bool(true);
                 }
             }
         });
 
-        dragHandler = new MultiTouchArea(this, imageStream);
+        dragHandler = new MultiTouchArea(this, imageStreamNodeMain);
         dragHandler.enableScaling();
         dragHandler.enableOneFingerGestures();
         dragHandler.enableScroll();
@@ -278,6 +269,10 @@ public class SetupActivity extends RosActivity {
             }
         };
         threadTarget.start();
+    }
+
+    private void onPostLayout(){
+
     }
 
     @Override
@@ -473,10 +468,10 @@ public class SetupActivity extends RosActivity {
             @Override
             public void run() {
 
-                float viewWidth=imageStream.getWidth();
-                float viewHeight=imageStream.getHeight();
-                float streamWidth=imageStream.getDrawable().getIntrinsicWidth();
-                float streamHeight=imageStream.getDrawable().getIntrinsicHeight();
+                float viewWidth= imageStreamNodeMain.getWidth();
+                float viewHeight= imageStreamNodeMain.getHeight();
+                float streamWidth= imageStreamNodeMain.getDrawable().getIntrinsicWidth();
+                float streamHeight= imageStreamNodeMain.getDrawable().getIntrinsicHeight();
 
                 float focusX=viewWidth / 2;
                 float focusY=viewHeight / 2;
@@ -537,7 +532,7 @@ public class SetupActivity extends RosActivity {
                 finalTMatrix.setScale(scale, scale);
                 finalTMatrix.postTranslate(finalScaledCenteredX + scaleCorrectionX, finalScaledCenteredY + scaleCorrectionY);
 
-                imageStream.setImageMatrix(finalTMatrix);
+                imageStreamNodeMain.setImageMatrix(finalTMatrix);
 
                 if(dragHandler.isDetectingOneFingerGesture()){
                     updateCenter=false;

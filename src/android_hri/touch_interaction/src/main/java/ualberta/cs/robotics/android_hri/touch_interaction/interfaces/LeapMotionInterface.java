@@ -6,6 +6,7 @@ import android.graphics.Matrix;
 import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.MenuItem;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -71,7 +72,7 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
     private PointTopic positionTopic;
     private PointTopic rotationTopic;
     private Float32Topic graspTopic;
-    private StringTopic stringTopic;
+    private StringTopic logTopic;
 
     private Switch rightHanded;
     private CheckBox showLog;
@@ -116,10 +117,10 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
         status_ok=getString(R.string.status_ok);
         status_fail=getString(R.string.status_fail);
 
-        maxTargetSpeed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, Float.parseFloat(getString(R.string.max_target_speed)), getResources().getDisplayMetrics())*2.1f;
+        maxTargetSpeed = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, Float.parseFloat(getString(R.string.max_target_speed)), getResources().getDisplayMetrics())*3.f;
         msgText = (TextView) findViewById(R.id.msgTextView);
 
-        targetImage = (ImageView) findViewById(R.id.imageTarget);
+        targetImage = (ImageView) findViewById(R.id.targetView);
         positionImage = (ImageView) findViewById(R.id.positionView);
         leftHand = (ImageView) findViewById(R.id.leftHand);
         leftIndex = (ImageView) findViewById(R.id.leftIndexFinger);
@@ -136,23 +137,28 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
 
         showLog = (CheckBox) findViewById(R.id.showLog);
 
-        imageStreamNodeMain = (RosImageView<CompressedImage>) findViewById(R.id.imageViewCenter);
-
+        imageStreamNodeMain = (RosImageView<CompressedImage>) findViewById(R.id.streamingView);
         imageStreamNodeMain.setTopicName(getString(R.string.topic_streaming));
-
         imageStreamNodeMain.setMessageType(getString(R.string.topic_streaming_msg));
         imageStreamNodeMain.setMessageToBitmapCallable(new BitmapFromCompressedImage());
         imageStreamNodeMain.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        imageStreamNodeMain.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                imageStreamNodeMain.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                onPostLayout();
+            }
+        });
 
         positionTopic = new PointTopic();
         positionTopic.publishTo(getString(R.string.topic_positionabs), false, 10);
 
-        graspTopic = new Float32Topic();
-        graspTopic.publishTo(getString(R.string.topic_graspingabs), false, 2);
-        graspTopic.setPublishingFreq(500);
-
         rotationTopic = new PointTopic();
         rotationTopic.publishTo(getString(R.string.topic_rotationabs), false, 10);
+
+        graspTopic = new Float32Topic();
+        graspTopic.setPublishingFreq(500);
+        graspTopic.publishTo(getString(R.string.topic_graspingabs), true, 0);
 
         interfaceNumberTopic = new Int32Topic();
         interfaceNumberTopic.publishTo(getString(R.string.topic_interfacenumber), true, 0);
@@ -164,12 +170,12 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
         emergencyTopic.setPublishingFreq(100);
         emergencyTopic.setPublisher_bool(true);
 
-        stringTopic = new StringTopic();
-        stringTopic.publishTo(getString(R.string.topic_lmlog), false, 10);
-        stringTopic.setPublishingFreq(100);
+        logTopic = new StringTopic();
+        logTopic.publishTo(getString(R.string.topic_lmlog), false, 10);
+        logTopic.setPublishingFreq(100);
 
         androidNode = new AndroidNode(NODE_NAME);
-        androidNode.addTopics(positionTopic, graspTopic, rotationTopic, emergencyTopic, stringTopic, interfaceNumberTopic);
+        androidNode.addTopics(positionTopic, graspTopic, rotationTopic, emergencyTopic, logTopic, interfaceNumberTopic);
         androidNode.addNodeMain(imageStreamNodeMain);
 
         mController = new Controller();
@@ -214,18 +220,13 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
             }
         });
 
-        Thread threadInit = new Thread(){
-            public void run(){
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                isReset=true;
-                lastPosition = new float[]{targetImage.getX()+ targetImage.getWidth()/2, targetImage.getY()+ targetImage.getHeight()/2};
-            }
-        };
-        threadInit.start();
+    }
+
+    private void onPostLayout(){
+        lastPosition = new float[]{targetImage.getX()+ targetImage.getWidth()/2, targetImage.getY()+ targetImage.getHeight()/2};
+        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
+        params.rightMargin=px;
     }
 
     @Override
@@ -398,8 +399,8 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
 
     @Override
     public void onUpdateMsg(final String msg) {
-        stringTopic.setPublisher_string(msg);
-        stringTopic.publishNow();
+        logTopic.setPublisher_string(msg);
+        logTopic.publishNow();
 
         runOnUiThread(new Runnable() {
             public void run() {

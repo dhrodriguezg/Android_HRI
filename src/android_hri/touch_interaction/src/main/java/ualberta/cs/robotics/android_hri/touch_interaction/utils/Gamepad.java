@@ -23,7 +23,7 @@ public class Gamepad { //well...not really a listener.
     private HashMap<Integer,Integer> mButton;
 
     public Gamepad(Activity activity){
-        isAttached =isGamepadConnected();
+        isAttached=isGamepadConnected();
         this.activity=activity;
         setupMaps();
     }

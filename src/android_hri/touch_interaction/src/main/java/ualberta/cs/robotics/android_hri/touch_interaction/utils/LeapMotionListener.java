@@ -2,7 +2,6 @@ package ualberta.cs.robotics.android_hri.touch_interaction.utils;
 
 import android.app.Activity;
 import android.os.Environment;
-import android.util.Log;
 
 import com.leapmotion.leap.Controller;
 import com.leapmotion.leap.Finger;
@@ -28,8 +27,6 @@ public class LeapMotionListener extends Listener {
     private static final float MAX_POS_X =  200;
     private static final float MAX_POS_Y =  600;
     private static final float MAX_POS_Z =  200;
-    private static final float MIN_GRAP =  30;
-    private static final float MAX_GRAP =  80;
     private static final float OPEN_THRESHOLD =  0.17f;
 
     private LeapMotionFrameListener mListener;
@@ -39,19 +36,20 @@ public class LeapMotionListener extends Listener {
     private LowPassFilter rotationFilter;
     private LowPassFilter graspFilter;
     private boolean rightHanded;
+    private boolean isAttached;
 
     private String hands, fingers, rightHand, leftHand, actionHand, taskHand;
     private String palm, wrist, index, middle ,ring, pinky, thumb;
     private String selectTask, moveTask, rotateTask, graspTask, distances;
     private String initialized, connected, disconnected, exited;
     private String task, taskNaN, task5, task6;
-
-    StringBuffer palmPos = new StringBuffer();
+    private StringBuffer palmPos = new StringBuffer();
 
     public LeapMotionListener(Activity activity, LeapMotionFrameListener listener) {
         mActivity = activity;
         mListener = listener;
         rightHanded = true;
+        isAttached = false;
         graspFilter = new LowPassFilter();
         rotationFilter = new LowPassFilter();
         leftHandFilter = new LowPassFilter[7];
@@ -89,7 +87,7 @@ public class LeapMotionListener extends Listener {
     }
 
     public void onInit(Controller controller) {
-        Log.d(TAG, initialized);
+        mListener.onUpdateMsg(initialized);
     }
 
     public void onConnect(Controller controller) {
@@ -105,6 +103,7 @@ public class LeapMotionListener extends Listener {
     }
 
     public void onFrame(Controller controller) {
+        isAttached = true;
         StringBuffer msg = new StringBuffer();
         Frame frame = controller.frame();
         boolean isRight = false;
@@ -158,12 +157,6 @@ public class LeapMotionListener extends Listener {
         for(int n = 0; n < rightHandFilter.length; n++)
             rightHandFilter[n].applyFilter1(rightPositions[n]);
 
-        /*float radius = hand.sphereRadius();
-        if (radius > MAX_GRAP)
-            radius = MAX_GRAP;
-        else if (radius < MIN_GRAP)
-            radius = MIN_GRAP;
-        float grasp = (radius - MIN_GRAP) / (MAX_GRAP - MIN_GRAP); */
         Vector handNormal = new Vector(hand.palmNormal());
         handNormal.setX(dir2Radians(handNormal.getX()));
         handNormal.setY(dir2Radians(handNormal.getY()));
@@ -356,6 +349,14 @@ public class LeapMotionListener extends Listener {
         public void onUpdateMsg(String msg);
         public void onMoveLeftHand(Vector[] positions);
         public void onMoveRightHand(Vector[] positions);
+    }
+
+    public boolean isAttached() {
+        return isAttached;
+    }
+
+    public void setIsAttached(boolean isAttached) {
+        this.isAttached = isAttached;
     }
 
     private void saveFile(String text){

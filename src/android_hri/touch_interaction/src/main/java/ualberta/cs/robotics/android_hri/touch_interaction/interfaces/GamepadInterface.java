@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -67,13 +68,14 @@ public class GamepadInterface extends RosActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        imageStreamNodeMain = (RosImageView<CompressedImage>) findViewById(R.id.visualization);
+        imageStreamNodeMain = (RosImageView<CompressedImage>) findViewById(R.id.streamingView);
 
         maxTargetSpeed=TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, Float.parseFloat(getString(R.string.max_target_speed)), getResources().getDisplayMetrics());
-        targetImage = (ImageView) findViewById(R.id.imageTarget);
+        targetImage = (ImageView) findViewById(R.id.targetView);
 
         positionTopic = new PointTopic();
         positionTopic.publishTo(getString(R.string.topic_positionabs), false, 10);
+
         rotationTopic = new PointTopic();
         rotationTopic.publishTo(getString(R.string.topic_rotationrel), false, 10);
 
@@ -101,6 +103,13 @@ public class GamepadInterface extends RosActivity {
         imageStreamNodeMain.setMessageType(getString(R.string.topic_streaming_msg));
         imageStreamNodeMain.setMessageToBitmapCallable(new BitmapFromCompressedImage());
         imageStreamNodeMain.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        imageStreamNodeMain.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                imageStreamNodeMain.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                onPostLayout();
+            }
+        });
 
         ToggleButton emergencyStop = (ToggleButton)findViewById(R.id.emergencyButton) ;
         emergencyStop.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -140,10 +149,9 @@ public class GamepadInterface extends RosActivity {
                 while(running){
                     try {
                         Thread.sleep(10);
-                        sendGamepadValues();
-                        updateGrasp();
                         updatePosition();
                         updateRotation();
+                        updateGrasping();
                     } catch (InterruptedException e) {
                         e.getStackTrace();
                     }
@@ -153,14 +161,16 @@ public class GamepadInterface extends RosActivity {
         threadGamepad.start();
     }
 
+    private void onPostLayout(){
+        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
+        params.rightMargin=px;
+    }
+
     @Override
     public void onResume() {
         super.onResume();
         emergencyTopic.setPublisher_bool(true);
-        /*** The following code was created because sometimes the target image is not well positioned when the app is launched ***/
-        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
-        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
-        params.rightMargin=px;
         running=true;
     }
 
@@ -190,15 +200,9 @@ public class GamepadInterface extends RosActivity {
         return gamepad.dispatchKeyEvent(keyEvent);
     }
 
-    private void updateGrasp(){
-        float graspP=gamepad.getAxisValue(MotionEvent.AXIS_RTRIGGER);
-        float graspN=-gamepad.getAxisValue(MotionEvent.AXIS_LTRIGGER);
-        if(gamepad.isAttached()){
-            graspTopic.setPublisher_float(graspP + graspN);
-        }
-    }
-
     private void updatePosition(){
+        if(!gamepad.isAttached())
+            return;
         float posX=-maxTargetSpeed*gamepad.getAxisValue(MotionEvent.AXIS_X);
         float posY=-maxTargetSpeed*gamepad.getAxisValue(MotionEvent.AXIS_Y);
         if(Math.abs(posX) > 0.1 || Math.abs(posY) > 0.1){
@@ -226,17 +230,18 @@ public class GamepadInterface extends RosActivity {
                     }
                 });
             }
-
         }
     }
 
     private void updateRotation(){
+        if(!gamepad.isAttached())
+            return;
         float rotX=-gamepad.getAxisValue(MotionEvent.AXIS_Z);
         float rotY=-gamepad.getAxisValue(MotionEvent.AXIS_RZ);
 
         if(Math.abs(rotX) > 0.1 || Math.abs(rotY) > 0.1){
             //send rotations
-            rotationTopic.getPublisher_point()[0]=0f;
+            rotationTopic.getPublisher_point()[0]=0.f;
             if(Math.abs(rotX)>Math.abs(rotY))
                 rotationTopic.getPublisher_point()[1]=rotX;
             else
@@ -245,8 +250,12 @@ public class GamepadInterface extends RosActivity {
         }
     }
 
-    private void sendGamepadValues(){
-
+    private void updateGrasping(){
+        if(!gamepad.isAttached())
+            return;
+        float graspP=gamepad.getAxisValue(MotionEvent.AXIS_RTRIGGER);
+        float graspN=-gamepad.getAxisValue(MotionEvent.AXIS_LTRIGGER);
+        graspTopic.setPublisher_float(graspP + graspN);
     }
 
     private boolean validTarget(float x, float y) {

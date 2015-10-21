@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.os.Bundle;
 import android.util.TypedValue;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -83,26 +84,17 @@ public class ScreenJoystickInterface extends RosActivity {
         joystickPositionNodeMain.setHolonomic(true);
         joystickRotationNodeMain.setHolonomic(true);
 
-        imageStreamNodeMain = (RosImageView<CompressedImage>) findViewById(R.id.visualization);
+        imageStreamNodeMain = (RosImageView<CompressedImage>) findViewById(R.id.streamingView);
 
-        graspHandler = (ScrollerView) findViewById(R.id.scrollerView);
-        graspHandler.setTopValue(0.f);
-        graspHandler.setBottomValue(2.f);
-        graspHandler.setFontSize(13);
-        graspHandler.setMaxTotalItems(8);
-        graspHandler.setMaxVisibleItems(7);
-        graspHandler.beginOnBottom();
-        graspHandler.showPercentage();
+        positionTopic =  new PointTopic();
+        positionTopic.publishTo(getString(R.string.topic_positionabs), false, 10);
+
+        rotationTopic =  new PointTopic();
+        rotationTopic.publishTo(getString(R.string.topic_rotationrel), false, 10);
 
         graspTopic = new Float32Topic();
         graspTopic.setPublishingFreq(500);
         graspTopic.publishTo(getString(R.string.topic_graspingabs), true, 0);
-
-        positionTopic =  new PointTopic();
-        positionTopic.publishTo(getString(R.string.topic_positionabs), false, 50);
-
-        rotationTopic =  new PointTopic();
-        rotationTopic.publishTo(getString(R.string.topic_rotationrel), false, 50);
 
         interfaceNumberTopic = new Int32Topic();
         interfaceNumberTopic.publishTo(getString(R.string.topic_interfacenumber), true, 0);
@@ -117,19 +109,33 @@ public class ScreenJoystickInterface extends RosActivity {
         androidNode = new AndroidNode(NODE_NAME);
         androidNode.addTopics(emergencyTopic, positionTopic, rotationTopic, graspTopic, interfaceNumberTopic);
         androidNode.addNodeMain(imageStreamNodeMain);
+
+        graspHandler = (ScrollerView) findViewById(R.id.scrollerView);
+        graspHandler.setTopValue(0.f);
+        graspHandler.setBottomValue(2.f);
+        graspHandler.setFontSize(13);
+        graspHandler.setMaxTotalItems(8);
+        graspHandler.setMaxVisibleItems(7);
+        graspHandler.beginAtBottom();
+        graspHandler.showPercentage();
         //In case you still need to publish the virtualjoysticks values, set the topicname and then add the joysticks to the AndroidNode
         //joystickPositionNodeMain.setTopicName(JOYPOS_TOPIC);
         //joystickRotationNodeMain.setTopicName(JOYROT_TOPIC);
         //androidNode.addNodeMains(joystickPositionNodeMain,joystickRotationNodeMain);
 
-        targetImage = (ImageView) findViewById(R.id.imageTarget);
-
-        graspTopic.setPublisher_float(0.01f); //it's just to init the thread below
+        targetImage = (ImageView) findViewById(R.id.targetView);
 
         imageStreamNodeMain.setTopicName(getString(R.string.topic_streaming));
         imageStreamNodeMain.setMessageType(getString(R.string.topic_streaming_msg));
         imageStreamNodeMain.setMessageToBitmapCallable(new BitmapFromCompressedImage());
         imageStreamNodeMain.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        imageStreamNodeMain.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                imageStreamNodeMain.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                onPostLayout();
+            }
+        });
 
         ToggleButton emergencyStop = (ToggleButton)findViewById(R.id.emergencyButton) ;
         emergencyStop.setOnCheckedChangeListener( new CompoundButton.OnCheckedChangeListener() {
@@ -152,9 +158,9 @@ public class ScreenJoystickInterface extends RosActivity {
                 while(running){
                     try {
                         Thread.sleep(10);
-                        updateGrasp();
                         updatePosition();
                         updateRotation();
+                        updateGrasping();
                     } catch (InterruptedException e) {
                         e.getStackTrace();
                     }
@@ -165,14 +171,16 @@ public class ScreenJoystickInterface extends RosActivity {
 
     }
 
+    private void onPostLayout(){
+        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
+        params.rightMargin=px;
+    }
+
     @Override
     public void onResume() {
         super.onResume();
         emergencyTopic.setPublisher_bool(true);
-        /*** The following code was created because sometimes the target image is not well positioned when the app is launched ***/
-        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
-        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
-        params.rightMargin=px;
         running=true;
     }
 
@@ -190,8 +198,7 @@ public class ScreenJoystickInterface extends RosActivity {
         super.onDestroy();
     }
 
-    private void updateGrasp() {
-
+    private void updateGrasping() {
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {

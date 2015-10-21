@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -38,7 +39,6 @@ import ualberta.cs.robotics.android_hri.touch_interaction.topic.Float32Topic;
 import ualberta.cs.robotics.android_hri.touch_interaction.topic.Int32Topic;
 import ualberta.cs.robotics.android_hri.touch_interaction.topic.PointTopic;
 import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.MultiGestureArea;
-import ualberta.cs.robotics.android_hri.touch_interaction.touchscreen.gesture_detector.TwoFingerGestureDetector;
 import ualberta.cs.robotics.android_hri.touch_interaction.utils.AndroidNode;
 
 
@@ -94,23 +94,30 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
         positionImage = (ImageView) findViewById(R.id.positionView);
         msgText = (TextView) findViewById(R.id.msgTextView);
 
-        imageStreamNodeMain = (RosImageView<CompressedImage>) findViewById(R.id.imageViewCenter);
+        imageStreamNodeMain = (RosImageView<CompressedImage>) findViewById(R.id.streamingView);
         statelessGestureHandler = new MultiGestureArea(this, imageStreamNodeMain);
 
         imageStreamNodeMain.setTopicName(getString(R.string.topic_streaming));
         imageStreamNodeMain.setMessageType(getString(R.string.topic_streaming_msg));
         imageStreamNodeMain.setMessageToBitmapCallable(new BitmapFromCompressedImage());
         imageStreamNodeMain.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        imageStreamNodeMain.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                imageStreamNodeMain.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                onPostLayout();
+            }
+        });
 
         positionTopic = new PointTopic();
         positionTopic.publishTo(getString(R.string.topic_positionabs), false, 10);
 
-        graspTopic = new Float32Topic();
-        graspTopic.publishTo(getString(R.string.topic_graspingabs), false, 2);
-        graspTopic.setPublishingFreq(500);
-
         rotationTopic = new PointTopic();
         rotationTopic.publishTo(getString(R.string.topic_rotationabs), false, 10);
+
+        graspTopic = new Float32Topic();
+        graspTopic.setPublishingFreq(500);
+        graspTopic.publishTo(getString(R.string.topic_graspingabs), true, 0);
 
         interfaceNumberTopic = new Int32Topic();
         interfaceNumberTopic.publishTo(getString(R.string.topic_interfacenumber), true, 0);
@@ -152,7 +159,6 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
                 while(running){
                     try {
                         Thread.sleep(10);
-                        TwoFingerGestureDetector.MAX_RESOLUTION= imageStreamNodeMain.getWidth();
                         updatePosition();
                         updateRotation();
                         updateGrasping();
@@ -164,30 +170,20 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
             }
         };
         threadGestures.start();
+    }
 
-        Thread threadInit = new Thread(){
-            public void run(){
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                lastPosition = new float[]{targetImage.getX()+targetImage.getWidth()/2, targetImage.getY()+targetImage.getHeight()/2};
-                statelessGestureHandler.syncPos(lastPosition[0], lastPosition[1]); //This way the tracker begins at the target position
-            }
-        };
-        threadInit.start();
-
+    private void onPostLayout(){
+        lastPosition = new float[]{targetImage.getX()+targetImage.getWidth()/2, targetImage.getY()+targetImage.getHeight()/2};
+        statelessGestureHandler.syncPos(lastPosition[0], lastPosition[1]); //This way the tracker begins at the target position
+        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
+        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
+        params.rightMargin=px;
     }
 
     @Override
     public void onResume() {
         super.onResume();
         emergencyTopic.setPublisher_bool(true);
-        /*** The following code was created because sometimes the target image is not well positioned when the app is launched ***/
-        int px = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 120, getResources().getDisplayMetrics()); //convert pid to pixel
-        RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams)targetImage.getLayoutParams();
-        params.rightMargin=px;
         running=true;
     }
     
@@ -283,7 +279,6 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
         float grasp = statelessGestureHandler.getGrasp();
         graspTopic.setPublisher_float(grasp);
         msg.append(String.format(graspMsg, grasp));
-        graspTopic.publishNow();
     }
 
     private void updateText() {

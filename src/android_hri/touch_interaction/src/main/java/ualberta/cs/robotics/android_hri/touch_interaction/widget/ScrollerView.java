@@ -213,19 +213,19 @@ public class ScrollerView extends RelativeLayout{
         percentage = false;
     }
 
-    public void beginOnTop(){
+    public void beginAtTop(){
         initialPosition=1;
     }
 
-    public void beginOnBottom(){
+    public void beginAtBottom(){
         initialPosition=maxTotalItems;
     }
 
-    public void beginOnMiddle(){
+    public void beginAtMiddle(){
         initialPosition=maxTotalItems/2;
     }
 
-    public void beginOnItem(int index){
+    public void beginAtItem(int index){
         initialPosition=index;
     }
 
