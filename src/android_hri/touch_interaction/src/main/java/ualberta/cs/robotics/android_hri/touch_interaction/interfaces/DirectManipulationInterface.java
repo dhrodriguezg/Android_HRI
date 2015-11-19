@@ -226,9 +226,20 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
     }
 
     private void updatePosition() {
-        if(!statelessGestureHandler.isDetectingGesture())
+        final float x,y;
+        if(statelessGestureHandler.isDetectingGesture()) {
+            //positionPoint = new float[]{statelessGestureHandler.getPosX(), statelessGestureHandler.getPosY()};
+            x=statelessGestureHandler.getPosX();
+            y=statelessGestureHandler.getPosY();
+            statelessGestureHandler.resetTarget();
+        } else if(statelessGestureHandler.isTargetSelected()) {
+            x=statelessGestureHandler.getTargetX();
+            y=statelessGestureHandler.getTargetY();
+        } else {
             return;
-        float[] positionPoint = new float[]{statelessGestureHandler.getPosX(), statelessGestureHandler.getPosY()};
+        }
+
+        float[] positionPoint = new float[]{x,y};
         float[] positionPixel = new float[2];
         smoothMovement(positionPoint);
 
@@ -239,8 +250,8 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                positionImage.setX(statelessGestureHandler.getPosX() - positionImage.getWidth() / 2);
-                positionImage.setY(statelessGestureHandler.getPosY() - positionImage.getHeight() / 2);
+                positionImage.setX(x - positionImage.getWidth() / 2);
+                positionImage.setY(y - positionImage.getHeight() / 2);
             }
         });
 
@@ -255,12 +266,13 @@ public class DirectManipulationInterface extends RosActivity implements SensorEv
         positionTopic.getPublisher_point()[2] = 0;
         positionTopic.publishNow();
         msg.append(String.format(moveMsg + " | ", positionTopic.getPublisher_point()[0], positionTopic.getPublisher_point()[1]));
-
         this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 targetImage.setX(lastPosition[0] - targetImage.getWidth() / 2);
                 targetImage.setY(lastPosition[1] - targetImage.getHeight() / 2);
+                if(Math.hypot(positionImage.getX()-targetImage.getX(),positionImage.getY()-targetImage.getY())<2)
+                    statelessGestureHandler.resetTarget();
             }
         });
     }

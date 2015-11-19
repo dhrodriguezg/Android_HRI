@@ -1,7 +1,10 @@
 package ualberta.cs.robotics.android_hri.touch_interaction.touchscreen;
 
 import android.app.Activity;
+import android.content.Context;
+import android.os.Vibrator;
 import android.util.TypedValue;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
@@ -9,28 +12,26 @@ import android.widget.ImageView;
 /**
  * Created by DarkNeoBahamut on 23/07/2015.
  */
-public class MultiGestureArea{
+public class MultiGestureArea extends GestureDetector.SimpleOnGestureListener{
 
     private static final String TAG = "MultiGestureArea";
 
     private Activity mActivity;
     private ImageView mView;
+    private GestureDetector mGestureDetector;
     private static final int INVALID_POINTER_ID = -1;
     private static final int INVALID = -1;
     private static final int FAST_GRASPING_TIME_THREASHOLD = 300;//ms
     private static final int FAST_GRASPING_DISTANCE_THREASHOLD = 100;//dpi
     private static final float REF_DISTANCE_DIP = 600;
+    private Vibrator vibrator;
 
-    private static final float MAX_DISTANCE_DIP = 600;
-    private static final float MIN_DISTANCE_DIP = 400;
-    private static final float MIN_RELATIVE_DIP = 200;
     private static final float MAX_GRASP = 2.f;
     private static final float MIN_GRASP = .1f;
 
     private boolean detectingGesture =false;
     private float fX, fY, sX, sY;
     private float nfX, nfY, nsX, nsY;
-    private float dx, dy;
     private int ptrID1, ptrID2;
 
     private float initDistance;
@@ -48,19 +49,25 @@ public class MultiGestureArea{
     private float grasp;
     private float posX;
     private float posY;
+    private float targetX;
+    private float targetY;
 
     private long initTime=0;
     private long endTime=0;
     private boolean synced;
+    private boolean isTarget;
     private float syncX;
     private float syncY;
 
     public MultiGestureArea(Activity activity, ImageView view){
+        vibrator = (Vibrator) activity.getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+        mGestureDetector = new GestureDetector(activity, this);
         ptrID1 = INVALID_POINTER_ID;
         ptrID2 = INVALID_POINTER_ID;
         currPosX = INVALID;
         currPosY = INVALID;
         grasp = MAX_GRASP;
+        isTarget = false;
         synced = false;
         rotation = 0f;
         mActivity = activity;
@@ -74,6 +81,7 @@ public class MultiGestureArea{
             @Override
             public boolean onTouch(View view, MotionEvent event) {
                 calculateGestures(view, event);
+                mGestureDetector.onTouchEvent(event);
                 return true;
             }
         });
@@ -162,6 +170,22 @@ public class MultiGestureArea{
 
     }
 
+    @Override
+    public void onLongPress(MotionEvent event) {
+        targetX =event.getX();
+        targetY =event.getY();
+        vibrator.vibrate(200);
+        isTarget = true;
+    }
+
+    public void resetTarget(){
+        isTarget = false;
+    }
+
+    public boolean isTargetSelected(){
+        return isTarget;
+    }
+
     private float getAngleBetweenLines (float fX, float fY, float sX, float sY, float nfX, float nfY, float nsX, float nsY) {
         float angle1 = (float) Math.atan2((fY - sY), (fX - sX));
         float angle2 = (float) Math.atan2((nfY - nsY), (nfX - nsX));
@@ -173,9 +197,33 @@ public class MultiGestureArea{
     }
 
     public void syncPos(float x, float y){
-        synced =true;
+        synced = true;
         syncX =x;
         syncY =y;
+    }
+
+    public float getTargetX() {
+        return targetX;
+    }
+
+    public void setTargetX(float targetX) {
+        this.targetX = targetX;
+    }
+
+    public float getTargetY() {
+        return targetY;
+    }
+
+    public void setTargetY(float targetY) {
+        this.targetY = targetY;
+    }
+
+    public boolean isTarget() {
+        return isTarget;
+    }
+
+    public void setIsTarget(boolean isTarget) {
+        this.isTarget = isTarget;
     }
 
     public float getRotation() {
