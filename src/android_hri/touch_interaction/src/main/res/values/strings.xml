@@ -8,7 +8,7 @@
     <string name="emergency_on">STOPPING ROBOT</string>
     <string name="emergency_on_msg">EMERGENCY STOP ACTIVATED!</string>
     <string name="emergency_off_msg">EMERGENCY STOP DEACTIVATED!</string>
-    <string name="max_target_speed">0.2</string>
+    <string name="max_target_speed">0.3</string>
 
     <!-- MAIN TEXT -->
     <string name="app_name">WAM Android Interface</string>

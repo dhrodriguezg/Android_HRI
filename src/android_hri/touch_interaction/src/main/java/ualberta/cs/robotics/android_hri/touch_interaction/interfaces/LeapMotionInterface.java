@@ -507,7 +507,7 @@ public class LeapMotionInterface extends RosActivity implements LeapMotionListen
                         case 0: //palm
                             rightHand.setX(point[0] - rightHand.getWidth()/2);
                             rightHand.setY(point[1] - rightHand.getHeight()/2);
-                            rightHand.setAlpha(0.4f);
+                            //rightHand.setAlpha(0.4f);
                             break;
                         case 1: //index
                             rightIndex.setX(point[0] - rightIndex.getWidth()/2);

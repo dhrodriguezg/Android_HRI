@@ -74,7 +74,7 @@
         android:layout_alignParentTop="true"
         android:layout_toRightOf="@+id/textTracking"
         android:background="#ffff0000"
-
+        android:alpha="0.7"
         android:gravity="center_vertical|center_horizontal"
         android:layout_toLeftOf="@+id/emergencyButton" />
 
@@ -85,6 +85,7 @@
         android:text="@string/status_fail"
         android:id="@+id/statusView"
         android:background="#ffff0000"
+        android:alpha="0.7"
         android:gravity="center_vertical|center_horizontal"
         android:layout_alignParentTop="true"
         android:layout_alignRight="@+id/showLog"
@@ -230,5 +231,14 @@
         android:layout_alignTop="@+id/rightHanded"
         android:layout_alignBottom="@+id/rightHanded"
         android:gravity="center_vertical" />
+
+    <ImageView
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:src="@drawable/target_cool"
+        android:id="@+id/targetCenter"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:alpha="0.7"/>
 
 </RelativeLayout>
