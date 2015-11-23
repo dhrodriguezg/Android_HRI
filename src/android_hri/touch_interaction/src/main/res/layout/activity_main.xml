@@ -83,7 +83,9 @@
                 android:layout_height="0px"
                 android:src="@drawable/interface_1"
                 android:id="@+id/imageViewPreviewController"
-                android:layout_weight="3"
+                android:layout_weight="2"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
                 android:visibility="visible" />
 
             <Button
@@ -117,7 +119,9 @@
                 android:layout_height="0px"
                 android:src="@drawable/interface_2"
                 android:id="@+id/imageViewPreviewDragging"
-                android:layout_weight="3"
+                android:layout_weight="2"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
                 android:visibility="visible" />
 
             <Button
@@ -151,7 +155,9 @@
                 android:layout_height="0px"
                 android:src="@drawable/interface_3"
                 android:id="@+id/imageViewPreviewGamepad"
-                android:layout_weight="3"
+                android:layout_weight="2"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
                 android:visibility="visible"
                 android:layout_gravity="center"/>
 
@@ -186,7 +192,9 @@
                 android:layout_height="0px"
                 android:src="@drawable/interface_4"
                 android:id="@+id/imageViewPreviewLeapMotion"
-                android:layout_weight="3"
+                android:layout_weight="2"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
                 android:visibility="visible"
                 android:layout_gravity="center"/>
 
