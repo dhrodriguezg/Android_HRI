@@ -12,7 +12,10 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.text.DecimalFormat;
 import java.util.Locale;
 
 import ualberta.cs.robotics.android_hri.touch_interaction.interfaces.GamepadInterface;
@@ -56,6 +59,14 @@ public class MainActivity extends ActionBarActivity {
         WORKSPACE_WIDTH=Float.parseFloat(getString(R.string.workspace_width));
         WORKSPACE_Y_OFFSET=Float.parseFloat(getString(R.string.workspace_yoffset));
         WORKSPACE_HEIGHT=Float.parseFloat(getString(R.string.workspace_height));
+
+        Button pingButton = (Button) findViewById(R.id.pingButton);
+        pingButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startSendingPing();
+            }
+        });
 
         Button calibrationButton = (Button) findViewById(R.id.calibrationButton);
         calibrationButton.setOnClickListener(new View.OnClickListener() {
@@ -161,6 +172,13 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void startSendingPing(){
+        int exit = pingHost(rosIP.getText().toString(), 10, true);
+        if (exit!=0){
+            Toast.makeText(getApplicationContext(), rosIP.getText().toString()+" is not reachable!!!",Toast.LENGTH_LONG).show();
+        }
+    }
+
     private void startCalibrationActivity(){
         if (isMasterValid()){
             Intent myIntent = new Intent(MainActivity.this, SetupActivity.class);
@@ -198,7 +216,7 @@ public class MainActivity extends ActionBarActivity {
 
     private boolean isMasterValid(){
         ROS_MASTER = "http://" + rosIP.getText().toString() + ":" + rosPort.getText().toString();
-        int exit = pingHost(rosIP.getText().toString());
+        int exit = pingHost(rosIP.getText().toString(), 1, false);
         if (exit!=0){
             Toast.makeText(getApplicationContext(), rosIP.getText().toString()+" is not reachable!!!",Toast.LENGTH_LONG).show();
             return false;
@@ -206,12 +224,33 @@ public class MainActivity extends ActionBarActivity {
         return true;
     }
 
-    private static int pingHost(String host){
+    private int pingHost(String host, int tries, boolean showStats){
         int exit = -1;
         try {
             Runtime runtime = Runtime.getRuntime();
-            Process proc = runtime.exec("ping -c 1 " + host);
+            Process proc = runtime.exec("ping -c " + tries + " " + host);
             proc.waitFor();
+            if(showStats){
+                BufferedReader stdInput = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+                DecimalFormat numberFormat = new DecimalFormat("#.00");
+                float minTime=Float.MAX_VALUE;
+                float maxTime=Float.MIN_VALUE;
+                float avgTime=0;
+                float n=0.f;
+                String result_line;
+                while ((result_line = stdInput.readLine()) != null) {
+                    if(!result_line.contains("time="))
+                        continue;
+                    String s_time = result_line.split("time=")[1].split(" ")[0];
+                    float currentTime = Float.parseFloat(s_time);
+                    avgTime += currentTime;
+                    minTime = minTime < currentTime ? minTime : currentTime;
+                    maxTime = maxTime > currentTime ? maxTime : currentTime;
+                    n++;
+                }
+                avgTime/=n;
+                Toast.makeText(getApplicationContext(), "Avg: "+ numberFormat.format(avgTime) + "ms Min: " + numberFormat.format(minTime) + "ms Max: " + numberFormat.format(maxTime) + "ms",Toast.LENGTH_LONG).show();
+            }
             exit = proc.exitValue();
         } catch (IOException e) {
             e.printStackTrace();
