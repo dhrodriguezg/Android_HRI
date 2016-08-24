@@ -2,10 +2,13 @@
 <resources>
 
     <!-- GLOBAL TEXT -->
+    <string name="spanish">Español</string>
+    <string name="english">English</string>
     <string name="emergency_off">PARADA EMERGENCIA</string>
     <string name="emergency_on">DETENIENDO EL ROBOT</string>
     <string name="emergency_on_msg">PARADA DE EMERGENCIA ACTIVADA!</string>
     <string name="emergency_off_msg">PARADA DE EMERGENCIA DESACTIVADA!</string>
+    <string name="max_target_speed">0.3</string>
 
     <!-- MAIN TEXT -->
     <string name="app_name">Interface Android para WAM</string>
@@ -13,14 +16,22 @@
     <string name="ros_master_port">Puerto ROS M.:</string>
     <string name="default_master_ip">192.168.1.121</string>
     <string name="default_master_port">11311</string>
+    <string name="ping">Ping</string>
+    <string name="test">Probar</string>
+    <string name="ros_hostname_ip">Direccion ROS Cliente:</string>
+    <string name="default_hostname_ip">0.0.0.0</string>
+    <string name="change_hostname_ip">Cambiar</string>
+    <string name="options">Opciones</string>
     <string name="setup">Configurar</string>
-    <string name="interface_screenjoystick_name">Joystick en Pantalla</string>
-    <string name="interface_screenjoystick_number">Interface 1</string>
-    <string name="interface_directmanipulation_name">Maniputacion Directa</string>
-    <string name="interface_directmanipulation_number">Interface 2</string>
-    <string name="interface_gamepad_name">Gamepad</string>
-    <string name="interface_gamepad_number">Interface 3</string>
-    <string name="interface_leapmotion_name">Leap Motion</string>
+    <string name="camera">Cámara</string>
+    <string name="interfaces">Interfaces</string>
+    <string name="interface_gamepad_name">1. Gamepad</string>
+    <string name="interface_gamepad_number">Interface 1</string>
+    <string name="interface_screenjoystick_name">2. Joystick en Pantalla</string>
+    <string name="interface_screenjoystick_number">Interface 2</string>
+    <string name="interface_directmanipulation_name">3. Maniputacion Directa</string>
+    <string name="interface_directmanipulation_number">Interface 3</string>
+    <string name="interface_leapmotion_name">4. Leap Motion</string>
     <string name="interface_leapmotion_number">Interface 4</string>
 
     <!-- SETUP TEXT -->
@@ -97,5 +108,37 @@
     <string name="taskNaN">Tarea: -1 (No válido)</string>
     <string name="task5">Tarea: 5 (Mano abierta)</string>
     <string name="task6">Tarea: 6 (Confirmar)</string>
+
+    <!-- GLOBAL VALUES -->
+    <string name="workspace_xoffset">0.5544</string>
+    <string name="workspace_width">1.0123</string>
+    <string name="workspace_yoffset">0.8652</string>
+    <string name="workspace_height">0.5567</string>
+
+    <string name="topic_streaming">"/usb_cam/image_raw/compressed"</string>
+    <string name="topic_streaming_msg">sensor_msgs/CompressedImage</string>
+    <string name="topic_emergencystop">/android/emergency_stop</string>
+    <string name="topic_interfacenumber">/android/interface_number</string>
+
+    <string name="topic_positionrel">/android/position_rel</string>
+    <string name="topic_positionabs">/android/position_abs</string>
+    <string name="topic_rotationrel">/android/rotation_rel</string>
+    <string name="topic_rotationabs">/android/rotation_abs</string>
+    <string name="topic_graspingrel">/android/grasping_rel</string>
+    <string name="topic_graspingabs">/android/grasping_abs</string>
+
+    <string name="topic_trackerpoint">/android/tracker_point</string>
+    <string name="topic_targetpoint">/android/target_point</string>
+
+    <string name="topic_lmlog">/android/lmlog</string>
+    <string name="topic_setup_on">/android/setup/on</string>
+    <string name="topic_setup_off">/android/setup/off</string>
+    <string name="topic_setup_quick">/android/setup/quick</string>
+    <string name="topic_setup_pos1state">/android/setup/pos1_state</string>
+    <string name="topic_setup_pos2state">/android/setup/pos2_state</string>
+    <string name="topic_setup_grasp">/android/setup/grasp_state</string>
+    <string name="topic_setup_spread">/android/setup/spread_state</string>
+
+    <string name="service_test">/android/test_service</string>
 
 </resources>
